@@ -195,8 +195,11 @@ textarea.bridge-out{font-family:'SF Mono',ui-monospace,monospace;font-size:11px;
     <div class="card">
       <div class="card-t">🏁 Punto de partida (entrenamiento previo)</div>
       <p class="note" style="margin-bottom:9px">Describe lo que ya venías haciendo para que la progresión arranque desde tu nivel real, no desde cero. Ej: "Circuito cuerpo completo con banda, 40 min, 40s trabajo / 20s descanso" o "Press mancuerna 12kg 3×10, sentadilla goblet 16kg 3×12". Es la referencia de partida: cuando lleves varias semanas registrando sesiones, Claude prioriza esas; actualiza o vacía este texto si tu rutina cambia.</p>
-      <textarea id="baseline-in" placeholder="Tu entrenamiento de las últimas semanas: ejercicios, kilos, series, estructura, duración..."></textarea>
-      <button class="btn btn-block" style="margin-top:8px" onclick="saveBaseline()">💾 Guardar punto de partida</button>
+      <textarea id="baseline-in" rows="10" style="min-height:220px;font-size:15px;line-height:1.6" placeholder="Tu entrenamiento de las últimas semanas: ejercicios, kilos, series, estructura, duración..."></textarea>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn" style="flex:1" onclick="saveBaseline()">💾 Guardar</button>
+        <button class="btn" onclick="openBaselineFull()">⛶ Pantalla completa</button>
+      </div>
       <div id="baseline-saved" style="font-size:12px;color:var(--free);margin-top:6px"></div>
     </div>
     <div class="card">
@@ -305,6 +308,7 @@ textarea.bridge-out{font-family:'SF Mono',ui-monospace,monospace;font-size:11px;
     </div>
     <button class="btn btn-primary btn-block" onclick="buildWeekOffline()">⚡ Generar semana (offline)</button>
     <button class="btn btn-block" style="margin-top:8px" onclick="openBridge('new')">✨ Generar con Claude (más detallado)</button>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 14</div>
   </div>
 </div>
 
@@ -365,6 +369,14 @@ textarea.bridge-out{font-family:'SF Mono',ui-monospace,monospace;font-size:11px;
   <div class="sheet">
     <div class="sheet-h"><h3>✨ Puente con Claude</h3><button class="btn btn-sm" onclick="closeSheet('bridge-bg')">✕</button></div>
     <div id="bridge-body"></div>
+  </div>
+</div>
+
+<div class="sheet-bg" id="baseline-bg">
+  <div class="sheet" style="max-height:94vh">
+    <div class="sheet-h"><h3>🏁 Punto de partida</h3><button class="btn btn-sm" onclick="closeSheet('baseline-bg')">✕</button></div>
+    <textarea id="bf-text" style="width:100%;min-height:60vh;font-size:16px;line-height:1.6;padding:12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);font-family:inherit;resize:vertical" placeholder="Escribe o edita aquí con todo el espacio..."></textarea>
+    <button class="btn btn-primary btn-block" style="margin-top:10px" onclick="saveBaselineFull()">💾 Guardar y cerrar</button>
   </div>
 </div>
 
@@ -1152,6 +1164,19 @@ function saveBaseline(){
   const el=document.getElementById('baseline-saved');
   el.textContent='✓ Guardado. Se incluirá al adaptar la semana con Claude.';
   setTimeout(()=>{el.textContent='';},3000);
+}
+function openBaselineFull(){
+  document.getElementById('bf-text').value=document.getElementById('baseline-in').value;
+  openSheet('baseline-bg');
+  setTimeout(()=>{const t=document.getElementById('bf-text');t.focus();},150);
+}
+function saveBaselineFull(){
+  const v=document.getElementById('bf-text').value;
+  document.getElementById('baseline-in').value=v;
+  S.baseline=v;save();
+  closeSheet('baseline-bg');
+  const el=document.getElementById('baseline-saved');
+  el.textContent='✓ Guardado.';setTimeout(()=>{el.textContent='';},3000);
 }
 
 function openBridge(mode){
