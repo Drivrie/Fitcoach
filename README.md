@@ -172,3 +172,20 @@ externas) que solapan el mismo periodo. Para no inflar las cifras:
   hiciste ese día (p. ej. saliste a correr en lugar de la fuerza prevista).
 - **↩ Restaurar** deshace el "no realizado"; **↩ Deshacer** revierte una sesión marcada
   como hecha (y la quita del historial).
+
+---
+
+## Mejoras v15
+1. Tamaño de texto ajustable (Normal/Grande/Muy grande/Máximo) en Perfil, para presbicia.
+2. Señal acústica (pitidos) en los últimos 3 s de cada cuenta atrás de trabajo y descanso,
+   además de la vibración, para no mirar la pantalla.
+3. Durante el descanso que da paso a un ejercicio nuevo se muestra ya el siguiente
+   ejercicio: figura, series/reps y descripción, para prepararlo sin esperar al final.
+4. Spotify: en lugar de la previsualización de 30 s, ahora se abre la lista directamente
+   en la app de Spotify (reproducción completa), con listas recientes y buscador. La música
+   se controla desde Spotify / Centro de control de iOS.
+5. Si la exportación de Apple Salud falla, se pueden introducir los marcadores a mano
+   (FC reposo, HRV, VO2max, % grasa, pasos, kcal activas) en la tarjeta de Apple Health.
+6. Alternativas más seguras por ejercicio (p. ej. press militar → press sentado con
+   respaldo o elevaciones laterales) seleccionables en el resumen de la sesión. Si no se
+   elige nada, se usa el ejercicio propuesto por defecto (marcado con ★).

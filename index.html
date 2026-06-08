@@ -157,6 +157,28 @@ textarea.bridge-out{font-family:'SF Mono',ui-monospace,monospace;font-size:11px;
 .pl-cue{font-size:13px;color:var(--text2);line-height:1.5}
 #player-music{padding:0 14px 14px}
 #player-music:empty{display:none}
+
+/* --- Escala de fuente ajustable (accesibilidad / presbicia) --- */
+:root{--fs:1}
+body{font-size:calc(15px*var(--fs))}
+.card-t{font-size:calc(15px*var(--fs))!important}
+.field label{font-size:calc(13px*var(--fs))!important}
+.field input,.field select,.field textarea{font-size:calc(15px*var(--fs))!important}
+.btn{font-size:calc(14px*var(--fs))!important}
+.note{font-size:calc(12px*var(--fs))!important}
+.sess-tt{font-size:calc(15px*var(--fs))!important}
+.sess-m{font-size:calc(13px*var(--fs))!important}
+.ex-nm{font-size:calc(15px*var(--fs))!important}
+.ex-mt,.ex-d,.ex-tag{font-size:calc(13px*var(--fs))!important}
+.meal-n{font-size:calc(14px*var(--fs))!important}
+.meal-m,.meal-t{font-size:calc(12px*var(--fs))!important}
+.pl-name{font-size:calc(22px*var(--fs))!important}
+.pl-reps{font-size:calc(17px*var(--fs))!important}
+.pl-cue{font-size:calc(13px*var(--fs))!important}
+.pl-phase{font-size:calc(13px*var(--fs))!important}
+.stat-v{font-size:calc(20px*var(--fs))!important}
+.stat-l{font-size:calc(11px*var(--fs))!important}
+.chip{font-size:calc(13px*var(--fs))!important}
 </style>
 </head>
 <body>
@@ -254,6 +276,23 @@ textarea.bridge-out{font-family:'SF Mono',ui-monospace,monospace;font-size:11px;
       <input type="file" id="hf" accept=".xml,.zip" style="display:none" onchange="parseHealth(event)">
       <div id="h-status" style="margin-top:7px;font-size:12px;color:var(--text2)"></div>
       <div id="h-lastimport" style="margin-top:5px;font-size:12px"></div>
+      <details style="margin-top:10px">
+        <summary style="cursor:pointer;font-size:13px;color:var(--accent)">¿No puedes exportar? Introduce los marcadores a mano</summary>
+        <p class="note" style="margin:8px 0">Si la exportación de Salud falla, abre la app Salud, busca cada dato (Examinar → Corazón / Actividad / Medidas) y escríbelo aquí. Déjalo en blanco si no lo tienes.</p>
+        <div class="row2">
+          <div class="field"><label>FC reposo (lpm)</label><input type="number" id="m-rhr" inputmode="numeric" placeholder="58"></div>
+          <div class="field"><label>HRV / VFC (ms)</label><input type="number" id="m-hrv" inputmode="numeric" placeholder="45"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>VO₂max</label><input type="number" id="m-vo2" inputmode="decimal" placeholder="44"></div>
+          <div class="field"><label>% grasa</label><input type="number" id="m-bf" inputmode="decimal" placeholder="18"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Pasos/día (media)</label><input type="number" id="m-steps" inputmode="numeric" placeholder="9000"></div>
+          <div class="field"><label>kcal activas/día</label><input type="number" id="m-akcal" inputmode="numeric" placeholder="500"></div>
+        </div>
+        <button class="btn btn-primary btn-block" onclick="saveManualHealth()">💾 Guardar marcadores</button>
+      </details>
     </div>
     <div class="card" id="health-markers" style="display:none">
       <div class="card-t">❤️ Marcadores de estado (Apple Salud)</div>
@@ -308,7 +347,12 @@ textarea.bridge-out{font-family:'SF Mono',ui-monospace,monospace;font-size:11px;
     </div>
     <button class="btn btn-primary btn-block" onclick="buildWeekOffline()">⚡ Generar semana (offline)</button>
     <button class="btn btn-block" style="margin-top:8px" onclick="openBridge('new')">✨ Generar con Claude (más detallado)</button>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 14</div>
+    <div class="card">
+      <div class="card-t">🔠 Tamaño de texto</div>
+      <p class="note" style="margin-bottom:9px">Ajusta el tamaño de letra de toda la app a tu gusto y visión.</p>
+      <div id="fs-chips"></div>
+    </div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 15</div>
   </div>
 </div>
 
@@ -498,8 +542,13 @@ function initState(){
   if(!S.nutri)S.nutri=null;
   if(!S.insight)S.insight='';
   if(S.baseline==null)S.baseline='';
+  if(S.fontScale==null)S.fontScale=1;
+  if(!S.spotifyRecents)S.spotifyRecents=[];
+  if(S.musicMuted==null)S.musicMuted=false;
 }
 initState();
+function applyFontScale(){document.documentElement.style.setProperty('--fs',S.fontScale||1);}
+applyFontScale();
 
 /* --- Fechas --- */
 function weekDates(off){const n=new Date();const d=n.getDay()||7;const mon=new Date(n);mon.setDate(n.getDate()-d+1+off*7);return Array.from({length:7},(_,i)=>{const x=new Date(mon);x.setDate(mon.getDate()+i);return x})}
@@ -936,6 +985,60 @@ function exSVG(arg){
     <g class="exfb">${_fig(f.B,c)}${exB}</g></svg>`;
 }
 
+/* --- Alternativas más seguras por ejercicio (mismo grupo, menos lesivas) --- */
+const ALT={
+  militar:[
+    {nombre:'Press militar sentado con respaldo',descripcion:'Sentado con la espalda apoyada en respaldo vertical; elimina la carga sobre la zona lumbar al empujar.',musculos:'Deltoides, tríceps'},
+    {nombre:'Elevaciones laterales',descripcion:'De pie o sentado, eleva las mancuernas a los lados hasta la altura de los hombros; aísla el deltoide sin comprimir la columna.',musculos:'Deltoides lateral'}
+  ],
+  rdl:[
+    {nombre:'Hip thrust con mancuerna',descripcion:'Espalda apoyada en sofá/banco, empuja la cadera arriba con la mancuerna sobre la cadera; trabaja glúteo e isquios con mínima carga lumbar.',musculos:'Glúteos, isquios'},
+    {nombre:'Puente de glúteo',descripcion:'Tumbado boca arriba, eleva la cadera apretando glúteos; versión sin carga axial, muy segura para la espalda.',musculos:'Glúteos, isquios'}
+  ],
+  pesomuerto:[
+    {nombre:'Hip thrust con mancuerna',descripcion:'Empuje de cadera con apoyo de espalda; carga la cadena posterior sin comprimir la columna.',musculos:'Glúteos, isquios'}
+  ],
+  goblet:[
+    {nombre:'Sentadilla a caja',descripcion:'Sentadilla bajando a tocar una silla/caja y subiendo; controla la profundidad y reduce el estrés en rodilla y zona baja.',musculos:'Cuádriceps, glúteos'},
+    {nombre:'Zancadas',descripcion:'Zancadas con o sin mancuernas; trabajo unilateral con menos carga sobre la columna.',musculos:'Cuádriceps, glúteos'}
+  ],
+  sentadilla:[
+    {nombre:'Sentadilla a caja',descripcion:'Bajada controlada a una caja/silla; reduce el estrés lumbar y de rodilla.',musculos:'Cuádriceps, glúteos'}
+  ],
+  zancada:[
+    {nombre:'Sentadilla goblet',descripcion:'Si la zancada te molesta la rodilla, la goblet reparte mejor la carga.',musculos:'Cuádriceps, glúteos'}
+  ],
+  dominada:[
+    {nombre:'Jalón con banda',descripcion:'Tira de una banda anclada arriba hacia el pecho; mismo patrón de dorsal con menos exigencia de hombro.',musculos:'Dorsal, bíceps'},
+    {nombre:'Remo con mancuerna',descripcion:'Remo a una mano con apoyo; trabaja la espalda con menos tensión en el hombro.',musculos:'Dorsal, romboides'}
+  ],
+  pressbanca:[
+    {nombre:'Press con mancuernas',descripcion:'Las mancuernas permiten un recorrido más natural y menos estrés en el hombro que la barra.',musculos:'Pecho, tríceps'},
+    {nombre:'Flexiones',descripcion:'Empuje con peso corporal, articulación del hombro más libre.',musculos:'Pecho, tríceps'}
+  ],
+  pressdb:[
+    {nombre:'Flexiones',descripcion:'Si el press te molesta el hombro, las flexiones permiten que las escápulas se muevan libres.',musculos:'Pecho, tríceps'}
+  ],
+  flexion:[
+    {nombre:'Flexiones inclinadas',descripcion:'Manos apoyadas en una superficie elevada; reduce la carga y el estrés en muñeca y hombro.',musculos:'Pecho, tríceps'}
+  ],
+  fondos:[
+    {nombre:'Flexiones',descripcion:'Menos estrés en el hombro que los fondos si tienes molestias.',musculos:'Pecho, tríceps'}
+  ]
+};
+function altsFor(ex){const k=figKey((ex._orig&&ex._orig.nombre)||ex.nombre);return ALT[k]||null;}
+function swapExercise(key,i,optIdx){
+  const sess=(S.schedule[key]||[]).find(s=>s.type==='ai');if(!sess)return;
+  const ex=sess.exercises[i];if(!ex)return;
+  if(!ex._orig)ex._orig={nombre:ex.nombre,descripcion:ex.descripcion,musculos:ex.musculos,errores:ex.errores,yt:ex.yt};
+  const opts=[ex._orig].concat(altsFor(ex)||[]);
+  const sel=opts[optIdx];if(!sel)return;
+  ex.nombre=sel.nombre;ex.descripcion=sel.descripcion;ex.musculos=sel.musculos;
+  ex.errores=sel.errores||ERRORS[figKey(sel.nombre)]||[];
+  ex.yt=sel.yt||(matchYT({nombre:sel.nombre}).yt);
+  save();showSess(key);
+}
+
 function showSess(key){
   const sess=(S.schedule[key]||[]).find(s=>s.type==='ai');
   if(!sess||!sess.exercises){document.getElementById('sess-content').innerHTML='<div class="empty"><span class="ic">🏋</span><p>Esta sesión aún no tiene ejercicios. Genera la semana primero.</p></div>';tab('sess');return;}
@@ -946,6 +1049,17 @@ function showSess(key){
   if(sess.warmup)h+=`<div class="note" style="margin-bottom:11px">🔥 <b>Calentamiento:</b> ${sess.warmup}</div>`;
   sess.exercises.forEach((ex,i)=>{
     const errs=(ex.errores&&ex.errores.length?ex.errores:(ERRORS[figKey(ex.nombre)]||[]));
+    const alts=altsFor(ex);
+    let altHtml='';
+    if(alts&&alts.length){
+      const opts=[(ex._orig?{nombre:ex._orig.nombre}:{nombre:ex.nombre})].concat(alts);
+      const curName=ex.nombre;
+      altHtml=`<div style="padding:0 13px 12px">
+        <div style="font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">⇄ Alternativas (elige una; por defecto la propuesta)</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${opts.map((o,oi)=>`<span class="chip${o.nombre===curName?' sel':''}" onclick="event.stopPropagation();swapExercise('${key}',${i},${oi})">${oi===0?'★ ':''}${o.nombre}</span>`).join('')}
+        </div></div>`;
+    }
     h+=`<div class="ex"><div class="ex-h" onclick="toggleEx(${i})">
       <div class="ex-n">${i+1}</div>
       <div style="flex:1"><div class="ex-nm">${ex.nombre}</div>
@@ -957,6 +1071,7 @@ function showSess(key){
         <div style="flex:1;font-size:12.5px">${ex.descripcion||''}<div style="color:var(--text2);margin-top:5px">💪 ${ex.musculos||''}</div>
         ${ex.nota_progresion?`<div class="ex-tag">📈 ${ex.nota_progresion}</div>`:''}</div>
       </div>
+      ${altHtml}
       ${errs.length?`<div style="padding:0 13px 12px"><div style="font-size:11px;font-weight:600;color:var(--danger);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">⚠ Errores a evitar</div><ul style="margin:0;padding-left:16px;font-size:12px;color:var(--text2);line-height:1.6">${errs.map(e=>`<li>${e}</li>`).join('')}</ul></div>`:''}
       </div></div>`;
   });
@@ -1416,6 +1531,20 @@ function parseHealth(e){
   r.readAsText(file);
 }
 
+function saveManualHealth(){
+  const g=id=>{const v=parseFloat(document.getElementById(id).value);return isNaN(v)?null:v;};
+  const h=Object.assign({},S.health||{});
+  const rhr=g('m-rhr'),hrv=g('m-hrv'),vo2=g('m-vo2'),bf=g('m-bf'),st=g('m-steps'),ak=g('m-akcal');
+  if(rhr!=null)h.restingHR=Math.round(rhr);
+  if(hrv!=null)h.hrv=Math.round(hrv);
+  if(vo2!=null)h.vo2max=+vo2.toFixed(1);
+  if(bf!=null)h.bodyFat=+bf.toFixed(1);
+  if(st!=null)h.avgSteps=Math.round(st);
+  if(ak!=null)h.avgActiveKcal=Math.round(ak);
+  h.date=new Date().toISOString().split('T')[0];h.manual=true;
+  if(Object.keys(h).length>1){S.health=h;S.lastHealthImport=h.date;save();renderHealth();updateImportInfo();
+    const st2=document.getElementById('h-status');st2.textContent='✓ Marcadores guardados manualmente.';st2.style.color='var(--free)';}
+}
 function renderHealth(){
   const card=document.getElementById('health-markers');if(!card)return;
   const h=S.health;
@@ -1513,11 +1642,31 @@ function importWorkouts(doc){
    ============================================================ */
 let P={active:false,sess:null,exi:0,set:1,phase:'ready',int:null,sec:0,tot:0,key:null};
 
+/* --- Señal acústica (Web Audio, sin archivos) --- */
+let AC=null;
+function initAudio(){try{if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();}catch(e){}}
+function beep(freq,dur,vol){
+  if(S.musicMuted&&false)return; // los beeps no dependen del silencio de música
+  try{initAudio();if(!AC)return;
+    const o=AC.createOscillator(),g=AC.createGain();
+    o.type='sine';o.frequency.value=freq;o.connect(g);g.connect(AC.destination);
+    const t=AC.currentTime;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol||0.25,t+0.01);
+    g.gain.exponentialRampToValueAtTime(0.001,t+(dur||0.15));
+    o.start(t);o.stop(t+(dur||0.15)+0.02);
+  }catch(e){}
+}
+// avisos durante una cuenta atrás: pitido corto en 3-2-1 y largo al llegar a 0
+function countdownCue(sec){
+  if(sec===3||sec===2||sec===1)beep(880,0.12,0.22);
+  else if(sec<=0)beep(1320,0.45,0.3);
+}
+
 function parseReps(r){const m=String(r).match(/(\d+)\s*s/);return m?+m[1]:null;} // segundos si es "40s"
 
 function startPlayer(key){
   const sess=(S.schedule[key]||[]).find(s=>s.type==='ai');
   if(!sess||!sess.exercises)return;
+  initAudio();
   P={active:true,sess,exi:0,set:1,phase:'ready',int:null,sec:0,tot:0,key};
   document.getElementById('player').classList.add('show');
   document.body.style.overflow='hidden';
@@ -1529,17 +1678,50 @@ function closePlayer(){
   document.getElementById('player').classList.remove('show');
   document.body.style.overflow='';
 }
-function loadPlayerMusic(){
+const SP_PLAYLISTS={
+  fuerza:{id:'37i9dQZF1DX4eRPd9frC1m',n:'Beast Mode'},
+  musculo:{id:'37i9dQZF1DX76Wlfdnj7AP',n:'Power Workout'},
+  grasa:{id:'37i9dQZF1DX70RN3TfWWJh',n:'Cardio'},
+  resistencia:{id:'37i9dQZF1DX9oh43oAzkyx',n:'Running'},
+  tonificar:{id:'37i9dQZF1DXe6bgV3TmZOL',n:'Workout Twerkout'},
+  bienestar:{id:'37i9dQZF1DWZd79rJ6a7lp',n:'Peaceful'}
+};
+function openSpotify(id,name){
+  // recordar en recientes (máx 5)
+  S.spotifyRecents=(S.spotifyRecents||[]).filter(r=>r.id!==id);
+  S.spotifyRecents.unshift({id,n:name});S.spotifyRecents=S.spotifyRecents.slice(0,5);save();
+  renderPlayerMusic();
+  // intentar abrir la app nativa; si no, la web
+  const appUri='spotify:playlist:'+id;
+  const webUrl='https://open.spotify.com/playlist/'+id;
+  const t=Date.now();
+  window.location.href=appUri;
+  setTimeout(()=>{if(Date.now()-t<1500)window.open(webUrl,'_blank');},700);
+}
+function loadPlayerMusic(){renderPlayerMusic();}
+function renderPlayerMusic(){
+  const cont=document.getElementById('player-music');if(!cont)return;
+  if(S.musicMuted){cont.innerHTML='';return;}
   const obj=primaryGoal(S.profile.objetivos);
-  const pl={fuerza:'37i9dQZF1DX4eRPd9frC1m',musculo:'37i9dQZF1DX76Wlfdnj7AP',grasa:'37i9dQZF1DX70RN3TfWWJh',
-    resistencia:'37i9dQZF1DX9oh43oAzkyx',tonificar:'37i9dQZF1DXe6bgV3TmZOL',bienestar:'37i9dQZF1DWZd79rJ6a7lp'}[obj]||'37i9dQZF1DX76Wlfdnj7AP';
-  document.getElementById('player-music').innerHTML=`<iframe style="border-radius:10px" src="https://open.spotify.com/embed/playlist/${pl}?utm_source=generator&theme=0" width="100%" height="80" frameborder="0" allow="autoplay; encrypted-media" loading="lazy"></iframe>`;
+  const sug=SP_PLAYLISTS[obj]||SP_PLAYLISTS.musculo;
+  const recents=(S.spotifyRecents||[]).filter(r=>r.id!==sug.id);
+  cont.innerHTML=`
+    <div style="background:rgba(255,255,255,.06);border-radius:12px;padding:12px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <span style="font-size:18px">🎧</span>
+        <span style="font-size:calc(13px*var(--fs));color:rgba(255,255,255,.7)">Música en Spotify</span>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="openSpotify('${sug.id}','${sug.n}')">▶ ${sug.n} (recomendada)</button>
+      ${recents.length?`<div style="font-size:calc(11px*var(--fs));color:rgba(255,255,255,.5);margin:10px 0 6px">Recientes</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">${recents.map(r=>`<span class="chip" style="background:rgba(255,255,255,.1);border-color:transparent;color:#fff" onclick="openSpotify('${r.id}','${(r.n||'').replace(/'/g,'')}')">${r.n||'Lista'}</span>`).join('')}</div>`:''}
+      <a class="btn btn-block" style="margin-top:10px;text-decoration:none;background:rgba(255,255,255,.12);border-color:transparent;color:#fff" href="spotify:search" onclick="setTimeout(()=>{if(document.hasFocus())window.open('https://open.spotify.com/search','_blank')},700)">🔎 Buscar otra lista en Spotify</a>
+      <div style="font-size:calc(10px*var(--fs));color:rgba(255,255,255,.4);margin-top:8px;line-height:1.4">Se abre la app de Spotify (reproducción completa). Controla la música desde Spotify o el Centro de control de iOS y vuelve a FitCoach.</div>
+    </div>`;
 }
 function toggleMusic(){
   S.musicMuted=!S.musicMuted;save();
   document.getElementById('mus-btn').textContent=S.musicMuted?'🔇':'🎵';
-  document.getElementById('player-music').style.display=S.musicMuted?'none':'block';
-  if(!S.musicMuted&&!document.getElementById('player-music').innerHTML)loadPlayerMusic();
+  renderPlayerMusic();
 }
 
 function renderPlayer(){
@@ -1549,9 +1731,24 @@ function renderPlayer(){
   const pct=Math.round(((P.exi)/total)*100);
   let mid='';
   if(P.phase==='rest'){
+    // ¿este descanso da paso a un ejercicio NUEVO (serie 1) o a otra serie del mismo?
+    const nuevoEj = P.set===1;
+    let preview='';
+    if(nuevoEj){
+      const errs=ex.errores&&ex.errores.length?ex.errores:(ERRORS[figKey(ex.nombre)]||[]);
+      preview=`<div style="margin-top:14px;padding:12px;background:rgba(255,255,255,.08);border-radius:12px">
+        <div style="font-size:calc(12px*var(--fs));color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">A continuación</div>
+        <div style="width:130px;height:104px;margin:0 auto 10px">${exSVG(ex.nombre)}</div>
+        <div style="font-weight:700;font-size:calc(16px*var(--fs))">${ex.nombre}</div>
+        <div class="pl-cue" style="margin-top:4px">${ex.series>1?`${ex.series} series`:'1 serie'} · ${ex.reps}${/^\d+$/.test(String(ex.reps))?' reps':''}${ex.rir?' · RIR '+ex.rir:''}</div>
+        ${ex.descripcion?`<div class="pl-cue" style="margin-top:6px">${ex.descripcion}</div>`:''}
+        ${errs.length?`<div class="pl-cue" style="margin-top:6px;color:var(--danger)">⚠ Evita: ${errs[0].toLowerCase()}</div>`:''}
+      </div>`;
+    }
     mid=`<div class="pl-phase" style="color:var(--done)">DESCANSO</div>
       <div class="pl-timer" id="pl-timer">${fmtSec(P.sec)}</div>
-      <div class="pl-next">Siguiente: serie ${P.set} de ${ex.series}</div>
+      <div class="pl-next">${nuevoEj?'Prepárate para el siguiente ejercicio':'Siguiente: serie '+P.set+' de '+ex.series}</div>
+      ${preview}
       <button class="btn btn-block" style="margin-top:14px;background:rgba(255,255,255,.15);border-color:transparent;color:#fff" onclick="skipRest()">Saltar descanso →</button>`;
   } else if(P.phase==='work'&&repSecs){
     mid=`<div class="pl-phase" style="color:var(--free)">TRABAJO</div>
@@ -1580,7 +1777,7 @@ function finishSet(){
   if(repSecs&&P.phase!=='work'){ // ejercicio por tiempo: contar trabajo
     P.phase='work';P.sec=repSecs;P.tot=repSecs;renderPlayer();
     clearInterval(P.int);if(navigator.vibrate)navigator.vibrate(40);
-    P.int=setInterval(()=>{P.sec--;const t=document.getElementById('pl-timer');if(t)t.textContent=fmtSec(P.sec);
+    P.int=setInterval(()=>{P.sec--;const t=document.getElementById('pl-timer');if(t)t.textContent=fmtSec(P.sec);countdownCue(P.sec);
       if(P.sec<=0){clearInterval(P.int);if(navigator.vibrate)navigator.vibrate([100,50,100]);beginRest();}},1000);
     return;
   }
@@ -1600,7 +1797,7 @@ function beginRest(){
 }
 function runRest(){
   clearInterval(P.int);if(navigator.vibrate)navigator.vibrate(40);
-  P.int=setInterval(()=>{P.sec--;const t=document.getElementById('pl-timer');if(t)t.textContent=fmtSec(P.sec);
+  P.int=setInterval(()=>{P.sec--;const t=document.getElementById('pl-timer');if(t)t.textContent=fmtSec(P.sec);countdownCue(P.sec);
     if(P.sec<=0){clearInterval(P.int);if(navigator.vibrate)navigator.vibrate([100,50,100]);P.phase='ready';renderPlayer();}},1000);
 }
 function skipRest(){clearInterval(P.int);P.phase='ready';renderPlayer();}
@@ -1620,13 +1817,14 @@ function finishSession(){
    ============================================================ */
 let tInt=null,tSec=0,tTot=0,tRun=false;
 function startTimer(secs,label){
+  initAudio();
   tSec=secs;tTot=secs;tRun=true;
   document.getElementById('tm-l').textContent=label||'Descanso';
   document.getElementById('timer').classList.add('show');
   document.getElementById('tm-btn').textContent='⏸';
   clearInterval(tInt);updTimer();
   if(navigator.vibrate)navigator.vibrate(30);
-  tInt=setInterval(()=>{if(!tRun)return;tSec--;updTimer();if(tSec<=0){clearInterval(tInt);document.getElementById('tm-l').textContent='¡Siguiente serie!';if(navigator.vibrate)navigator.vibrate([100,50,100]);}},1000);
+  tInt=setInterval(()=>{if(!tRun)return;tSec--;updTimer();countdownCue(tSec);if(tSec<=0){clearInterval(tInt);document.getElementById('tm-l').textContent='¡Siguiente serie!';if(navigator.vibrate)navigator.vibrate([100,50,100]);}},1000);
 }
 function updTimer(){const m=String(Math.floor(tSec/60)).padStart(2,'0'),s=String(Math.max(0,tSec)%60).padStart(2,'0');
   document.getElementById('tm-c').textContent=m+':'+s;document.getElementById('tm-pi').style.width=Math.max(0,Math.round(tSec/tTot*100))+'%';}
@@ -1685,6 +1883,17 @@ function renderEquipChips(){
 }
 function setMin(v){S.profile.minutos=v;document.getElementById('minutos').value=v;document.getElementById('min-out').textContent=v;save();}
 
+const FS_OPTS=[['Normal',1],['Grande',1.15],['Muy grande',1.3],['Máximo',1.45]];
+function renderFsChips(){
+  const c=document.getElementById('fs-chips');if(!c)return;c.innerHTML='';
+  FS_OPTS.forEach(([lab,v])=>{
+    const sel=Math.abs((S.fontScale||1)-v)<0.001;
+    const el=document.createElement('span');el.className='chip'+(sel?' sel':'');el.textContent=lab;
+    el.onclick=()=>{S.fontScale=v;save();applyFontScale();renderFsChips();};
+    c.appendChild(el);
+  });
+}
+
 function saveProfile(){
   S.profile.peso=peso.value;S.profile.altura=altura.value;S.profile.edad=edad.value;S.profile.sexo=sexo.value;
   S.profile.nivel=nivel.value;S.profile.minutos=parseInt(document.getElementById('minutos').value)||45;
@@ -1713,7 +1922,7 @@ if(window.navigator.standalone||window.matchMedia('(display-mode: standalone)').
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
 
 /* Arranque */
-loadProfile();renderDayChips();renderCal();renderProg();renderNutri();renderHealth();updateImportInfo();
+loadProfile();renderDayChips();renderCal();renderProg();renderNutri();renderHealth();updateImportInfo();renderFsChips();
 document.getElementById('hdr-week').textContent='Semana '+realWeekNum();
 </script>
 </body>
