@@ -270,34 +270,57 @@ body{font-size:calc(15px*var(--fs))}
       <div class="card-t">🍎 Apple Health</div>
       <div onclick="document.getElementById('hf').click()" style="border:1px dashed var(--border);border-radius:11px;padding:14px;text-align:center;cursor:pointer">
         <div style="font-size:24px;margin-bottom:4px">⬆️</div>
-        <div style="font-size:13px;color:var(--text2)">Importar export.xml</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:2px">Salud → tu perfil → Exportar datos</div>
+        <div style="font-size:13px;color:var(--text2)">Importar datos de Salud</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">export.xml o JSON (últimos 30 días)</div>
       </div>
-      <input type="file" id="hf" accept=".xml,.zip" style="display:none" onchange="parseHealth(event)">
+      <input type="file" id="hf" accept=".xml,.zip,.json,application/json" style="display:none" onchange="parseHealth(event)">
       <div id="h-status" style="margin-top:7px;font-size:12px;color:var(--text2)"></div>
       <div id="h-lastimport" style="margin-top:5px;font-size:12px"></div>
       <details style="margin-top:10px">
-        <summary style="cursor:pointer;font-size:13px;color:var(--accent)">¿No puedes exportar? Introduce los marcadores a mano</summary>
-        <p class="note" style="margin:8px 0">Si la exportación de Salud falla, abre la app Salud, busca cada dato (Examinar → Corazón / Actividad / Medidas) y escríbelo aquí. Déjalo en blanco si no lo tienes.</p>
+        <summary style="cursor:pointer;font-size:13px;color:var(--accent)">Formatos admitidos (XML o JSON)</summary>
+        <p class="note" style="margin:8px 0">El export.xml nativo de Salud contiene años de datos y puede ser enorme o fallar. Como alternativa más ligera puedes subir un <b>JSON de los últimos 30 días</b>:<br>
+        • Apps como <b>Health Auto Export</b> o <b>Health Export Kit</b> generan ese JSON automáticamente.<br>
+        • O un JSON simple con esta forma:</p>
+        <pre style="font-size:11px;background:var(--surface2);padding:10px;border-radius:8px;overflow:auto;line-height:1.4">{
+  "markers": {
+    "restingHR": 58, "hrv": 45, "vo2max": 44,
+    "bodyFat": 18, "weight": 64, "height": 176,
+    "avgSteps": 9000, "avgActiveKcal": 500
+  },
+  "workouts": [
+    {"date":"2026-06-09","type":"Carrera","duration":39,"distance":7.1},
+    {"date":"2026-06-10","type":"Fuerza","duration":50}
+  ]
+}</pre>
+        <p class="note" style="margin:8px 0">Todos los campos son opcionales: incluye solo los que tengas.</p>
+      </details>
+      <details style="margin-top:10px">
+        <summary style="cursor:pointer;font-size:13px;color:var(--accent)">✏️ Introducir / actualizar marcadores a mano (medias del mes)</summary>
+        <p class="note" style="margin:8px 0">La forma recomendada. En la app Salud abre cada dato, filtra por mes (pestaña <b>M</b>) y apunta el <b>PROMEDIO</b>; para VO₂max y % grasa usa el valor más reciente. Rutas: FC reposo, HRV y VO₂max → Examinar → Corazón. Pasos y energía activa → Examinar → Actividad. % grasa → Examinar → Medidas corporales. Déjalo en blanco si no lo tienes; se prellenan tus valores anteriores para que solo cambies lo necesario.</p>
         <div class="row2">
           <div class="field"><label>FC reposo (lpm)</label><input type="number" id="m-rhr" inputmode="numeric" placeholder="58"></div>
           <div class="field"><label>HRV / VFC (ms)</label><input type="number" id="m-hrv" inputmode="numeric" placeholder="45"></div>
         </div>
         <div class="row2">
           <div class="field"><label>VO₂max</label><input type="number" id="m-vo2" inputmode="decimal" placeholder="44"></div>
-          <div class="field"><label>% grasa</label><input type="number" id="m-bf" inputmode="decimal" placeholder="18"></div>
+          <div class="field"><label>% grasa (opcional)</label><input type="number" id="m-bf" inputmode="decimal" placeholder="déjalo vacío"></div>
         </div>
         <div class="row2">
           <div class="field"><label>Pasos/día (media)</label><input type="number" id="m-steps" inputmode="numeric" placeholder="9000"></div>
           <div class="field"><label>kcal activas/día</label><input type="number" id="m-akcal" inputmode="numeric" placeholder="500"></div>
         </div>
+        <div class="row2">
+          <div class="field"><label>Sueño (h/noche, media)</label><input type="number" id="m-sleep" inputmode="decimal" step="0.1" placeholder="7.2"></div>
+          <div class="field"></div>
+        </div>
         <button class="btn btn-primary btn-block" onclick="saveManualHealth()">💾 Guardar marcadores</button>
       </details>
     </div>
     <div class="card" id="health-markers" style="display:none">
-      <div class="card-t">❤️ Marcadores de estado (Apple Salud)</div>
+      <div class="card-t">❤️ Marcadores de estado (medias mensuales)</div>
       <div class="hm-grid stat-grid" style="grid-template-columns:1fr 1fr 1fr"></div>
-      <p class="note" style="margin-top:10px">Claude usa estos marcadores para valorar tu recuperación y ajustar el plan (p. ej. HRV baja o pulso en reposo alto → semana más suave). Pasos y kcal se deduplican por fuente para no contar dos veces lo que registran iPhone y Watch a la vez. Orientativo, no diagnóstico médico.</p>
+      <div id="h-reminder"></div>
+      <p class="note" style="margin-top:10px">Claude usa estos marcadores para valorar tu recuperación y ajustar el plan (p. ej. HRV baja o pulso en reposo alto → semana más suave). Las flechas muestran la tendencia frente a tu actualización anterior. Orientativo, no diagnóstico médico.</p>
     </div>
     <div class="card">
       <div class="card-t">Datos personales</div>
@@ -352,7 +375,7 @@ body{font-size:calc(15px*var(--fs))}
       <p class="note" style="margin-bottom:9px">Ajusta el tamaño de letra de toda la app a tu gusto y visión.</p>
       <div id="fs-chips"></div>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 15</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 19</div>
   </div>
 </div>
 
@@ -544,6 +567,7 @@ function initState(){
   if(S.baseline==null)S.baseline='';
   if(S.fontScale==null)S.fontScale=1;
   if(!S.spotifyRecents)S.spotifyRecents=[];
+  if(!S.healthLog)S.healthLog=[];
   if(S.musicMuted==null)S.musicMuted=false;
 }
 initState();
@@ -1220,9 +1244,22 @@ Si se combinan varios objetivos, prioriza un esquema de fuerza/hipertrofia para 
     if(H.bodyFat)parts.push(`% grasa ${H.bodyFat}%`);
     if(H.avgSteps)parts.push(`media ${H.avgSteps} pasos/día`);
     if(H.avgActiveKcal)parts.push(`media ${H.avgActiveKcal} kcal activas/día`);
+    if(H.avgSleepH)parts.push(`sueño medio ${H.avgSleepH} h/noche`);
     if(parts.length){
-      healthTxt=`\n\nMARCADORES DE ESTADO (de Apple Salud, valora mi recuperación y ajusta en consecuencia):\n- ${parts.join('\n- ')}
-Interpretación orientativa: una FC en reposo elevada o una HRV baja respecto a lo habitual sugieren fatiga/estrés → reduce volumen o intensidad esa semana. Un VO2max alto indica buena base aeróbica → tolera más acondicionamiento. Un % de grasa alto con objetivo de perder grasa refuerza el déficit y la conservación de músculo. No hagas diagnósticos médicos; trátalo como contexto.`;
+      // tendencia frente a la actualización anterior
+      let trend='';
+      const log=S.healthLog||[];
+      if(log.length>=2){
+        const cur=log[log.length-1],prev=log[log.length-2];
+        const tp=[];
+        const cmp=(lab,a,b)=>{if(a!=null&&b!=null&&a!==b)tp.push(`${lab}: ${b}→${a}`);};
+        cmp('FC reposo',cur.restingHR,prev.restingHR);cmp('HRV',cur.hrv,prev.hrv);
+        cmp('VO2max',cur.vo2max,prev.vo2max);cmp('% grasa',cur.bodyFat,prev.bodyFat);
+        cmp('pasos',cur.avgSteps,prev.avgSteps);cmp('sueño',cur.avgSleepH,prev.avgSleepH);
+        if(tp.length)trend=`\nTendencia vs mes anterior (${prev.date}→${cur.date}): ${tp.join('; ')}.`;
+      }
+      healthTxt=`\n\nMARCADORES DE ESTADO (medias mensuales de Apple Salud, valora mi recuperación y ajusta en consecuencia):\n- ${parts.join('\n- ')}${trend}
+Interpretación orientativa: una FC en reposo elevada o una HRV baja respecto a lo habitual sugieren fatiga/estrés → reduce volumen o intensidad esa semana. Un sueño medio por debajo de ~7 h limita la recuperación y la ganancia de músculo → no subas volumen y prioriza descanso. Un VO2max alto indica buena base aeróbica → tolera más acondicionamiento. Si hay tendencia, coméntala brevemente en el análisis. No hagas diagnósticos médicos; trátalo como contexto.`;
     }
   }
 
@@ -1432,13 +1469,158 @@ function applyModify(){
 /* ============================================================
    APPLE HEALTH (importar export.xml)
    ============================================================ */
+/* --- Importar marcadores/actividad desde JSON (últimos 30 días) ---
+   Acepta dos formatos:
+   A) Simple propio: {markers:{restingHR,hrv,vo2max,bodyFat,weight,height,avgSteps,avgActiveKcal},
+                      workouts:[{date:"YYYY-MM-DD",type,duration,distance}]}
+   B) Health Auto Export: {data:{metrics:[{name,units,data:[{date,qty,source}]}], workouts:[...]}} */
+function parseHealthJSON(obj,st){
+  const imp=[]; const h=Object.assign({},S.health||{}); let added=0;
+  const sinceMs=Date.now()-30*86400000;
+  const HAE_MAP={resting_heart_rate:'restingHR',heart_rate_variability:'hrv',vo2_max:'vo2max',body_fat_percentage:'bodyFat'};
+  const pDate=s=>{if(!s)return NaN;s=String(s).trim();let m=s.replace(' ','T').replace(/\s*([+-]\d{2}):?(\d{2})$/,'$1:$2');let t=Date.parse(m);if(isNaN(t))t=Date.parse(s.split(' ')[0]);return t;};
+
+  if(obj.markers){ // formato simple propio
+    const m=obj.markers;
+    if(m.restingHR!=null)h.restingHR=Math.round(m.restingHR);
+    if(m.hrv!=null)h.hrv=Math.round(m.hrv);
+    if(m.vo2max!=null)h.vo2max=+(+m.vo2max).toFixed(1);
+    if(m.bodyFat!=null)h.bodyFat=+(+m.bodyFat).toFixed(1);
+    if(m.avgSteps!=null)h.avgSteps=Math.round(m.avgSteps);
+    if(m.avgActiveKcal!=null)h.avgActiveKcal=Math.round(m.avgActiveKcal);
+    if(m.sleep!=null||m.avgSleepH!=null)h.avgSleepH=+(+(m.avgSleepH!=null?m.avgSleepH:m.sleep)).toFixed(1);
+    if(m.weight!=null){peso.value=Math.round(m.weight);imp.push('peso '+Math.round(m.weight)+'kg');}
+    if(m.height!=null){altura.value=Math.round(m.height);imp.push('altura '+Math.round(m.height)+'cm');}
+    calcBio();saveProfile();
+    added=importWorkoutsArr(obj.workouts||[],sinceMs);
+  } else if(obj.data&&Array.isArray(obj.data.metrics)){ // Health Auto Export
+    const acc={steps:{},energy:{}};
+    obj.data.metrics.forEach(metric=>{
+      const name=metric.name; const arr=metric.data||[];
+      if(HAE_MAP[name]){ // marcador: tomar el más reciente
+        let best=null;arr.forEach(d=>{const t=pDate(d.date);if(!isNaN(t)&&(!best||t>best.t))best={t,q:d.qty};});
+        if(best){const k=HAE_MAP[name];h[k]=k==='restingHR'||k==='hrv'?Math.round(best.q):+(+best.q).toFixed(1);}
+      } else if(name==='weight_body_mass'){
+        let best=null;arr.forEach(d=>{const t=pDate(d.date);if(!isNaN(t)&&(!best||t>best.t))best={t,q:d.qty};});
+        if(best){peso.value=Math.round(best.q);imp.push('peso '+Math.round(best.q)+'kg');}
+      } else if(name==='height'){
+        let best=null;arr.forEach(d=>{const t=pDate(d.date);if(!isNaN(t)&&(!best||t>best.t))best={t,q:d.qty};});
+        if(best){const cm=best.q<3?best.q*100:best.q;altura.value=Math.round(cm);imp.push('altura '+Math.round(cm)+'cm');}
+      } else if(name==='step_count'||name==='active_energy'){
+        const metricKey=name==='step_count'?'steps':'energy';
+        arr.forEach(d=>{const t=pDate(d.date);if(isNaN(t)||t<sinceMs)return;
+          const day=new Date(t).toISOString().split('T')[0];const src=d.source||'?';
+          (acc[metricKey][day]=acc[metricKey][day]||{});
+          acc[metricKey][day][src]=(acc[metricKey][day][src]||0)+(+d.qty||0);});
+      }
+    });
+    const avgMax=map=>{const days=Object.keys(map);if(!days.length)return null;let s=0;days.forEach(dy=>{let mx=0;for(const sr in map[dy])mx=Math.max(mx,map[dy][sr]);s+=mx;});return Math.round(s/days.length);};
+    const as=avgMax(acc.steps);if(as!=null)h.avgSteps=as;
+    const ae=avgMax(acc.energy);if(ae!=null)h.avgActiveKcal=ae;
+    calcBio();saveProfile();
+    const wos=(obj.data.workouts||[]).map(w=>({date:(w.start||w.date||'').split(' ')[0].split('T')[0],type:w.name||w.type,duration:w.duration?(w.duration>600?Math.round(w.duration/60):Math.round(w.duration)):null,distance:w.distance&&w.distance.qty?w.distance.qty:(w.distance||null)}));
+    added=importWorkoutsArr(wos,sinceMs);
+  } else if(obj.activity||(obj.additional&&obj.additional.heart)){ // Health Export Kit
+    const act=obj.activity||{};
+    const daily=act.daily||[];
+    const stepsArr=daily.map(d=>+d.steps||0).filter(v=>v>0);
+    const enArr=daily.map(d=>+d.activeEnergyKcal||0).filter(v=>v>0);
+    if(stepsArr.length)h.avgSteps=Math.round(stepsArr.reduce((a,b)=>a+b,0)/stepsArr.length);
+    if(enArr.length)h.avgActiveKcal=Math.round(enArr.reduce((a,b)=>a+b,0)/enArr.length);
+    // corazón: valor más reciente de cada marcador
+    const hd=(obj.additional&&obj.additional.heart&&obj.additional.heart.daily)||[];
+    let lr=null,lv=null;
+    hd.forEach(e=>{const t=pDate(e.date);if(isNaN(t))return;const v=e.values||{};
+      if(v.restingHR!=null&&(!lr||t>lr.t))lr={t,q:v.restingHR};
+      if(v.vo2max!=null&&(!lv||t>lv.t))lv={t,q:v.vo2max};});
+    if(lr)h.restingHR=Math.round(lr.q);
+    if(lv)h.vo2max=+(+lv.q).toFixed(1);
+    // peso/grasa si vinieran en additional.body
+    const bd=(obj.additional&&obj.additional.body&&obj.additional.body.daily)||[];
+    let lw=null,lbf=null;
+    bd.forEach(e=>{const t=pDate(e.date);if(isNaN(t))return;const v=e.values||e;
+      if((v.weight||v.bodyMass)!=null&&(!lw||t>lw.t))lw={t,q:v.weight||v.bodyMass};
+      if((v.bodyFat||v.bodyFatPercentage)!=null&&(!lbf||t>lbf.t))lbf={t,q:v.bodyFat||v.bodyFatPercentage};});
+    if(lw){peso.value=Math.round(lw.q);imp.push('peso '+Math.round(lw.q)+'kg');}
+    if(lbf)h.bodyFat=+(+lbf.q).toFixed(1);
+    // sueño si viniera en additional.sleep.daily
+    const sd=(obj.additional&&obj.additional.sleep&&obj.additional.sleep.daily)||[];
+    if(sd.length){
+      const hrs=sd.map(e=>{const v=e.values||e;return v.asleepHours!=null?v.asleepHours:(v.hours!=null?v.hours:(v.timeAsleepHours!=null?v.timeAsleepHours:(v.asleepMinutes!=null?v.asleepMinutes/60:null)));}).filter(x=>x!=null&&x>0);
+      if(hrs.length)h.avgSleepH=+(hrs.reduce((a,b)=>a+b,0)/hrs.length).toFixed(1);
+    }
+    calcBio();saveProfile();
+    const wos=(act.workouts||[]).map(w=>({date:(w.start||'').split('T')[0],type:w.type,duration:w.durationSec?Math.round(w.durationSec/60):(w.duration||null),distance:w.distanceKm!=null?w.distanceKm:(w.distance||null)}));
+    added=importWorkoutsArr(wos,sinceMs);
+  } else { st.textContent='JSON no reconocido. Usa el formato simple {markers, workouts}, Health Auto Export o Health Export Kit.';st.style.color='var(--danger)';return; }
+
+  h.date=new Date().toISOString().split('T')[0];
+  if(Object.keys(h).length>1){S.health=h;logHealthSnapshot(h);}
+  const markers=[];
+  if(h.restingHR)markers.push('FC reposo '+h.restingHR);
+  if(h.hrv)markers.push('HRV '+h.hrv+'ms');
+  if(h.vo2max)markers.push('VO2max '+h.vo2max);
+  if(h.bodyFat)markers.push(h.bodyFat+'% grasa');
+  if(markers.length)imp.push(markers.join(', '));
+  if(added>0)imp.push(added+' entrenamientos');
+  S.lastHealthImport=h.date;save();
+  st.textContent='✓ Importado (JSON): '+(imp.length?imp.join(', '):'sin datos reconocibles');st.style.color='var(--free)';
+  renderProg();renderCal();renderHealth();updateImportInfo();
+}
+
+/* añade entrenamientos desde un array genérico, con dedup por solapamiento e historial */
+function importWorkoutsArr(arr,sinceMs){
+  let added=0;
+  const parsed=[];
+  arr.forEach(w=>{
+    if(!w||!w.date)return;
+    const t=Date.parse(w.date+'T00:00:00');if(isNaN(t)||(sinceMs&&t<sinceMs-86400000))return;
+    const durMin=w.duration?Math.round(w.duration):0;
+    const title=woLabelTxt(w.type||'Entrenamiento');
+    const sMs=t,eMs=t+(durMin||0)*60000;
+    parsed.push({key:w.date,title,duration:durMin||'?',distance:w.distance?(+w.distance).toFixed(1):'',feeling:'💪',notes:'(importado JSON)',date:w.date,imported:true,_s:sMs,_e:eMs,_type:title});
+  });
+  parsed.sort((a,b)=>a._s-b._s);
+  const kept=[];
+  parsed.forEach(p=>{const dup=kept.find(k=>k._type===p._type&&p._s<k._e&&p._e>k._s);if(dup){if((+p.duration||0)>(+dup.duration||0)){dup.duration=p.duration;dup._e=p._e;}if(!dup.distance&&p.distance)dup.distance=p.distance;return;}kept.push(p);});
+  const existing=S.history.filter(x=>x.imported);
+  kept.forEach(p=>{
+    const clash=existing.find(x=>x.key===p.key&&x.title===p._type&&Math.abs((+x.duration||0)-(+p.duration||0))<=3);
+    if(clash)return;
+    const e={key:p.key,title:p.title,duration:p.duration,distance:p.distance,feeling:p.feeling,notes:p.notes,date:p.key,imported:true};
+    S.history.unshift(e);added++;
+    if(!S.schedule[p.key])S.schedule[p.key]=[];
+    if(!S.schedule[p.key].some(s=>s.done&&s.title===p.title))S.schedule[p.key].push({type:'free',title:p.title,meta:p.duration+'min'+(p.distance?' · '+p.distance+'km':'')+' · Salud',done:true,log:e});
+  });
+  S.history.sort((a,b)=>b.key.localeCompare(a.key));
+  return added;
+}
+function woLabelTxt(t){
+  t=String(t).toLowerCase();
+  if(/run|carrera|correr/.test(t))return 'Carrera';
+  if(/walk|pase|camin/.test(t))return 'Caminata';
+  if(/cycl|bike|bici/.test(t))return 'Bicicleta';
+  if(/swim|nataci/.test(t))return 'Natación';
+  if(/strength|fuerza|funcional/.test(t))return 'Fuerza';
+  if(/hiit|interval/.test(t))return 'HIIT';
+  if(/yoga|movil/.test(t))return 'Yoga / Movilidad';
+  return t.charAt(0).toUpperCase()+t.slice(1);
+}
+
 function parseHealth(e){
   const file=e.target.files[0];if(!file)return;
   const st=document.getElementById('h-status');st.textContent='Leyendo… (puede tardar si el archivo es grande)';
+  const isJson=/\.json$/i.test(file.name);
   const r=new FileReader();
   r.onload=ev=>{
+    const text=ev.target.result;
+    if(isJson||/^\s*[{\[]/.test(text)){ // formato JSON
+      try{parseHealthJSON(JSON.parse(text),st);}
+      catch(err){st.textContent='El JSON no es válido. Revisa el formato (ver ayuda).';st.style.color='var(--danger)';}
+      return;
+    }
     try{
-      const doc=new DOMParser().parseFromString(ev.target.result,'text/xml');
+      const doc=new DOMParser().parseFromString(text,'text/xml');
       const me=doc.querySelector('Me');let imp=[];
       if(me){
         const dob=me.getAttribute('HKCharacteristicTypeIdentifierDateOfBirth');
@@ -1513,7 +1695,7 @@ function parseHealth(e){
       if(nStepDays)h.avgSteps=avgDailyMax(acc.steps);
       if(nEnDays)h.avgActiveKcal=avgDailyMax(acc.energy);
       h.date=new Date().toISOString().split('T')[0];
-      if(Object.keys(h).length>1){S.health=h;save();}
+      if(Object.keys(h).length>1){S.health=h;logHealthSnapshot(h);save();}
       const markers=[];
       if(h.restingHR)markers.push('FC reposo '+h.restingHR);
       if(h.hrv)markers.push('HRV '+h.hrv+'ms');
@@ -1531,33 +1713,66 @@ function parseHealth(e){
   r.readAsText(file);
 }
 
+function logHealthSnapshot(h){
+  if(!S.healthLog)S.healthLog=[];
+  const today=h.date||new Date().toISOString().split('T')[0];
+  const snap={date:today,restingHR:h.restingHR,hrv:h.hrv,vo2max:h.vo2max,bodyFat:h.bodyFat,avgSteps:h.avgSteps,avgActiveKcal:h.avgActiveKcal,avgSleepH:h.avgSleepH};
+  const i=S.healthLog.findIndex(s=>s.date===today);
+  if(i>=0)S.healthLog[i]=snap;else S.healthLog.push(snap);
+  S.healthLog.sort((a,b)=>a.date.localeCompare(b.date));
+  if(S.healthLog.length>24)S.healthLog=S.healthLog.slice(-24);
+}
 function saveManualHealth(){
   const g=id=>{const v=parseFloat(document.getElementById(id).value);return isNaN(v)?null:v;};
   const h=Object.assign({},S.health||{});
-  const rhr=g('m-rhr'),hrv=g('m-hrv'),vo2=g('m-vo2'),bf=g('m-bf'),st=g('m-steps'),ak=g('m-akcal');
+  const rhr=g('m-rhr'),hrv=g('m-hrv'),vo2=g('m-vo2'),bf=g('m-bf'),st=g('m-steps'),ak=g('m-akcal'),sl=g('m-sleep');
   if(rhr!=null)h.restingHR=Math.round(rhr);
   if(hrv!=null)h.hrv=Math.round(hrv);
   if(vo2!=null)h.vo2max=+vo2.toFixed(1);
   if(bf!=null)h.bodyFat=+bf.toFixed(1);
   if(st!=null)h.avgSteps=Math.round(st);
   if(ak!=null)h.avgActiveKcal=Math.round(ak);
+  if(sl!=null)h.avgSleepH=+sl.toFixed(1);
   h.date=new Date().toISOString().split('T')[0];h.manual=true;
-  if(Object.keys(h).length>1){S.health=h;S.lastHealthImport=h.date;save();renderHealth();updateImportInfo();
-    const st2=document.getElementById('h-status');st2.textContent='✓ Marcadores guardados manualmente.';st2.style.color='var(--free)';}
+  if(Object.keys(h).length>1){S.health=h;S.lastHealthImport=h.date;logHealthSnapshot(h);save();renderHealth();updateImportInfo();
+    const st2=document.getElementById('h-status');st2.textContent='✓ Marcadores guardados. Recordatorio: actualízalos cada mes con la media mensual.';st2.style.color='var(--free)';}
+}
+function prefillManualHealth(){
+  const h=S.health||{};const set=(id,v)=>{const el=document.getElementById(id);if(el&&v!=null)el.value=v;};
+  set('m-rhr',h.restingHR);set('m-hrv',h.hrv);set('m-vo2',h.vo2max);set('m-bf',h.bodyFat);set('m-steps',h.avgSteps);set('m-akcal',h.avgActiveKcal);set('m-sleep',h.avgSleepH);
+}
+function trendArrow(cur,prev,goodDown){
+  if(prev==null||cur==null||prev===cur)return '';
+  const up=cur>prev;const good=goodDown?!up:up;
+  const color=good?'var(--free)':'var(--done)';
+  const diff=Math.abs(+(cur-prev).toFixed(1));
+  return `<span style="color:${color};font-size:calc(10px*var(--fs));white-space:nowrap"> ${up?'▲':'▼'}${diff}</span>`;
 }
 function renderHealth(){
   const card=document.getElementById('health-markers');if(!card)return;
   const h=S.health;
   if(!h||Object.keys(h).length<=1){card.style.display='none';return;}
   card.style.display='block';
+  // snapshot anterior para tendencia (penúltimo distinto del actual)
+  const log=S.healthLog||[];const prev=log.length>=2?log[log.length-2]:null;
+  // FC reposo y % grasa: bajar es bueno; HRV y VO2max: subir es bueno; pasos/kcal: subir es bueno
   const items=[];
-  if(h.restingHR)items.push(['FC reposo',h.restingHR+' lpm']);
-  if(h.hrv)items.push(['HRV (SDNN)',h.hrv+' ms']);
-  if(h.vo2max)items.push(['VO₂max',h.vo2max]);
-  if(h.bodyFat)items.push(['% grasa',h.bodyFat+'%']);
-  if(h.avgSteps)items.push(['Pasos/día',h.avgSteps.toLocaleString('es-ES')]);
-  if(h.avgActiveKcal)items.push(['kcal activas/día',h.avgActiveKcal]);
-  card.querySelector('.hm-grid').innerHTML=items.map(([k,v])=>`<div class="stat"><div class="stat-v" style="font-size:16px">${v}</div><div class="stat-l">${k}</div></div>`).join('');
+  if(h.restingHR)items.push(['FC reposo',h.restingHR+' lpm',trendArrow(h.restingHR,prev&&prev.restingHR,true)]);
+  if(h.hrv)items.push(['HRV (SDNN)',h.hrv+' ms',trendArrow(h.hrv,prev&&prev.hrv,false)]);
+  if(h.vo2max)items.push(['VO₂max',h.vo2max,trendArrow(h.vo2max,prev&&prev.vo2max,false)]);
+  if(h.bodyFat)items.push(['% grasa',h.bodyFat+'%',trendArrow(h.bodyFat,prev&&prev.bodyFat,true)]);
+  if(h.avgSteps)items.push(['Pasos/día',h.avgSteps.toLocaleString('es-ES'),trendArrow(h.avgSteps,prev&&prev.avgSteps,false)]);
+  if(h.avgActiveKcal)items.push(['kcal activas/día',h.avgActiveKcal,trendArrow(h.avgActiveKcal,prev&&prev.avgActiveKcal,false)]);
+  if(h.avgSleepH)items.push(['Sueño/noche',h.avgSleepH+' h',trendArrow(h.avgSleepH,prev&&prev.avgSleepH,false)]);
+  card.querySelector('.hm-grid').innerHTML=items.map(([k,v,t])=>`<div class="stat"><div class="stat-v" style="font-size:calc(16px*var(--fs))">${v}${t||''}</div><div class="stat-l">${k}</div></div>`).join('');
+  // recordatorio mensual
+  const rem=document.getElementById('h-reminder');
+  if(rem){
+    const d=S.lastHealthImport?new Date(S.lastHealthImport+'T00:00:00'):null;
+    const days=d?Math.floor((Date.now()-d.getTime())/86400000):999;
+    if(days>=30)rem.innerHTML=`<div style="background:rgba(245,158,11,.12);border-radius:9px;padding:9px 11px;margin-top:10px;font-size:calc(12px*var(--fs));color:var(--done)">🔔 Hace ${days} días que no actualizas tus medias mensuales. Abre Salud, lee las medias del mes y actualízalas para seguir la tendencia.</div>`;
+    else rem.innerHTML='';
+  }
 }
 
 function updateImportInfo(){
@@ -1567,10 +1782,10 @@ function updateImportInfo(){
   const days=Math.floor((Date.now()-d.getTime())/86400000);
   const fecha=d.toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'});
   const cuando=days<=0?'hoy':days===1?'hace 1 día':`hace ${days} días`;
-  if(days>=21){
-    el.innerHTML=`<span style="color:var(--done)">⚠ Última importación: ${fecha} (${cuando}). Conviene importar un export.xml reciente para actualizar tu estado.</span>`;
+  if(days>=30){
+    el.innerHTML=`<span style="color:var(--done)">⚠ Última actualización: ${fecha} (${cuando}). Toca actualizar las medias mensuales.</span>`;
   } else {
-    el.innerHTML=`<span style="color:var(--text3)">Última importación: ${fecha} (${cuando}).</span>`;
+    el.innerHTML=`<span style="color:var(--text3)">Última actualización: ${fecha} (${cuando}).</span>`;
   }
 }
 
@@ -1903,7 +2118,7 @@ function loadProfile(){
   const p=S.profile;
   peso.value=p.peso;altura.value=p.altura;edad.value=p.edad;sexo.value=p.sexo;nivel.value=p.nivel;
   document.getElementById('minutos').value=p.minutos;document.getElementById('min-out').textContent=p.minutos;
-  renderObjChips();renderEquipChips();
+  renderObjChips();renderEquipChips();prefillManualHealth();
   if(p.peso&&p.altura&&p.edad)calcBio();
 }
 ['peso','altura','edad','sexo','nivel'].forEach(id=>{

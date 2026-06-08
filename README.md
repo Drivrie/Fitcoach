@@ -189,3 +189,32 @@ externas) que solapan el mismo periodo. Para no inflar las cifras:
 6. Alternativas más seguras por ejercicio (p. ej. press militar → press sentado con
    respaldo o elevaciones laterales) seleccionables en el resumen de la sesión. Si no se
    elige nada, se usa el ejercicio propuesto por defecto (marcado con ★).
+
+---
+
+## Importar datos de Salud en JSON (v16)
+Además del export.xml nativo, ahora se acepta JSON (más ligero, ideal para 30 días):
+- Formato de la app Health Auto Export (data.metrics + data.workouts).
+- Formato simple propio: {markers:{restingHR,hrv,vo2max,bodyFat,weight,height,avgSteps,
+  avgActiveKcal}, workouts:[{date,type,duration,distance}]}. Todos los campos opcionales.
+Pasos y kcal se deduplican por fuente (máximo por día) y los entrenamientos por solapamiento,
+igual que en el XML. Se eligió JSON frente a markdown por ser estructurado y parseable sin
+ambigüedad.
+
+## v17: soporte de Health Export Kit
+Tercer formato JSON admitido: Health Export Kit (activity.daily, activity.workouts,
+additional.heart.daily). Pasos/kcal se promedian sobre los días; FC reposo y VO2max toman
+el valor más reciente; se importan los entrenamientos con dedup. Nota: ese exportador puede
+no incluir HRV ni % de grasa.
+
+## v18: marcadores manuales con tendencia mensual
+Entrada manual de marcadores (medias mensuales) prellenada con los últimos valores; guarda
+un histórico (S.healthLog) y muestra flechas de tendencia frente al mes anterior. Recordatorio
+mensual (30 días) para actualizar. La tendencia mes a mes se incluye también en el prompt de
+Claude. Guía integrada de dónde leer cada media en la app Salud (pestaña M → PROMEDIO).
+
+## v19: marcador de sueño
+Añadido el sueño (h/noche media) como octavo marcador, por su peso en la recuperación.
+% grasa queda explícitamente opcional. El sueño entra en la tarjeta con tendencia, en el
+prompt de Claude (con la regla: <7h → no subir volumen, priorizar descanso) y en los
+formatos JSON (simple: markers.sleep; Health Export Kit: additional.sleep.daily).
