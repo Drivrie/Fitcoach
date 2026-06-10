@@ -375,7 +375,12 @@ body{font-size:calc(15px*var(--fs))}
       <p class="note" style="margin-bottom:9px">Ajusta el tamaño de letra de toda la app a tu gusto y visión.</p>
       <div id="fs-chips"></div>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 19</div>
+    <div class="card">
+      <div class="card-t">🔊 Aviso sonoro</div>
+      <p class="note" style="margin-bottom:9px">Pitidos en los últimos 3 segundos de cada cuenta atrás. Si apenas se oyen: sube el volumen del móvil con los botones laterales <b>mientras suena</b>, y comprueba que el interruptor de silencio (lateral del iPhone) no esté activado.</p>
+      <button class="btn btn-block" onclick="testBeep()">▶ Probar sonido</button>
+    </div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 20</div>
   </div>
 </div>
 
@@ -1859,22 +1864,33 @@ let P={active:false,sess:null,exi:0,set:1,phase:'ready',int:null,sec:0,tot:0,key
 
 /* --- Señal acústica (Web Audio, sin archivos) --- */
 let AC=null;
-function initAudio(){try{if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();}catch(e){}}
+function initAudio(){try{if(!AC){AC=new (window.AudioContext||window.webkitAudioContext)();
+    // compresor para subir el volumen percibido sin saturar
+    COMP=AC.createDynamicsCompressor();COMP.threshold.value=-24;COMP.ratio.value=12;COMP.connect(AC.destination);}
+  if(AC.state==='suspended')AC.resume();}catch(e){}}
+let COMP=null;
 function beep(freq,dur,vol){
-  if(S.musicMuted&&false)return; // los beeps no dependen del silencio de música
   try{initAudio();if(!AC)return;
-    const o=AC.createOscillator(),g=AC.createGain();
-    o.type='sine';o.frequency.value=freq;o.connect(g);g.connect(AC.destination);
-    const t=AC.currentTime;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol||0.25,t+0.01);
-    g.gain.exponentialRampToValueAtTime(0.001,t+(dur||0.15));
-    o.start(t);o.stop(t+(dur||0.15)+0.02);
+    const t=AC.currentTime;dur=dur||0.18;
+    const out=COMP||AC.destination;
+    // dos osciladores (cuadrada + triangular) para un pitido más fuerte y presente
+    const g=AC.createGain();g.connect(out);
+    const o1=AC.createOscillator();o1.type='square';o1.frequency.value=freq;o1.connect(g);
+    const o2=AC.createOscillator();o2.type='triangle';o2.frequency.value=freq*2;o2.connect(g);
+    const v=vol||0.85;
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(v,t+0.006);
+    g.gain.setValueAtTime(v,t+dur-0.04);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o1.start(t);o2.start(t);o1.stop(t+dur+0.02);o2.stop(t+dur+0.02);
   }catch(e){}
 }
-// avisos durante una cuenta atrás: pitido corto en 3-2-1 y largo al llegar a 0
+// avisos durante una cuenta atrás: pitido en 3-2-1 y doble pitido más agudo al llegar a 0
 function countdownCue(sec){
-  if(sec===3||sec===2||sec===1)beep(880,0.12,0.22);
-  else if(sec<=0)beep(1320,0.45,0.3);
+  if(sec===3||sec===2||sec===1)beep(1000,0.18,0.85);
+  else if(sec<=0){beep(1500,0.4,0.95);setTimeout(()=>beep(1500,0.45,0.95),200);}
 }
+function testBeep(){initAudio();beep(1000,0.18,0.85);setTimeout(()=>beep(1500,0.4,0.95),350);}
 
 function parseReps(r){const m=String(r).match(/(\d+)\s*s/);return m?+m[1]:null;} // segundos si es "40s"
 
