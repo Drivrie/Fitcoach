@@ -12,12 +12,24 @@
 <title>FitCoach IA</title>
 <style>
 :root{
-  --bg:#0f1419; --surface:#1a2029; --surface2:#232b36; --border:#2e3742;
-  --text:#e8eaed; --text2:#9aa4b1; --text3:#6b7480;
-  --accent:#7c6cf5; --accent-d:#5d4fd6; --ai:#7c6cf5; --free:#34d399; --done:#fbbf24;
-  --danger:#f87171; --radius:14px; --radius-sm:10px;
+  --bg:#000000; --surface:#1c1c1e; --surface2:#2c2c2e; --border:#38383a;
+  --text:#ffffff; --text2:#98989f; --text3:#6e6e73;
+  --accent:#32d74b; --accent-d:#28b03d; --ai:#0a84ff; --free:#32d74b; --done:#fa114f;
+  --ring-move:#fa114f; --ring-ex:#92e82a; --ring-stand:#1ad5cd;
+  --danger:#ff453a; --warn:#ffd60a; --radius:16px; --radius-sm:12px;
   --safe-top:env(safe-area-inset-top,0px); --safe-bot:env(safe-area-inset-bottom,0px);
 }
+.hero{background:linear-gradient(135deg,#1c1c1e 0%,#111113 100%);border:1px solid var(--border);border-radius:20px;padding:16px;margin-bottom:13px;display:flex;gap:14px;align-items:center}
+.hero-ring{width:84px;height:84px;flex-shrink:0;position:relative}
+.hero-ring svg{transform:rotate(-90deg)}
+.hero-ring .pct{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;font-size:calc(17px*var(--fs))}
+.hero-ring .pct small{font-size:calc(9px*var(--fs));color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.hero-info{flex:1;min-width:0}
+.hero-kicker{font-size:calc(11px*var(--fs));font-weight:700;color:var(--ring-ex);text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px}
+.hero-title{font-size:calc(18px*var(--fs));font-weight:700;letter-spacing:-.3px;line-height:1.25}
+.hero-meta{font-size:calc(12px*var(--fs));color:var(--text2);margin-top:3px}
+.hero-cta{margin-top:10px;display:flex;gap:8px}
+.hero-cta .btn{padding:9px 14px;border-radius:999px}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;
   background:var(--bg);color:var(--text);font-size:15px;line-height:1.5;
@@ -196,6 +208,7 @@ body{font-size:calc(15px*var(--fs))}
 
   <!-- CALENDARIO -->
   <div id="s-cal" class="screen active">
+    <div id="today-hero"></div>
     <div class="cal-grid" id="cal"></div>
     <div class="legend">
       <span><span class="d" style="background:var(--ai)"></span>Sesión IA</span>
@@ -234,6 +247,14 @@ body{font-size:calc(15px*var(--fs))}
     <div class="card">
       <div class="card-t">🧠 Análisis del entrenador</div>
       <div class="note" id="insight" style="white-space:pre-wrap;min-height:44px">Registra sesiones para recibir análisis adaptativo.</div>
+    </div>
+    <div class="card">
+      <div class="card-t">🏆 Logros</div>
+      <div id="badges"></div>
+    </div>
+    <div class="card">
+      <div class="card-t">📈 Evolución de marcadores (mes a mes)</div>
+      <div id="marker-charts"></div>
     </div>
     <div class="card">
       <div class="card-t">📋 Historial</div>
@@ -380,7 +401,7 @@ body{font-size:calc(15px*var(--fs))}
       <p class="note" style="margin-bottom:9px">Pitidos en los últimos 3 segundos de cada cuenta atrás. Si apenas se oyen: sube el volumen del móvil con los botones laterales <b>mientras suena</b>, y comprueba que el interruptor de silencio (lateral del iPhone) no esté activado.</p>
       <button class="btn btn-block" onclick="testBeep()">▶ Probar sonido</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 20</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 24</div>
   </div>
 </div>
 
@@ -730,7 +751,77 @@ function tab(t){
 
 function changeWeek(d){S.currentWeek+=d;save();renderCal();renderProg();document.getElementById('hdr-week').textContent='Semana '+realWeekNum();}
 
+function renderTodayHero(){
+  const hero=document.getElementById('today-hero');if(!hero)return;
+  // anillo: cumplimiento de la semana mostrada (sesiones hechas / planificadas, ignorando saltadas)
+  const dates=weekDates(S.currentWeek).map(fmt);
+  let plan=0,done=0;
+  dates.forEach(k=>{(S.schedule[k]||[]).forEach(s=>{if(s.skipped)return;plan++;if(s.done)done++;});});
+  const pct=plan?Math.min(100,Math.round(done/plan*100)):0;
+  const R=34,C=2*Math.PI*R,off=C*(1-pct/100);
+  // sesión de hoy
+  const todayKey=fmt(new Date());
+  const inWeek=dates.includes(todayKey);
+  const todaySess=(S.schedule[todayKey]||[]).filter(s=>!s.skipped);
+  const ai=todaySess.find(s=>s.type==='ai'&&!s.done);
+  const freePend=todaySess.find(s=>s.type==='free'&&!s.done);
+  const allDone=todaySess.length>0&&todaySess.every(s=>s.done);
+  let kicker,title,meta,cta='';
+  const dName=new Date().toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
+  if(!inWeek){kicker='Semana mostrada';title='Estás viendo otra semana';meta='Vuelve a la semana actual para ver tu sesión de hoy.';}
+  else if(ai){kicker='Hoy · '+dName;title=ai.title;meta=ai.meta||'';
+    cta=`<div class="hero-cta"><button class="btn btn-primary" onclick="startPlayer('${todayKey}')">▶ Empezar</button><button class="btn" onclick="showSess('${todayKey}')">Ver sesión</button></div>`;}
+  else if(freePend){kicker='Hoy · '+dName;title=freePend.title;meta=freePend.meta||'Entrenamiento libre';
+    cta=`<div class="hero-cta"><button class="btn btn-primary" onclick="openLog('${todayKey}')">✓ Registrar</button></div>`;}
+  else if(allDone){kicker='Hoy · '+dName;title='¡Completado! 💪';meta='Buen trabajo. Descansa y recupera.';}
+  else{kicker='Hoy · '+dName;title='Día de descanso';meta='Recuperación activa: camina o estira suave.';}
+  hero.innerHTML=`<div class="hero">
+    <div class="hero-ring">
+      <svg width="84" height="84" viewBox="0 0 84 84">
+        <circle cx="42" cy="42" r="${R}" fill="none" stroke="rgba(146,232,42,.18)" stroke-width="9"/>
+        <circle cx="42" cy="42" r="${R}" fill="none" stroke="var(--ring-ex)" stroke-width="9" stroke-linecap="round"
+          stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" style="transition:stroke-dashoffset .6s ease"/>
+      </svg>
+      <div class="pct">${pct}%<small>${done}/${plan||0} ses.</small></div>
+    </div>
+    <div class="hero-info">
+      <div class="hero-kicker">${kicker}</div>
+      <div class="hero-title">${title}</div>
+      <div class="hero-meta">${meta}</div>
+      ${cta}
+    </div>
+  </div>${sundayRitualHtml(dates,todayKey)}`;
+}
+
+/* Recordatorio del ritual de cierre de semana (solo en domingo, semana actual, si aún no se adaptó la siguiente) */
+function sundayRitualHtml(dates,todayKey){
+  const isSunday=(new Date().getDay()===0);
+  if(!isSunday||S.currentWeek!==0)return '';
+  // ¿ya hay sesiones IA en la semana que viene? → ritual hecho
+  const next=weekDates(1).map(fmt);
+  const nextPlanned=next.some(k=>(S.schedule[k]||[]).some(s=>s.type==='ai'));
+  // pasos pendientes de esta semana
+  const pendientes=dates.filter(k=>(S.schedule[k]||[]).some(s=>!s.done&&!s.skipped)).length;
+  // ¿toca también actualizar marcadores? (≥30 días)
+  const d=S.lastHealthImport?new Date(S.lastHealthImport+'T00:00:00'):null;
+  const markersDue=!d||Math.floor((Date.now()-d.getTime())/86400000)>=30;
+  if(nextPlanned&&!markersDue)return '';
+  const steps=[];
+  if(pendientes)steps.push(`Registra o marca como no realizado lo pendiente (${pendientes} día${pendientes>1?'s':''})`);
+  if(markersDue)steps.push('Toca actualizar tus medias mensuales en Perfil (ya ha pasado un mes)');
+  if(!nextPlanned)steps.push('Avanza con › a la semana próxima y pulsa "Adaptar con Claude"');
+  if(!steps.length)return '';
+  return `<div style="background:linear-gradient(135deg,rgba(10,132,255,.14),rgba(50,215,75,.10));border:1px solid var(--border);border-radius:16px;padding:13px 14px;margin-bottom:13px">
+    <div style="font-size:calc(11px*var(--fs));font-weight:700;color:var(--ai);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px">📋 Domingo · cierra la semana</div>
+    <ol style="margin:0;padding-left:18px;font-size:calc(13px*var(--fs));color:var(--text2);line-height:1.7">
+      ${steps.map(s=>`<li>${s}</li>`).join('')}
+    </ol>
+    ${!nextPlanned?`<button class="btn btn-primary" style="margin-top:10px;border-radius:999px;padding:8px 14px" onclick="openBridge('adapt')">✨ Adaptar semana próxima</button>`:''}
+  </div>`;
+}
+
 function renderCal(){
+  renderTodayHero();
   const dates=weekDates(S.currentWeek);
   document.getElementById('hdr-week').textContent='Semana '+realWeekNum()+(realWeekNum()%4===0?' · descarga':'');
   const today=fmt(new Date());
@@ -996,7 +1087,9 @@ function figKey(name){
   return null;
 }
 
+const _svgCache={};
 function exSVG(arg){
+  if(_svgCache[arg])return _svgCache[arg];
   // arg puede ser un nombre de ejercicio o un patrón (fallback)
   let key=figKey(arg);
   let f=key?FIGS[key]:null;
@@ -1008,10 +1101,12 @@ function exSVG(arg){
   const c=f.c;
   const exA=f.extra?f.extra(f.A,'A'):'';
   const exB=f.extra?f.extra(f.B,'B'):'';
-  return `<svg viewBox="0 0 120 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Animación del ejercicio">
+  const out=`<svg viewBox="0 0 120 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Animación del ejercicio">
     <rect width="120" height="100" rx="10" fill="${c}1a"/>
     <g class="exfa">${_fig(f.A,c)}${exA}</g>
     <g class="exfb">${_fig(f.B,c)}${exB}</g></svg>`;
+  _svgCache[arg]=out;
+  return out;
 }
 
 /* --- Alternativas más seguras por ejercicio (mismo grupo, menos lesivas) --- */
@@ -1119,11 +1214,16 @@ function openLog(key){
   document.getElementById('log-title').textContent='Registrar · '+(idx>=0?DAY_NAMES[idx]:'');
   document.getElementById('log-body').innerHTML=`
     <div class="field"><label>Tipo</label><select id="l-type">
-      <option>Fuerza (sesión IA)</option><option>Carrera</option><option>Bicicleta</option>
+      <option>Fuerza (sesión IA)</option><option>Carrera</option><option>Carrera en cinta</option>
+      <option>Caminata / Paseo</option><option>Bicicleta</option>
       <option>Natación</option><option>HIIT</option><option>Yoga / Movilidad</option><option>Otro</option></select></div>
     <div class="row2">
       <div class="field"><label>Duración (min)</label><input type="number" id="l-dur" placeholder="45" inputmode="numeric"></div>
       <div class="field"><label>Distancia (km)</label><input type="number" id="l-dist" placeholder="opcional" step="0.1" inputmode="decimal"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>kcal (Watch)</label><input type="number" id="l-kcal" placeholder="opcional" inputmode="numeric"></div>
+      <div class="field"><label>FC media (lpm)</label><input type="number" id="l-hr" placeholder="opcional" inputmode="numeric"></div>
     </div>
     <div class="field"><label>RPE / esfuerzo percibido</label>
       <div class="feel">
@@ -1132,9 +1232,22 @@ function openLog(key){
         <div class="feel-b sel" onclick="selFeel(this)" data-f="💪" title="bien">💪</div>
         <div class="feel-b" onclick="selFeel(this)" data-f="🔥" title="excelente">🔥</div>
       </div></div>
-    <div class="field"><label>Notas (pesos, series reales, sensaciones)</label>
-      <textarea id="l-notes" placeholder="Ej: Sentadilla 4×6 a 70kg, última serie costó. 5km en 27min..."></textarea></div>`;
+    <div class="field"><label style="display:flex;justify-content:space-between;align-items:center">Notas (pesos, series reales, sensaciones)<button class="btn btn-xs" onclick="insertLoadTemplate('${key}')">＋ Plantilla cargas</button></label>
+      <textarea id="l-notes" placeholder="Ej: goblet 16kg llegué a 12, press 16kg 3×10 justo, dominadas 3×7..."></textarea></div>`;
   openSheet('log-bg');
+}
+/* Inserta en notas el esqueleto de cargas con los ejercicios de la sesión IA del día */
+function insertLoadTemplate(key){
+  const ta=document.getElementById('l-notes');if(!ta)return;
+  const sess=(S.schedule[key]||[]).find(s=>s.type==='ai');
+  let tpl;
+  if(sess&&sess.exercises&&sess.exercises.length){
+    tpl=sess.exercises.map(e=>`${e.nombre}: `).join('\n');
+  } else {
+    tpl='Ejercicio 1 (kg × reps logradas): \nEjercicio 2: ';
+  }
+  ta.value=(ta.value?ta.value.trimEnd()+'\n':'')+tpl;
+  ta.focus();
 }
 function selFeel(el){document.querySelectorAll('.feel-b').forEach(b=>b.classList.remove('sel'));el.classList.add('sel');}
 function saveLog(){
@@ -1142,10 +1255,12 @@ function saveLog(){
   const type=document.getElementById('l-type').value;
   const dur=document.getElementById('l-dur').value||'?';
   const dist=document.getElementById('l-dist').value;
+  const kcal=document.getElementById('l-kcal')?document.getElementById('l-kcal').value:'';
+  const hr=document.getElementById('l-hr')?document.getElementById('l-hr').value:'';
   const feel=document.querySelector('.feel-b.sel').dataset.f;
   const notes=document.getElementById('l-notes').value;
   if(!S.schedule[key])S.schedule[key]=[];
-  const log={type,duration:dur,distance:dist,feeling:feel,notes,date:key};
+  const log={type,duration:dur,distance:dist,kcal,hr,feeling:feel,notes,date:key};
   const aiIdx=S.schedule[key].findIndex(s=>s.type==='ai');
   if(type.includes('IA')&&aiIdx>=0){S.schedule[key][aiIdx].done=true;S.schedule[key][aiIdx].log=log;}
   else{
@@ -1195,13 +1310,81 @@ function renderProg(){
   document.getElementById('insight').textContent=S.insight||'Registra sesiones para recibir análisis adaptativo.';
   const bi=document.getElementById('baseline-in');if(bi&&document.activeElement!==bi)bi.value=S.baseline||'';
   const hl=document.getElementById('history');
-  if(!S.history.length){hl.innerHTML='<p style="font-size:13px;color:var(--text2)">Sin sesiones registradas.</p>';return;}
-  hl.innerHTML=S.history.slice(0,10).map(h=>`
+  if(!S.history.length){hl.innerHTML='<p style="font-size:13px;color:var(--text2)">Sin sesiones registradas.</p>';}
+  else hl.innerHTML=S.history.slice(0,10).map(h=>`
     <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border)">
       <div style="flex:1"><div style="font-size:13px;font-weight:600">${h.title}</div>
         <div style="font-size:11px;color:var(--text2)">${h.key} · ${h.duration}min${h.distance?' · '+h.distance+'km':''}</div>
         ${h.notes?`<div style="font-size:11px;color:var(--text3);margin-top:2px">${h.notes.slice(0,70)}${h.notes.length>70?'…':''}</div>`:''}</div>
       <span style="font-size:19px;margin-left:8px">${h.feeling||'💪'}</span></div>`).join('');
+  renderBadges();renderMarkerCharts();
+}
+
+/* --- Trofeos / Logros --- */
+function renderBadges(){
+  const c=document.getElementById('badges');if(!c)return;
+  const st=computeStats();
+  const earned=earnedBadges();
+  const ids=new Set(earned.map(b=>b.id));
+  // persistir desbloqueados (para detectar "nuevo logro" al acabar sesión)
+  S.earnedBadges=[...ids];save();
+  c.innerHTML=`
+    <div style="display:flex;gap:14px;margin-bottom:12px">
+      <div class="stat" style="flex:1"><div class="stat-v">🔥 ${st.streak}</div><div class="stat-l">racha (sem. con ≥3 ses.)</div></div>
+      <div class="stat" style="flex:1"><div class="stat-v">🏃 ${st.km}</div><div class="stat-l">km registrados</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+    ${BADGES.map(b=>{const on=ids.has(b.id);
+      return `<div style="text-align:center;padding:10px 4px;border-radius:12px;background:${on?'var(--surface2)':'transparent'};border:1px solid ${on?'var(--border)':'transparent'};opacity:${on?1:.32};filter:${on?'none':'grayscale(1)'}">
+        <div style="font-size:24px">${b.icon}</div>
+        <div style="font-size:calc(10px*var(--fs));margin-top:3px;color:${on?'var(--text)':'var(--text3)'}">${b.name}</div></div>`;}).join('')}
+    </div>`;
+}
+
+/* --- Evolución de marcadores (gráficas mes a mes) --- */
+function sparkline(values,labels,goodDown){
+  const w=300,hh=64,pad=6;
+  const vals=values.filter(v=>v!=null);
+  if(vals.length<2)return '<div style="font-size:11px;color:var(--text3);padding:6px 0">Necesita al menos 2 actualizaciones para mostrar tendencia.</div>';
+  const min=Math.min(...vals),max=Math.max(...vals);
+  const span=(max-min)||1;
+  const pts=values.map((v,i)=>{
+    if(v==null)return null;
+    const x=pad+i*( (w-2*pad)/Math.max(1,values.length-1) );
+    const y=hh-pad-((v-min)/span)*(hh-2*pad);
+    return {x,y,v};
+  }).filter(Boolean);
+  const path=pts.map((p,i)=>(i?'L':'M')+p.x.toFixed(1)+' '+p.y.toFixed(1)).join(' ');
+  const last=pts[pts.length-1],first=pts[0];
+  const improving=goodDown?last.v<first.v:last.v>first.v;
+  const col=last.v===first.v?'var(--text2)':(improving?'var(--ring-ex)':'var(--warn)');
+  return `<svg viewBox="0 0 ${w} ${hh}" width="100%" height="${hh}" preserveAspectRatio="none">
+    <path d="${path}" fill="none" stroke="${col}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    ${pts.map(p=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.4" fill="${col}"/>`).join('')}
+  </svg>
+  <div style="display:flex;justify-content:space-between;font-size:calc(10px*var(--fs));color:var(--text3)"><span>${labels[0]||''}</span><span>${labels[labels.length-1]||''}</span></div>`;
+}
+function renderMarkerCharts(){
+  const c=document.getElementById('marker-charts');if(!c)return;
+  const log=(S.healthLog||[]);
+  if(log.length<2){c.innerHTML='<p class="note">Cuando guardes tus medias mensuales al menos dos veces, aquí verás la evolución de cada marcador.</p>';return;}
+  const labels=log.map(s=>{const d=new Date(s.date+'T00:00:00');return d.toLocaleDateString('es-ES',{month:'short'});});
+  const defs=[
+    ['FC reposo (lpm)','restingHR',true],['HRV (ms)','hrv',false],['VO₂max','vo2max',false],
+    ['Sueño (h)','avgSleepH',false],['Pasos/día','avgSteps',false],['% grasa','bodyFat',true]
+  ];
+  let h='';
+  defs.forEach(([lab,k,goodDown])=>{
+    const vals=log.map(s=>s[k]!=null?s[k]:null);
+    if(vals.filter(v=>v!=null).length<2)return;
+    const cur=vals.filter(v=>v!=null).slice(-1)[0];
+    h+=`<div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px">
+        <span style="font-size:calc(12px*var(--fs));color:var(--text2)">${lab}</span>
+        <span style="font-size:calc(14px*var(--fs));font-weight:700">${cur}</span></div>
+      ${sparkline(vals,labels,goodDown)}</div>`;
+  });
+  c.innerHTML=h||'<p class="note">Aún no hay dos meses del mismo marcador para comparar.</p>';
 }
 
 /* --- NUTRICIÓN --- */
@@ -1237,7 +1420,7 @@ Si se combinan varios objetivos, prioriza un esquema de fuerza/hipertrofia para 
     }
     const h=S.history.slice(0,20);
     histTxt+='\n\nHISTORIAL DE SESIONES COMPLETADAS (más reciente primero):\n'+
-      (h.length?h.map(x=>`- ${x.key}: ${x.title}, ${x.duration}min${x.distance?' '+x.distance+'km':''}, esfuerzo ${x.feeling}. ${x.notes||''}`).join('\n'):'(ninguna registrada)');
+      (h.length?h.map(x=>`- ${x.key}: ${x.title}, ${x.duration}min${x.distance?' '+x.distance+'km':''}${x.kcal?' · '+x.kcal+' kcal':''}${x.hr?' · FC media '+x.hr:''}, esfuerzo ${x.feeling}. ${x.notes||''}`).join('\n'):'(ninguna registrada)');
   }
   let healthTxt='';
   const H=S.health;
@@ -1749,7 +1932,7 @@ function prefillManualHealth(){
 function trendArrow(cur,prev,goodDown){
   if(prev==null||cur==null||prev===cur)return '';
   const up=cur>prev;const good=goodDown?!up:up;
-  const color=good?'var(--free)':'var(--done)';
+  const color=good?'var(--free)':'var(--warn)';
   const diff=Math.abs(+(cur-prev).toFixed(1));
   return `<span style="color:${color};font-size:calc(10px*var(--fs));white-space:nowrap"> ${up?'▲':'▼'}${diff}</span>`;
 }
@@ -1775,7 +1958,7 @@ function renderHealth(){
   if(rem){
     const d=S.lastHealthImport?new Date(S.lastHealthImport+'T00:00:00'):null;
     const days=d?Math.floor((Date.now()-d.getTime())/86400000):999;
-    if(days>=30)rem.innerHTML=`<div style="background:rgba(245,158,11,.12);border-radius:9px;padding:9px 11px;margin-top:10px;font-size:calc(12px*var(--fs));color:var(--done)">🔔 Hace ${days} días que no actualizas tus medias mensuales. Abre Salud, lee las medias del mes y actualízalas para seguir la tendencia.</div>`;
+    if(days>=30)rem.innerHTML=`<div style="background:rgba(245,158,11,.12);border-radius:9px;padding:9px 11px;margin-top:10px;font-size:calc(12px*var(--fs));color:var(--warn)">🔔 Hace ${days} días que no actualizas tus medias mensuales. Abre Salud, lee las medias del mes y actualízalas para seguir la tendencia.</div>`;
     else rem.innerHTML='';
   }
 }
@@ -1788,7 +1971,7 @@ function updateImportInfo(){
   const fecha=d.toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'});
   const cuando=days<=0?'hoy':days===1?'hace 1 día':`hace ${days} días`;
   if(days>=30){
-    el.innerHTML=`<span style="color:var(--done)">⚠ Última actualización: ${fecha} (${cuando}). Toca actualizar las medias mensuales.</span>`;
+    el.innerHTML=`<span style="color:var(--warn)">⚠ Última actualización: ${fecha} (${cuando}). Toca actualizar las medias mensuales.</span>`;
   } else {
     el.innerHTML=`<span style="color:var(--text3)">Última actualización: ${fecha} (${cuando}).</span>`;
   }
@@ -1894,18 +2077,27 @@ function testBeep(){initAudio();beep(1000,0.18,0.85);setTimeout(()=>beep(1500,0.
 
 function parseReps(r){const m=String(r).match(/(\d+)\s*s/);return m?+m[1]:null;} // segundos si es "40s"
 
+let WL=null;
+async function acquireWakeLock(){
+  try{if('wakeLock' in navigator){WL=await navigator.wakeLock.request('screen');}}catch(e){}
+}
+function releaseWakeLock(){try{if(WL){WL.release();WL=null;}}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&P.active)acquireWakeLock();});
+
 function startPlayer(key){
   const sess=(S.schedule[key]||[]).find(s=>s.type==='ai');
   if(!sess||!sess.exercises)return;
   initAudio();
-  P={active:true,sess,exi:0,set:1,phase:'ready',int:null,sec:0,tot:0,key};
+  P={active:true,sess,exi:0,set:1,phase:'ready',int:null,sec:0,tot:0,key,startedAt:Date.now(),setsDone:0};
   document.getElementById('player').classList.add('show');
   document.body.style.overflow='hidden';
+  acquireWakeLock();
   if(!S.musicMuted)loadPlayerMusic();
   renderPlayer();
 }
 function closePlayer(){
   P.active=false;clearInterval(P.int);
+  releaseWakeLock();
   document.getElementById('player').classList.remove('show');
   document.body.style.overflow='';
 }
@@ -1976,7 +2168,7 @@ function renderPlayer(){
         ${errs.length?`<div class="pl-cue" style="margin-top:6px;color:var(--danger)">⚠ Evita: ${errs[0].toLowerCase()}</div>`:''}
       </div>`;
     }
-    mid=`<div class="pl-phase" style="color:var(--done)">DESCANSO</div>
+    mid=`<div class="pl-phase" style="color:var(--free)">DESCANSO</div>
       <div class="pl-timer" id="pl-timer">${fmtSec(P.sec)}</div>
       <div class="pl-next">${nuevoEj?'Prepárate para el siguiente ejercicio':'Siguiente: serie '+P.set+' de '+ex.series}</div>
       ${preview}
@@ -2032,15 +2224,67 @@ function runRest(){
     if(P.sec<=0){clearInterval(P.int);if(navigator.vibrate)navigator.vibrate([100,50,100]);P.phase='ready';renderPlayer();}},1000);
 }
 function skipRest(){clearInterval(P.int);P.phase='ready';renderPlayer();}
+
+/* --- Logros y racha --- */
+function weekKeyOf(dateStr){const d=new Date(dateStr+'T00:00:00');const day=d.getDay()||7;d.setDate(d.getDate()-day+1);return d.toISOString().split('T')[0];}
+function computeStats(){
+  const hist=S.history||[];
+  const byWeek={};
+  hist.forEach(h=>{const wk=weekKeyOf(h.key);byWeek[wk]=(byWeek[wk]||0)+1;});
+  // racha: semanas consecutivas (hacia atrás desde la actual o anterior) con ≥3 sesiones
+  let streak=0;const now=new Date();
+  for(let i=0;i<104;i++){
+    const d=new Date(now);d.setDate(now.getDate()-7*i);
+    const wk=weekKeyOf(d.toISOString().split('T')[0]);
+    const n=byWeek[wk]||0;
+    if(n>=3)streak++;
+    else{if(i===0&&n>0)continue; // semana en curso aún incompleta no rompe la racha
+      break;}
+  }
+  const total=hist.length;
+  const fuerza=hist.filter(h=>/fuerza|énfasis/i.test(h.title)).length;
+  const km=hist.reduce((a,h)=>a+(parseFloat(h.distance)||0),0);
+  return {streak,total,fuerza,km:+km.toFixed(1),byWeek};
+}
+const BADGES=[
+  {id:'first',icon:'🥇',name:'Primera sesión',test:s=>s.total>=1},
+  {id:'s5',icon:'🏋️',name:'5 sesiones',test:s=>s.total>=5},
+  {id:'s20',icon:'💪',name:'20 sesiones',test:s=>s.total>=20},
+  {id:'s50',icon:'🏆',name:'50 sesiones',test:s=>s.total>=50},
+  {id:'wk1',icon:'🔥',name:'1 semana en racha',test:s=>s.streak>=1},
+  {id:'wk4',icon:'🚀',name:'4 semanas en racha',test:s=>s.streak>=4},
+  {id:'wk12',icon:'👑',name:'12 semanas en racha',test:s=>s.streak>=12},
+  {id:'km25',icon:'🏃',name:'25 km corridos',test:s=>s.km>=25},
+  {id:'km100',icon:'🌍',name:'100 km corridos',test:s=>s.km>=100},
+];
+function earnedBadges(){const st=computeStats();return BADGES.filter(b=>b.test(st));}
 function finishSession(){
   clearInterval(P.int);
-  document.getElementById('player-body').innerHTML=`<div style="text-align:center;padding:40px 20px">
-    <div style="font-size:54px;margin-bottom:14px">🎉</div>
-    <div style="font-size:22px;font-weight:700;margin-bottom:8px">¡Sesión completada!</div>
-    <div style="color:rgba(255,255,255,.7);font-size:14px;margin-bottom:24px">Buen trabajo. Registra cómo te has sentido para ajustar la próxima semana.</div>
+  // celebrar: estadísticas reales de la sesión y logros
+  const mins=P.startedAt?Math.max(1,Math.round((Date.now()-P.startedAt)/60000)):null;
+  const totalSets=(P.sess.exercises||[]).reduce((a,e)=>a+(+e.series||0),0);
+  const st=computeStats();
+  const prevIds=new Set(S.earnedBadges||[]);
+  // simular el logro tras registrar esta sesión (total+1)
+  const after={...st,total:st.total+1};
+  const newly=BADGES.filter(b=>b.test(after)&&!prevIds.has(b.id));
+  beep(1500,0.3,0.9);setTimeout(()=>beep(1800,0.3,0.9),250);setTimeout(()=>beep(2100,0.45,0.95),500);
+  document.getElementById('player-body').innerHTML=`<div style="text-align:center;padding:32px 20px">
+    <div style="font-size:54px;margin-bottom:10px">🎉</div>
+    <div style="font-size:calc(22px*var(--fs));font-weight:700;margin-bottom:14px">¡Sesión completada!</div>
+    <div style="display:flex;justify-content:center;gap:18px;margin-bottom:18px">
+      ${mins?`<div><div style="font-size:calc(20px*var(--fs));font-weight:700">${mins}'</div><div style="font-size:calc(10px*var(--fs));color:rgba(255,255,255,.6);text-transform:uppercase">duración</div></div>`:''}
+      <div><div style="font-size:calc(20px*var(--fs));font-weight:700">${totalSets}</div><div style="font-size:calc(10px*var(--fs));color:rgba(255,255,255,.6);text-transform:uppercase">series</div></div>
+      <div><div style="font-size:calc(20px*var(--fs));font-weight:700">🔥 ${st.streak}</div><div style="font-size:calc(10px*var(--fs));color:rgba(255,255,255,.6);text-transform:uppercase">racha sem.</div></div>
+    </div>
+    ${newly.length?`<div style="background:rgba(255,255,255,.1);border-radius:14px;padding:12px;margin-bottom:16px">
+      <div style="font-size:calc(11px*var(--fs));text-transform:uppercase;letter-spacing:.6px;color:#ffd60a;margin-bottom:6px">¡Logro desbloqueado!</div>
+      ${newly.map(b=>`<div style="font-size:calc(15px*var(--fs));font-weight:600">${b.icon} ${b.name}</div>`).join('')}</div>`:''}
+    <div style="color:rgba(255,255,255,.7);font-size:calc(13px*var(--fs));margin-bottom:20px">Registra cómo te has sentido para ajustar la próxima semana.</div>
     <button class="btn btn-primary btn-block" onclick="closePlayer();openLog('${P.key}')">✓ Registrar sesión</button>
     <button class="btn btn-block" style="margin-top:9px;background:rgba(255,255,255,.15);border-color:transparent;color:#fff" onclick="closePlayer()">Cerrar</button>
   </div>`;
+  if(navigator.vibrate)navigator.vibrate([100,60,100,60,200]);
 }
 
 /* ============================================================

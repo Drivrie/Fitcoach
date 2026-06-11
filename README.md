@@ -218,3 +218,39 @@ Añadido el sueño (h/noche media) como octavo marcador, por su peso en la recup
 % grasa queda explícitamente opcional. El sueño entra en la tarjeta con tendencia, en el
 prompt de Claude (con la regla: <7h → no subir volumen, priorizar descanso) y en los
 formatos JSON (simple: markers.sleep; Health Export Kit: additional.sleep.daily).
+
+## v21: rediseño estilo Fitness + pantalla Hoy + rendimiento
+- Paleta y estética inspiradas en la app Fitness de iPhone: fondo negro puro, tarjetas
+  #1c1c1e con radios de 16-20px, acentos verde/azul/rosa de anillos de actividad y color
+  ámbar dedicado a avisos.
+- Nueva tarjeta "Hoy" como portada del calendario: anillo de progreso semanal (sesiones
+  completadas/planificadas, animado) + la sesión de hoy con botón grande ▶ Empezar, o el
+  estado del día (libre, completado, descanso).
+- Rendimiento: memoización de las figuras SVG (se generan una vez y se reutilizan en
+  resumen, reproductor y vistas previas).
+
+## v22: gráficas, logros, wake lock y resumen post-sesión
+- 📈 Evolución de marcadores: sparklines mes a mes (FC reposo, HRV, VO2max, sueño, pasos,
+  % grasa) en Progreso, en verde si la tendencia mejora y ámbar si empeora.
+- 🏆 Logros: racha de semanas (≥3 sesiones/semana), km acumulados y 9 trofeos
+  desbloqueables (sesiones totales, rachas, km corridos).
+- 🔆 Wake lock: la pantalla no se apaga durante la sesión guiada (se reactiva al volver
+  a la app); se libera al cerrar el reproductor.
+- 🎉 Resumen post-sesión: al completar, muestra duración real, series totales, racha y
+  logros recién desbloqueados, con fanfarria sonora y vibración.
+
+## v23: ritual de cierre de semana (domingos)
+Los domingos, en la semana actual, la tarjeta "Hoy" muestra una guía con los pasos
+pendientes del cierre: registrar/descartar lo pendiente, actualizar las medias mensuales
+si ya pasó un mes, y adaptar la semana próxima con Claude (con botón directo). El banner
+desaparece automáticamente cuando todo está hecho. Respeta los dos ritmos: adaptación
+semanal con lo entrenado; marcadores solo cada mes.
+
+## v24: registro estructurado ligero
+- Campos opcionales kcal (Watch) y FC media (lpm) en el formulario de registro: dos números
+  universales que viajan estructurados al prompt de adaptación.
+- Tipos nuevos: "Carrera en cinta" y "Caminata / Paseo" (ya no hace falta indicarlo en notas).
+- Botón "＋ Plantilla cargas" en notas: inserta los ejercicios de la sesión IA del día como
+  esqueleto ("Sentadilla goblet: …") para apuntar kg × reps logradas sin teclear nombres.
+- Las cargas por ejercicio se mantienen deliberadamente en notas (texto libre) para no crear
+  un formulario por serie que añada fricción durante el entrenamiento.
