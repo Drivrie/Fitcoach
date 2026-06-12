@@ -254,3 +254,19 @@ semanal con lo entrenado; marcadores solo cada mes.
   esqueleto ("Sentadilla goblet: …") para apuntar kg × reps logradas sin teclear nombres.
 - Las cargas por ejercicio se mantienen deliberadamente en notas (texto libre) para no crear
   un formulario por serie que añada fricción durante el entrenamiento.
+
+## v25: precisión de registro y mejor programación
+- Plantilla de cargas prellenada con series×reps (y peso si existe) propuestos: solo se
+  corrige lo que difiera (✓ = según lo previsto).
+- Duración del registro acepta min:seg ("45:30") además de minutos.
+- Campo "peso" por ejercicio en los planes de Claude, con regla de claridad obligatoria
+  ("16 kg por mancuerna (una en cada mano)" / "una sola mancuerna de 16 kg" / "solo peso
+  corporal"); visible en resumen de sesión y reproductor.
+- Ejercicios cronometrados por lado (plancha lateral, etc.): el contador repite el tiempo
+  para el lado 2 con tono de cambio e indicador "lado 1/2 de 2".
+- Reparto muscular: el motor offline incluye ahora 2 ejercicios de pierna por sesión
+  completa, y el prompt exige ≥1/3 de ejercicios de tren inferior y ≥2 por sesión completa.
+- El prompt permite proponer EMOM/AMRAP/HIIT/circuito como variación puntual (máx. 1
+  sesión/semana) manteniendo la base de hipertrofia.
+- "recomendacion_cardio" ahora exige prescripción concreta (actividad, duración, FC/zona)
+  y se muestra en el Análisis del entrenador además de en los días libres.

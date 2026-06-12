@@ -401,7 +401,7 @@ body{font-size:calc(15px*var(--fs))}
       <p class="note" style="margin-bottom:9px">Pitidos en los últimos 3 segundos de cada cuenta atrás. Si apenas se oyen: sube el volumen del móvil con los botones laterales <b>mientras suena</b>, y comprueba que el interruptor de silencio (lateral del iPhone) no esté activado.</p>
       <button class="btn btn-block" onclick="testBeep()">▶ Probar sonido</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 24</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 25</div>
   </div>
 </div>
 
@@ -628,7 +628,7 @@ function pickExercises(equipSet,objetivo,minutos,seed){
   // distribución por patrón según objetivo
   let order;
   if(objetivo==='fuerza') order=['pierna','empuje','tiron','pierna','empuje','core','tiron'];
-  else if(objetivo==='musculo') order=['empuje','tiron','pierna','empuje','tiron','core','pierna'];
+  else if(objetivo==='musculo') order=['pierna','empuje','tiron','pierna','empuje','core','tiron','pierna'];
   else if(isCircuit) order=['pierna','empuje','tiron','cardio','core','cardio','pierna','empuje'];
   else order=['pierna','empuje','tiron','core','cardio','pierna','empuje','core'];
   const used=new Set();const out=[];
@@ -1187,7 +1187,7 @@ function showSess(key){
     h+=`<div class="ex"><div class="ex-h" onclick="toggleEx(${i})">
       <div class="ex-n">${i+1}</div>
       <div style="flex:1"><div class="ex-nm">${ex.nombre}</div>
-        <div class="ex-mt">${ex.series}×${ex.reps} · ${ex.descanso_seg}s${(ex.rir||ex.rpe)?' · RIR '+(ex.rir||ex.rpe):''}${ex.tempo?' · tempo '+ex.tempo:''}</div></div>
+        <div class="ex-mt">${ex.series}×${ex.reps} · ${ex.descanso_seg}s${(ex.rir||ex.rpe)?' · RIR '+(ex.rir||ex.rpe):''}${ex.tempo?' · tempo '+ex.tempo:''}${ex.peso?' · '+ex.peso:''}</div></div>
       <button class="btn btn-xs" onclick="event.stopPropagation();startTimer(${ex.descanso_seg},${JSON.stringify(ex.nombre)})">⏱</button>
     </div><div class="ex-b" id="exb-${i}">
       <div style="display:flex;gap:11px;padding:11px 13px">
@@ -1218,7 +1218,7 @@ function openLog(key){
       <option>Caminata / Paseo</option><option>Bicicleta</option>
       <option>Natación</option><option>HIIT</option><option>Yoga / Movilidad</option><option>Otro</option></select></div>
     <div class="row2">
-      <div class="field"><label>Duración (min)</label><input type="number" id="l-dur" placeholder="45" inputmode="numeric"></div>
+      <div class="field"><label>Duración (min o min:seg)</label><input type="text" id="l-dur" placeholder="45 ó 45:30" inputmode="numeric" pattern="[0-9]{1,3}(:[0-5][0-9])?"></div>
       <div class="field"><label>Distancia (km)</label><input type="number" id="l-dist" placeholder="opcional" step="0.1" inputmode="decimal"></div>
     </div>
     <div class="row2">
@@ -1242,7 +1242,9 @@ function insertLoadTemplate(key){
   const sess=(S.schedule[key]||[]).find(s=>s.type==='ai');
   let tpl;
   if(sess&&sess.exercises&&sess.exercises.length){
-    tpl=sess.exercises.map(e=>`${e.nombre}: `).join('\n');
+    // prellenado con lo propuesto: solo corriges lo que difiera y añades comentario
+    tpl=sess.exercises.map(e=>`${e.nombre} ${e.series}×${e.reps}${e.peso?' · '+e.peso:''}: ✓`).join('\n');
+    tpl='(✓ = según lo previsto; corrige solo lo que cambió y añade comentario)\n'+tpl;
   } else {
     tpl='Ejercicio 1 (kg × reps logradas): \nEjercicio 2: ';
   }
@@ -1253,7 +1255,8 @@ function selFeel(el){document.querySelectorAll('.feel-b').forEach(b=>b.classList
 function saveLog(){
   const key=S.logKey;
   const type=document.getElementById('l-type').value;
-  const dur=document.getElementById('l-dur').value||'?';
+  let dur=(document.getElementById('l-dur').value||'').trim()||'?';
+  if(dur!=='?'&&!/^\d{1,3}(:[0-5]?\d)?$/.test(dur)){alert('Duración: usa minutos ("45") o min:seg ("45:30").');return;}
   const dist=document.getElementById('l-dist').value;
   const kcal=document.getElementById('l-kcal')?document.getElementById('l-kcal').value:'';
   const hr=document.getElementById('l-hr')?document.getElementById('l-hr').value:'';
@@ -1468,6 +1471,10 @@ PRINCIPIOS BASADOS EN EVIDENCIA (ACSM 2026 Position Stand; meta-análisis de Sch
 - Entrenar cada grupo muscular principal al menos 2 veces por semana.
 - El peso corporal y las bandas son medios válidos y eficaces.
 - Indica el esfuerzo como RIR (repeticiones en reserva), no como RPE.
+- En "peso" especifica SIEMPRE la carga propuesta de forma inequívoca: para mancuernas aclara si es "X kg por mancuerna (una en cada mano)" o "una sola mancuerna de X kg" (p. ej. goblet); para barra "X kg en total incluida la barra"; si es sin carga, "solo peso corporal". Nunca dejes un número de kg sin aclarar a qué se refiere.
+- REPARTO MUSCULAR: el tren inferior (cuádriceps, isquios, glúteos) debe recibir AL MENOS un tercio de los ejercicios de la semana y ≥2 ejercicios en cada sesión completa de cuerpo entero. Las piernas son los grupos más grandes y relevantes; no las relegues frente a empuje/tirón/core.
+- VARIEDAD DE MÉTODOS: además del esquema clásico de series×repeticiones, puedes proponer ocasionalmente (1 sesión/semana como mucho, idealmente en las sesiones breves o la 3ª semana del ciclo) formatos como EMOM, AMRAP, HIIT o circuito metabólico, expresándolos en el mismo JSON (reps en segundos tipo "40s", meta describiendo el formato, descripcion con la mecánica). La base para hipertrofia sigue siendo series×reps cerca del fallo; estos formatos son variación y estímulo metabólico, no el plato principal.
+- CARDIO PRESCRITO: en "recomendacion_cardio" da instrucciones concretas y accionables para los días libres y el fin de semana (tipo de actividad, duración, e intensidad orientada por FC o sensación: p. ej. "carrera Z2 cómoda 35-40 min, FC ~125-140" o "paseo ligero 60 min"), coherentes con el objetivo y la fatiga semanal, en lugar de una frase genérica.
 - Proteína 1.6-2.2 g/kg/día (hacia el extremo alto si hay déficit calórico para preservar músculo).
 - Incluye SIEMPRE 2-3 "errores" comunes de técnica a evitar por cada ejercicio.`;
 
@@ -1483,7 +1490,7 @@ Responde ÚNICAMENTE con un objeto JSON válido, sin texto antes ni después, si
   "sesiones_ia":[
     {"dia_codigo":"L","titulo":"string","meta":"string breve","calentamiento":"string","vuelta_calma":"string",
      "ejercicios":[
-       {"nombre":"string","series":3,"reps":"6-12","descanso_seg":90,"rir":"1-3","tempo":"2-1-2","descripcion":"string técnica 1 frase","musculos":"string","errores":["error 1","error 2"]${mode==='adapt'?',"nota_progresion":"string"':''}}
+       {"nombre":"string","series":3,"reps":"6-12","descanso_seg":90,"rir":"1-3","tempo":"2-1-2","peso":"p. ej. 16 kg por mancuerna | 12 kg en cada mano | solo peso corporal","descripcion":"string técnica 1 frase","musculos":"string","errores":["error 1","error 2"]${mode==='adapt'?',"nota_progresion":"string"':''}}
      ]}
   ],
   "recomendacion_cardio":"string para días libres",
@@ -1574,6 +1581,7 @@ function applyBridge(){
     if(!S.schedule[key].some(s=>s.type==='free'))S.schedule[key].push({type:'free',title:'Entrenamiento libre',meta:plan.recomendacion_cardio||'Actividad libre',done:false});});
   if(plan.nutricion)S.nutri=plan.nutricion;
   if(plan.analisis_progreso)S.insight=plan.analisis_progreso;
+  if(plan.recomendacion_cardio)S.insight=(S.insight?S.insight+'\n\n':'')+'🏃 Cardio recomendado: '+plan.recomendacion_cardio;
   save();closeSheet('bridge-bg');renderCal();renderNutri();renderProg();tab('cal');
 }
 function matchYT(ex){
@@ -1634,7 +1642,7 @@ function modifyWithClaude(){
 - Incluye 2-3 errores comunes de técnica por ejercicio.
 
 Responde SOLO con JSON válido, sin backticks ni texto extra, con esta estructura (una sola sesión):
-{"titulo":"string","meta":"string breve","calentamiento":"string","vuelta_calma":"string","ejercicios":[{"nombre":"string","series":3,"reps":"8-12","descanso_seg":90,"rir":"1-3","tempo":"2-1-2","descripcion":"string","musculos":"string","errores":["e1","e2"]}]}
+{"titulo":"string","meta":"string breve","calentamiento":"string","vuelta_calma":"string","ejercicios":[{"nombre":"string","series":3,"reps":"8-12","descanso_seg":90,"rir":"1-3","tempo":"2-1-2","peso":"16 kg por mancuerna","descripcion":"string","musculos":"string","errores":["e1","e2"]}]}
 En "nombre" usa términos comunes en español (sentadilla, press de banca, remo, plancha, etc.).`;
   document.getElementById('mod-claude').style.display='block';
 }
@@ -2174,13 +2182,15 @@ function renderPlayer(){
       ${preview}
       <button class="btn btn-block" style="margin-top:14px;background:rgba(255,255,255,.15);border-color:transparent;color:#fff" onclick="skipRest()">Saltar descanso →</button>`;
   } else if(P.phase==='work'&&repSecs){
+    const side=isPerSide(ex)?` · <b style="color:var(--ring-stand)">lado ${P.side||1} de 2</b>`:'';
     mid=`<div class="pl-phase" style="color:var(--free)">TRABAJO</div>
       <div class="pl-timer" id="pl-timer">${fmtSec(P.sec)}</div>
-      <div class="pl-next">${ex.nombre} · serie ${P.set}/${ex.series}</div>`;
+      <div class="pl-next">${ex.nombre} · serie ${P.set}/${ex.series}${side}</div>`;
   } else {
     const errs=ex.errores&&ex.errores.length?ex.errores:(ERRORS[figKey(ex.nombre)]||[]);
     mid=`<div style="width:170px;height:135px;margin:0 auto 14px">${exSVG(ex.nombre)}</div>
       <div class="pl-reps">${ex.series>1?`Serie ${P.set} de ${ex.series}`:'1 serie'} · ${ex.reps}${/^\d+$/.test(String(ex.reps))?' reps':''}</div>
+      ${ex.peso?`<div class="pl-cue" style="margin-top:4px;color:var(--ring-ex);font-weight:600">🏋 ${ex.peso}</div>`:''}
       ${(ex.rir||ex.rpe)?`<div class="pl-cue">Deja ${ex.rir||ex.rpe} reps en reserva (RIR)${ex.tempo?' · tempo '+ex.tempo:''}</div>`:''}
       <div class="pl-cue" style="margin-top:8px">${ex.descripcion||''}</div>
       ${errs.length?`<div class="pl-cue" style="margin-top:8px;color:var(--danger)">⚠ Evita: ${errs[0].toLowerCase()}</div>`:''}
@@ -2194,17 +2204,29 @@ function renderPlayer(){
 }
 function fmtSec(s){const m=String(Math.floor(s/60)).padStart(2,'0');return m+':'+String(Math.max(0,s)%60).padStart(2,'0');}
 
+function isPerSide(ex){return /lado|lateral|unilateral|por pierna|por brazo|a una mano|cada (lado|pierna|brazo|mano)/i.test(String(ex.reps)+' '+(ex.nombre||''));}
 function finishSet(){
   const ex=P.sess.exercises[P.exi];
   const repSecs=parseReps(ex.reps);
   if(repSecs&&P.phase!=='work'){ // ejercicio por tiempo: contar trabajo
-    P.phase='work';P.sec=repSecs;P.tot=repSecs;renderPlayer();
-    clearInterval(P.int);if(navigator.vibrate)navigator.vibrate(40);
-    P.int=setInterval(()=>{P.sec--;const t=document.getElementById('pl-timer');if(t)t.textContent=fmtSec(P.sec);countdownCue(P.sec);
-      if(P.sec<=0){clearInterval(P.int);if(navigator.vibrate)navigator.vibrate([100,50,100]);beginRest();}},1000);
+    P.side=1;
+    startWorkCountdown(ex,repSecs);
     return;
   }
   beginRest();
+}
+function startWorkCountdown(ex,repSecs){
+  P.phase='work';P.sec=repSecs;P.tot=repSecs;renderPlayer();
+  clearInterval(P.int);if(navigator.vibrate)navigator.vibrate(40);
+  P.int=setInterval(()=>{P.sec--;const t=document.getElementById('pl-timer');if(t)t.textContent=fmtSec(P.sec);countdownCue(P.sec);
+    if(P.sec<=0){clearInterval(P.int);if(navigator.vibrate)navigator.vibrate([100,50,100]);
+      if(isPerSide(ex)&&P.side===1){ // toca el otro lado: repetir el tiempo
+        P.side=2;
+        beep(700,0.5,0.9); // tono distinto: cambio de lado
+        startWorkCountdown(ex,repSecs);
+        return;
+      }
+      P.side=0;beginRest();}},1000);
 }
 function beginRest(){
   const ex=P.sess.exercises[P.exi];
