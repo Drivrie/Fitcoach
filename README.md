@@ -270,3 +270,35 @@ semanal con lo entrenado; marcadores solo cada mes.
   sesión/semana) manteniendo la base de hipertrofia.
 - "recomendacion_cardio" ahora exige prescripción concreta (actividad, duración, FC/zona)
   y se muestra en el Análisis del entrenador además de en los días libres.
+
+## v26: corrección de "Añadir actividad" y aclaración de "Hoy"/semanas
+- "Añadir actividad libre" ahora abre el formulario de registro COMPLETO (tipo, duración
+  min:seg, distancia, kcal, FC, RPE, notas), con selector de día, y guarda la actividad
+  como realizada EN EL HISTORIAL (antes creaba una sesión vacía que no contaba para la
+  adaptación). Esto asegura que las sesiones añadidas sí se consideran al adaptar.
+- Tarjeta "Hoy": el anillo aclara que es el % de la SEMANA y muestra "X de Y sesiones de
+  la semana completadas" (Y = total planificado de la semana, no de hoy).
+- Puente con Claude: muestra a qué semana (rango de fechas) se aplicará el plan y, si estás
+  en la semana actual, ofrece un botón "› Ir a la semana próxima" para no volver a generar
+  sobre la semana en curso. Soluciona que no se generaran las semanas siguientes.
+
+## v27: seguimiento de mesociclo sin descarga forzada
+- La app cuenta en qué SEMANA del programa estás desde tu primer registro (inferProgramStart
+  = lunes de la fecha más antigua en historial/agenda; programWeekFor/mesoInfo).
+- Nueva tarjeta "Mesociclo" en Perfil: enfoque del bloque (editable) y semanas por bloque;
+  muestra "Semana N del programa · bloque B (semana W de L)".
+- Eliminada la descarga (deload) forzada cada 4 semanas: el usuario entrena todas las
+  semanas. La fatiga se gestiona con volumen/proximidad al fallo, no con descarga.
+- El prompt de Claude incluye la fase del programa (semana, bloque, enfoque) con instrucción
+  explícita de progresión ascendente dentro del bloque y de NO programar descargas.
+- La semana del programa se muestra también en la tarjeta "Hoy".
+
+## v28: Claude propone la fase del mesociclo (entrenador profesional)
+- El enfoque del bloque ya NO lo elige el usuario: lo PROPONE Claude en cada adaptación,
+  según el objetivo global y el progreso (campo "mesociclo" en el JSON: enfoque,
+  semanas_bloque, justificacion). El prompt instruye actuar como entrenador profesional y
+  decidir la fase (acumulación, intensificación, recomposición, etc.), avanzando de bloque
+  cuando corresponde.
+- La tarjeta Mesociclo de Perfil muestra el enfoque propuesto (solo lectura) y la semana del
+  programa; las semanas por bloque quedan como ajuste avanzado opcional.
+- El análisis del entrenador muestra "🗓️ Fase del mesociclo: … — justificación".

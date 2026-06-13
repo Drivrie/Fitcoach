@@ -392,6 +392,17 @@ body{font-size:calc(15px*var(--fs))}
     <button class="btn btn-primary btn-block" onclick="buildWeekOffline()">⚡ Generar semana (offline)</button>
     <button class="btn btn-block" style="margin-top:8px" onclick="openBridge('new')">✨ Generar con Claude (más detallado)</button>
     <div class="card">
+      <div class="card-t">🗓️ Mesociclo</div>
+      <p class="note" style="margin-bottom:9px">Tu entrenador (Claude) decide la fase del bloque según tu objetivo global y tu progreso, y la propone en cada adaptación semanal. La semana del programa se cuenta desde tu primer registro. Sin descarga programada.</p>
+      <div id="meso-info" style="font-size:calc(13px*var(--fs));font-weight:600;margin-bottom:6px"></div>
+      <div id="meso-focus-view" style="font-size:calc(13px*var(--fs));color:var(--text2);margin-bottom:10px"></div>
+      <details>
+        <summary style="cursor:pointer;font-size:calc(12px*var(--fs));color:var(--accent)">Ajuste avanzado (opcional)</summary>
+        <div class="field" style="margin-top:8px"><label>Semanas por bloque (orientativo; Claude puede ajustarlo)</label><select id="meso-len" onchange="saveMeso()">
+          <option value="3">3</option><option value="4" selected>4</option><option value="5">5</option><option value="6">6</option></select></div>
+      </details>
+    </div>
+    <div class="card">
       <div class="card-t">🔠 Tamaño de texto</div>
       <p class="note" style="margin-bottom:9px">Ajusta el tamaño de letra de toda la app a tu gusto y visión.</p>
       <div id="fs-chips"></div>
@@ -401,7 +412,7 @@ body{font-size:calc(15px*var(--fs))}
       <p class="note" style="margin-bottom:9px">Pitidos en los últimos 3 segundos de cada cuenta atrás. Si apenas se oyen: sube el volumen del móvil con los botones laterales <b>mientras suena</b>, y comprueba que el interruptor de silencio (lateral del iPhone) no esté activado.</p>
       <button class="btn btn-block" onclick="testBeep()">▶ Probar sonido</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 25</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 28</div>
   </div>
 </div>
 
@@ -595,6 +606,34 @@ function initState(){
   if(!S.spotifyRecents)S.spotifyRecents=[];
   if(!S.healthLog)S.healthLog=[];
   if(S.musicMuted==null)S.musicMuted=false;
+  // mesociclo: fecha de inicio del programa y duración de bloque (sin deload forzado)
+  if(!S.programStart)S.programStart=inferProgramStart();
+  if(!S.mesoLen)S.mesoLen=4;        // semanas por bloque (orientativo, editable)
+  if(!S.mesoFocus)S.mesoFocus='';   // lo propone Claude en la primera adaptación
+}
+// deduce la fecha de inicio: lunes de la semana del registro/plan más antiguo
+function inferProgramStart(){
+  const keys=[];
+  if(S&&S.history)S.history.forEach(h=>keys.push(h.key));
+  if(S&&S.schedule)Object.keys(S.schedule).forEach(k=>keys.push(k));
+  if(!keys.length)return null;
+  keys.sort();
+  const first=new Date(keys[0]+'T00:00:00');
+  const day=first.getDay()||7;first.setDate(first.getDate()-day+1);
+  return first.toISOString().split('T')[0];
+}
+// nº de semana del programa para una fecha dada (1 = primera semana con registros)
+function programWeekFor(dateStr){
+  if(!S.programStart)return null;
+  const a=new Date(S.programStart+'T00:00:00'),b=new Date(dateStr+'T00:00:00');
+  return Math.floor((b-a)/(7*86400000))+1;
+}
+function mesoInfo(weekNum){
+  if(!weekNum||weekNum<1)return null;
+  const len=S.mesoLen||4;
+  const block=Math.floor((weekNum-1)/len)+1;
+  const wInBlock=((weekNum-1)%len)+1;
+  return {weekNum,block,wInBlock,len,focus:S.mesoFocus};
 }
 initState();
 function applyFontScale(){document.documentElement.style.setProperty('--fs',S.fontScale||1);}
@@ -709,14 +748,14 @@ function buildWeekOffline(){
   if(!p.peso||!p.altura||!p.edad){alert('Completa peso, altura y edad en el perfil.');return}
   const objetivo=primaryGoal(p.objetivos);
   const eq=equipSet();
-  const week=realWeekNum();
-  const isDeload=week%4===0;
   const dates=weekDates(S.currentWeek);
+  if(!S.programStart)S.programStart=fmt(dates[0]);
+  const isDeload=false; // sin descarga forzada: el usuario entrena todas las semanas
   S.aiDays.forEach((code,i)=>{
     const idx=DAYS.indexOf(code);if(idx<0)return;
     const key=fmt(dates[idx]);
     if(!S.schedule[key])S.schedule[key]=[];
-    const sess=buildSessionOffline(eq,objetivo,p.nivel,p.minutos,code,week*7+i,isDeload);
+    const sess=buildSessionOffline(eq,objetivo,p.nivel,p.minutos,code,(S.currentWeek+1)*7+i,isDeload);
     const ex=S.schedule[key].findIndex(x=>x.type==='ai');
     const entry={type:'ai',title:sess.titulo,meta:sess.meta,warmup:sess.calentamiento,cooldown:sess.vuelta_calma,exercises:sess.ejercicios,done:false};
     if(ex>=0)S.schedule[key][ex]=entry;else S.schedule[key].push(entry);
@@ -730,9 +769,9 @@ function buildWeekOffline(){
     }
   });
   S.nutri=buildNutriOffline();
+  const mi=mesoInfo(programWeekFor(fmt(dates[0])));
+  if(mi)S.insight=`Semana ${mi.weekNum} del programa · bloque ${mi.block}, semana ${mi.wInBlock} de ${mi.len}${mi.focus?' ('+mi.focus+')':''}. Progresión continua, sin descarga programada. Pulsa "Adaptar con Claude" para que tu entrenador fije la fase del bloque.`;
   save();renderCal();renderNutri();renderProg();
-  if(isDeload)S.insight='Esta es una semana de descarga (cada 4 semanas): menos volumen e intensidad para que tu cuerpo asimile las ganancias y prevenga lesiones. Es parte del plan, no un retroceso.';
-  save();
   tab('cal');
 }
 
@@ -782,12 +821,13 @@ function renderTodayHero(){
         <circle cx="42" cy="42" r="${R}" fill="none" stroke="var(--ring-ex)" stroke-width="9" stroke-linecap="round"
           stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" style="transition:stroke-dashoffset .6s ease"/>
       </svg>
-      <div class="pct">${pct}%<small>${done}/${plan||0} ses.</small></div>
+      <div class="pct">${pct}%<small>semana</small></div>
     </div>
     <div class="hero-info">
       <div class="hero-kicker">${kicker}</div>
       <div class="hero-title">${title}</div>
       <div class="hero-meta">${meta}</div>
+      <div style="font-size:calc(11px*var(--fs));color:var(--text3);margin-top:6px">${done} de ${plan} sesiones de la semana completadas${(()=>{const mi=mesoInfo(programWeekFor(dates[0]));return mi?` · semana ${mi.weekNum} del programa`:'';})()}</div>
       ${cta}
     </div>
   </div>${sundayRitualHtml(dates,todayKey)}`;
@@ -1208,15 +1248,19 @@ function showSess(key){
 function toggleEx(i){document.getElementById('exb-'+i).classList.toggle('open')}
 
 /* --- LOG --- */
-function openLog(key){
-  S.logKey=key;
-  const idx=weekDates(S.currentWeek).map(fmt).indexOf(key);
-  document.getElementById('log-title').textContent='Registrar · '+(idx>=0?DAY_NAMES[idx]:'');
+function openLog(key,mode){
+  S.logKey=key;S.logMode=mode||'log';
+  const dates=weekDates(S.currentWeek).map(fmt);
+  const idx=dates.indexOf(key);
+  const isAdd=mode==='add';
+  document.getElementById('log-title').textContent=(isAdd?'Añadir actividad · ':'Registrar · ')+(idx>=0?DAY_NAMES[idx]:'');
+  const dayPicker=isAdd?`<div class="field"><label>Día</label><select id="l-day">${DAYS.map((c,i)=>`<option value="${dates[i]}"${dates[i]===key?' selected':''}>${DAY_NAMES[i]}</option>`).join('')}</select></div>`:'';
+  const typeOpts=isAdd
+    ? `<option>Carrera</option><option>Carrera en cinta</option><option>Caminata / Paseo</option><option>Bicicleta</option><option>Natación</option><option>HIIT</option><option>Fuerza libre</option><option>Yoga / Movilidad</option><option>Senderismo</option><option>Otro</option>`
+    : `<option>Fuerza (sesión IA)</option><option>Carrera</option><option>Carrera en cinta</option><option>Caminata / Paseo</option><option>Bicicleta</option><option>Natación</option><option>HIIT</option><option>Yoga / Movilidad</option><option>Otro</option>`;
   document.getElementById('log-body').innerHTML=`
-    <div class="field"><label>Tipo</label><select id="l-type">
-      <option>Fuerza (sesión IA)</option><option>Carrera</option><option>Carrera en cinta</option>
-      <option>Caminata / Paseo</option><option>Bicicleta</option>
-      <option>Natación</option><option>HIIT</option><option>Yoga / Movilidad</option><option>Otro</option></select></div>
+    ${dayPicker}
+    <div class="field"><label>Tipo</label><select id="l-type">${typeOpts}</select></div>
     <div class="row2">
       <div class="field"><label>Duración (min o min:seg)</label><input type="text" id="l-dur" placeholder="45 ó 45:30" inputmode="numeric" pattern="[0-9]{1,3}(:[0-5][0-9])?"></div>
       <div class="field"><label>Distancia (km)</label><input type="number" id="l-dist" placeholder="opcional" step="0.1" inputmode="decimal"></div>
@@ -1232,8 +1276,8 @@ function openLog(key){
         <div class="feel-b sel" onclick="selFeel(this)" data-f="💪" title="bien">💪</div>
         <div class="feel-b" onclick="selFeel(this)" data-f="🔥" title="excelente">🔥</div>
       </div></div>
-    <div class="field"><label style="display:flex;justify-content:space-between;align-items:center">Notas (pesos, series reales, sensaciones)<button class="btn btn-xs" onclick="insertLoadTemplate('${key}')">＋ Plantilla cargas</button></label>
-      <textarea id="l-notes" placeholder="Ej: goblet 16kg llegué a 12, press 16kg 3×10 justo, dominadas 3×7..."></textarea></div>`;
+    <div class="field"><label style="display:flex;justify-content:space-between;align-items:center">Notas (pesos, series reales, sensaciones)${isAdd?'':`<button class="btn btn-xs" onclick="insertLoadTemplate('${key}')">＋ Plantilla cargas</button>`}</label>
+      <textarea id="l-notes" placeholder="${isAdd?'Ej: 7,1 km, 5:30/km, 412 kcal, FC media 152...':'Ej: goblet 16kg llegué a 12, press 16kg 3×10 justo...'}"></textarea></div>`;
   openSheet('log-bg');
 }
 /* Inserta en notas el esqueleto de cargas con los ejercicios de la sesión IA del día */
@@ -1253,7 +1297,9 @@ function insertLoadTemplate(key){
 }
 function selFeel(el){document.querySelectorAll('.feel-b').forEach(b=>b.classList.remove('sel'));el.classList.add('sel');}
 function saveLog(){
-  const key=S.logKey;
+  let key=S.logKey;
+  const daySel=document.getElementById('l-day');
+  if(S.logMode==='add'&&daySel)key=daySel.value;
   const type=document.getElementById('l-type').value;
   let dur=(document.getElementById('l-dur').value||'').trim()||'?';
   if(dur!=='?'&&!/^\d{1,3}(:[0-5]?\d)?$/.test(dur)){alert('Duración: usa minutos ("45") o min:seg ("45:30").');return;}
@@ -1272,28 +1318,19 @@ function saveLog(){
     else S.schedule[key].push({type:'free',title:type,meta:dur+'min'+(dist?' · '+dist+'km':''),done:true,log});
   }
   S.history.unshift({key,...log,title:type});
-  save();closeSheet('log-bg');renderCal();renderProg();
+  S.logMode='log';
+  save();closeSheet('log-bg');closeSheet('add-bg');renderCal();renderProg();selDay(key,weekDates(S.currentWeek).map(fmt).indexOf(key),true);
 }
 
 /* --- ADD --- */
 function openAdd(){
-  const sel=document.getElementById('a-day');sel.innerHTML='';
-  DAYS.forEach((c,i)=>{const o=document.createElement('option');o.value=c;o.textContent=DAY_NAMES[i];sel.appendChild(o);});
-  openSheet('add-bg');
+  // "Añadir" ahora abre el formulario de registro completo para el día de hoy (o el primero de la semana mostrada)
+  const dates=weekDates(S.currentWeek).map(fmt);
+  const todayKey=fmt(new Date());
+  const key=dates.includes(todayKey)?todayKey:dates[0];
+  openLog(key,'add');
 }
-function openAddForDay(key,idx){
-  openAdd();
-  const sel=document.getElementById('a-day');if(sel&&DAYS[idx])sel.value=DAYS[idx];
-}
-function saveAdd(){
-  const code=document.getElementById('a-day').value;
-  const type=document.getElementById('a-type').value;
-  const notes=document.getElementById('a-notes').value;
-  const dates=weekDates(S.currentWeek);const idx=DAYS.indexOf(code);const key=fmt(dates[idx]);
-  if(!S.schedule[key])S.schedule[key]=[];
-  S.schedule[key].push({type:'free',title:type,meta:notes||'Actividad libre',done:false});
-  save();closeSheet('add-bg');document.getElementById('a-notes').value='';renderCal();selDay(key,idx);
-}
+function openAddForDay(key,idx){openLog(key,'add');}
 
 /* --- PROGRESO --- */
 function renderProg(){
@@ -1416,6 +1453,17 @@ function buildPrompt(mode){
   const eqLabels=(p.equipos||['ninguno']).map(e=>({ninguno:'peso corporal',mancuernas:'mancuernas',bandas:'bandas elásticas',barra:'barra y discos',kettlebell:'kettlebell',gimnasio:'gimnasio completo'}[e]||e)).join(', ');
   const cfg=`Objetivos (combinar de forma coherente): ${objLabels}. Nivel: ${p.nivel}. Equipo disponible: ${eqLabels}. Sesiones IA de ${p.minutos} min los días: ${S.aiDays.join(', ')||'ninguno'}. Días de entrenamiento libre: ${S.freeDays.join(', ')||'ninguno'}.
 Si se combinan varios objetivos, prioriza un esquema de fuerza/hipertrofia para el entrenamiento y ajusta SOLO la nutrición para el componente de composición corporal (p. ej. músculo+grasa = recomposición: déficit ligero con proteína alta; grasa = déficit; músculo/fuerza = superávit ligero).`;
+  // contexto de mesociclo (semana del programa que se va a planificar)
+  let mesoTxt='';
+  const targetWeek=programWeekFor(fmt(weekDates(S.currentWeek)[0]));
+  const mi=mesoInfo(targetWeek);
+  if(mi){
+    mesoTxt=`\n\nFASE DEL PROGRAMA: vas a planificar la SEMANA ${mi.weekNum} desde que empecé a registrar. Estoy en el bloque/mesociclo ${mi.block}, semana ${mi.wInBlock} de ${mi.len}. Enfoque vigente que propusiste antes: "${mi.focus}".
+- ACTÚA COMO ENTRENADOR PROFESIONAL: TÚ decides el enfoque del mesociclo en función de mi objetivo global y mi progreso; no me lo preguntes. Devuélvelo en el campo "mesociclo".
+- Si sigo dentro del mismo bloque (semana ${mi.wInBlock} de ${mi.len}), mantén el enfoque y progresa el volumen/carga de forma ascendente respecto a la semana anterior.
+- Si he llegado al final del bloque (semana ${mi.wInBlock} = ${mi.len}, o si el progreso/fatiga lo aconsejan), propón el enfoque del SIGUIENTE bloque (p. ej. pasar de acumulación de hipertrofia a un bloque de intensificación de fuerza, o de recomposición a fuerza), explicándolo en "mesociclo.justificacion".
+- IMPORTANTE: NO programes semanas de descarga completa (entreno todas las semanas); gestiona la fatiga con volumen y proximidad al fallo. Una "descarga activa" como enfoque de bloque solo si la fatiga acumulada es clara según mis sensaciones y marcadores.`;
+  }
   let histTxt='';
   if(mode==='adapt'){
     if(S.baseline&&S.baseline.trim()){
@@ -1459,7 +1507,7 @@ REGLAS DE ADAPTACIÓN (basadas en evidencia):
 - El PUNTO DE PARTIDA es la referencia del nivel inicial. Cuando existan sesiones recientes registradas, PRIORÍZALAS para decidir la progresión y trata el punto de partida solo como contexto de origen, no como el plan a repetir.
 - Sobrecarga progresiva: si el esfuerzo fue 💪/🔥 y completó las sesiones, sube carga ~2-5% o añade 1 serie/repeticiones (doble progresión).
 - Si predominó 😓/😴 o faltaron sesiones, reduce volumen y prioriza recuperación.
-- Cada 4ª semana programa una DESCARGA (deload): ~-40% volumen.
+- NO programes semanas de descarga. El usuario entrena todas las semanas; si hay fatiga (😓/😴, marcadores peores), reduce volumen o aleja del fallo esa semana, pero sin descarga completa.
 - En "nota_progresion" de cada ejercicio, explica el cambio concreto frente a la semana anterior.
 - Varía algún ejercicio si lleva 2+ semanas idéntico, para evitar estancamiento.
 - En "analisis_progreso" resume en 3-4 frases qué has ajustado y por qué.`:'';
@@ -1481,12 +1529,13 @@ PRINCIPIOS BASADOS EN EVIDENCIA (ACSM 2026 Position Stand; meta-análisis de Sch
   return `Actúa como mi entrenador personal profesional y nutricionista, siguiendo evidencia científica actual. ${mode==='adapt'?'Genera la SIGUIENTE semana de entrenamiento adaptada a mi progreso real.':'Genera mi plan de entrenamiento semanal.'}
 
 PERFIL: ${bioTxt}
-${cfg}${healthTxt}${histTxt}
+${cfg}${mesoTxt}${healthTxt}${histTxt}
 ${evidence}${adaptRules}
 
 Responde ÚNICAMENTE con un objeto JSON válido, sin texto antes ni después, sin backticks, con esta estructura exacta:
 {
   ${mode==='adapt'?'"analisis_progreso":"string 3-4 frases",':''}
+  "mesociclo":{"enfoque":"string: la fase que TÚ decides para este bloque según mi objetivo y progreso (p. ej. Acumulación de hipertrofia, Intensificación de fuerza, Recomposición, Descarga activa, Puesta a punto)","semanas_bloque":4,"justificacion":"string 1-2 frases de por qué esta fase ahora"},
   "sesiones_ia":[
     {"dia_codigo":"L","titulo":"string","meta":"string breve","calentamiento":"string","vuelta_calma":"string",
      "ejercicios":[
@@ -1533,7 +1582,15 @@ function openBridge(mode){
   if(!S.profile.peso||!S.profile.altura||!S.profile.edad){alert('Completa tus datos en el perfil primero.');return;}
   const prompt=buildPrompt(mode);
   S.bridgeMode=mode;
+  const wd=weekDates(S.currentWeek);
+  const rango=wd[0].toLocaleDateString('es-ES',{day:'numeric',month:'short'})+' – '+wd[6].toLocaleDateString('es-ES',{day:'numeric',month:'short'});
+  const esActual=S.currentWeek===0;
+  const aviso=esActual
+    ? `<div style="background:rgba(255,214,10,.12);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:12px;font-size:calc(12px*var(--fs))">⚠ El plan se aplicará a la semana <b>${rango}</b> (la actual). Para adaptar la <b>próxima</b>, avanza una semana:
+        <button class="btn btn-xs" style="margin-top:7px" onclick="goNextWeekInBridge()">› Ir a la semana próxima</button></div>`
+    : `<div style="background:rgba(50,215,75,.12);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:12px;font-size:calc(12px*var(--fs))">✓ El plan se aplicará a la semana <b>${rango}</b>.</div>`;
   document.getElementById('bridge-body').innerHTML=`
+    ${aviso}
     <div class="bridge-steps">
       <div class="bridge-step"><div class="num">1</div><div class="tx">Copia el mensaje para tu entrenador (botón abajo).</div></div>
       <div class="bridge-step"><div class="num">2</div><div class="tx">Ábrelo en la <b>app de Claude</b> (incluida en tu plan Pro, sin coste) y pégalo.</div></div>
@@ -1550,6 +1607,7 @@ function openBridge(mode){
   window._prompt=prompt;
   openSheet('bridge-bg');
 }
+function goNextWeekInBridge(){S.currentWeek++;save();renderCal();openBridge(S.bridgeMode||'adapt');}
 function copyPrompt(){
   navigator.clipboard.writeText(window._prompt).then(()=>{
     const b=document.getElementById('copy-btn');b.textContent='✓ Copiado';setTimeout(()=>b.textContent='📋 Copiar mensaje para Claude',1800);
@@ -1580,7 +1638,17 @@ function applyBridge(){
     if(!S.schedule[key])S.schedule[key]=[];
     if(!S.schedule[key].some(s=>s.type==='free'))S.schedule[key].push({type:'free',title:'Entrenamiento libre',meta:plan.recomendacion_cardio||'Actividad libre',done:false});});
   if(plan.nutricion)S.nutri=plan.nutricion;
+  if(plan.mesociclo){
+    if(plan.mesociclo.enfoque)S.mesoFocus=plan.mesociclo.enfoque;
+    if(plan.mesociclo.semanas_bloque)S.mesoLen=parseInt(plan.mesociclo.semanas_bloque)||S.mesoLen;
+    const j=plan.mesociclo.justificacion?' — '+plan.mesociclo.justificacion:'';
+    S.insight=(S.insight?S.insight+'\n\n':'')+'🗓️ Fase del mesociclo: '+(plan.mesociclo.enfoque||S.mesoFocus)+j;
+  }
   if(plan.analisis_progreso)S.insight=plan.analisis_progreso;
+  if(plan.mesociclo&&(plan.mesociclo.enfoque||plan.mesociclo.justificacion)){
+    const j=plan.mesociclo.justificacion?' — '+plan.mesociclo.justificacion:'';
+    S.insight=(S.insight?S.insight+'\n\n':'')+'🗓️ Fase del mesociclo: '+(plan.mesociclo.enfoque||S.mesoFocus)+j;
+  }
   if(plan.recomendacion_cardio)S.insight=(S.insight?S.insight+'\n\n':'')+'🏃 Cardio recomendado: '+plan.recomendacion_cardio;
   save();closeSheet('bridge-bg');renderCal();renderNutri();renderProg();tab('cal');
 }
@@ -2380,6 +2448,23 @@ function renderEquipChips(){
 }
 function setMin(v){S.profile.minutos=v;document.getElementById('minutos').value=v;document.getElementById('min-out').textContent=v;save();}
 
+function renderMeso(){
+  const info=document.getElementById('meso-info');
+  const fv=document.getElementById('meso-focus-view');
+  const l=document.getElementById('meso-len');
+  if(l&&S.mesoLen)l.value=String(S.mesoLen);
+  if(fv)fv.innerHTML=S.mesoFocus?`Enfoque propuesto por tu entrenador: <b style="color:var(--text)">${S.mesoFocus}</b>`:'Aún sin propuesta: pulsa "Adaptar con Claude" y tu entrenador fijará la fase del bloque.';
+  if(!info)return;
+  const cur=programWeekFor(fmt(new Date()));
+  const mi=mesoInfo(cur);
+  info.textContent=mi?`Semana ${mi.weekNum} del programa · bloque ${mi.block} (semana ${mi.wInBlock} de ${mi.len})`:'Aún sin registros: la cuenta empezará con tu primer plan o sesión.';
+}
+function saveMeso(){
+  const l=document.getElementById('meso-len');
+  if(l)S.mesoLen=parseInt(l.value)||4;
+  save();renderMeso();
+}
+
 const FS_OPTS=[['Normal',1],['Grande',1.15],['Muy grande',1.3],['Máximo',1.45]];
 function renderFsChips(){
   const c=document.getElementById('fs-chips');if(!c)return;c.innerHTML='';
@@ -2419,7 +2504,7 @@ if(window.navigator.standalone||window.matchMedia('(display-mode: standalone)').
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
 
 /* Arranque */
-loadProfile();renderDayChips();renderCal();renderProg();renderNutri();renderHealth();updateImportInfo();renderFsChips();
+loadProfile();renderDayChips();renderCal();renderProg();renderNutri();renderHealth();updateImportInfo();renderFsChips();renderMeso();
 document.getElementById('hdr-week').textContent='Semana '+realWeekNum();
 </script>
 </body>
