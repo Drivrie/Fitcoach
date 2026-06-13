@@ -412,7 +412,7 @@ body{font-size:calc(15px*var(--fs))}
       <p class="note" style="margin-bottom:9px">Pitidos en los últimos 3 segundos de cada cuenta atrás. Si apenas se oyen: sube el volumen del móvil con los botones laterales <b>mientras suena</b>, y comprueba que el interruptor de silencio (lateral del iPhone) no esté activado.</p>
       <button class="btn btn-block" onclick="testBeep()">▶ Probar sonido</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 28</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 30</div>
   </div>
 </div>
 
@@ -794,8 +794,22 @@ function renderTodayHero(){
   const hero=document.getElementById('today-hero');if(!hero)return;
   // anillo: cumplimiento de la semana mostrada (sesiones hechas / planificadas, ignorando saltadas)
   const dates=weekDates(S.currentWeek).map(fmt);
-  let plan=0,done=0;
-  dates.forEach(k=>{(S.schedule[k]||[]).forEach(s=>{if(s.skipped)return;plan++;if(s.done)done++;});});
+  // Conteo coherente con el calendario: por cada día, las sesiones reales de la agenda
+  // MÁS las previstas implícitas (día marcado IA/libre sin sesión aún en agenda).
+  let done=0,plan=0;
+  dates.forEach((k,i)=>{
+    const code=DAYS[i];
+    const list=(S.schedule[k]||[]).filter(s=>!s.skipped);
+    // dedupe por firma para evitar duplicados accidentales
+    const seen={};const uniq=[];
+    list.forEach(s=>{const sig=s.type+'|'+(s.done?'1':'0')+'|'+(s.title||'');if(!seen[sig]){seen[sig]=1;uniq.push(s);}});
+    const hasAI=uniq.some(s=>s.type==='ai');
+    const hasFree=uniq.some(s=>s.type==='free');
+    uniq.forEach(s=>{plan++;if(s.done)done++;});
+    // previstas implícitas no materializadas todavía en agenda
+    if(S.aiDays.includes(code)&&!hasAI)plan++;
+    if(S.freeDays.includes(code)&&!hasFree)plan++;
+  });
   const pct=plan?Math.min(100,Math.round(done/plan*100)):0;
   const R=34,C=2*Math.PI*R,off=C*(1-pct/100);
   // sesión de hoy
@@ -827,7 +841,16 @@ function renderTodayHero(){
       <div class="hero-kicker">${kicker}</div>
       <div class="hero-title">${title}</div>
       <div class="hero-meta">${meta}</div>
-      <div style="font-size:calc(11px*var(--fs));color:var(--text3);margin-top:6px">${done} de ${plan} sesiones de la semana completadas${(()=>{const mi=mesoInfo(programWeekFor(dates[0]));return mi?` · semana ${mi.weekNum} del programa`:'';})()}</div>
+      <div style="font-size:calc(11px*var(--fs));color:var(--text3);margin-top:6px">${(()=>{
+        let ai=0,aiDone=0,fr=0,frDone=0;
+        dates.forEach((k,i)=>{const code=DAYS[i];const list=(S.schedule[k]||[]).filter(s=>!s.skipped);
+          const seen={};const uniq=[];list.forEach(s=>{const sig=s.type+'|'+(s.done?'1':'0')+'|'+(s.title||'');if(!seen[sig]){seen[sig]=1;uniq.push(s);}});
+          const hasAI=uniq.some(s=>s.type==='ai'),hasFree=uniq.some(s=>s.type==='free');
+          uniq.forEach(s=>{if(s.type==='ai'){ai++;if(s.done)aiDone++;}else{fr++;if(s.done)frDone++;}});
+          if(S.aiDays.includes(code)&&!hasAI)ai++;
+          if(S.freeDays.includes(code)&&!hasFree)fr++;});
+        return `${done} de ${plan} completadas · ${aiDone}/${ai} IA, ${frDone}/${fr} libres`;
+      })()}${(()=>{const mi=mesoInfo(programWeekFor(dates[0]));return mi?` · semana ${mi.weekNum} del programa`:'';})()}</div>
       ${cta}
     </div>
   </div>${sundayRitualHtml(dates,todayKey)}`;
@@ -1262,8 +1285,8 @@ function openLog(key,mode){
     ${dayPicker}
     <div class="field"><label>Tipo</label><select id="l-type">${typeOpts}</select></div>
     <div class="row2">
-      <div class="field"><label>Duración (min o min:seg)</label><input type="text" id="l-dur" placeholder="45 ó 45:30" inputmode="numeric" pattern="[0-9]{1,3}(:[0-5][0-9])?"></div>
-      <div class="field"><label>Distancia (km)</label><input type="number" id="l-dist" placeholder="opcional" step="0.1" inputmode="decimal"></div>
+      <div class="field"><label>Duración (min o min:seg)</label><input type="text" id="l-dur" placeholder="37 ó 37:02" autocapitalize="off" autocorrect="off"></div>
+      <div class="field"><label>Distancia (km)</label><input type="text" id="l-dist" placeholder="7,34 (opcional)" inputmode="decimal" autocapitalize="off" autocorrect="off"></div>
     </div>
     <div class="row2">
       <div class="field"><label>kcal (Watch)</label><input type="number" id="l-kcal" placeholder="opcional" inputmode="numeric"></div>
@@ -1302,8 +1325,16 @@ function saveLog(){
   if(S.logMode==='add'&&daySel)key=daySel.value;
   const type=document.getElementById('l-type').value;
   let dur=(document.getElementById('l-dur').value||'').trim()||'?';
-  if(dur!=='?'&&!/^\d{1,3}(:[0-5]?\d)?$/.test(dur)){alert('Duración: usa minutos ("45") o min:seg ("45:30").');return;}
-  const dist=document.getElementById('l-dist').value;
+  // admite "37", "37:02", "37,02" (coma como separa min:seg también) → normaliza a min o min:seg
+  if(dur!=='?'){
+    dur=dur.replace(/[.,]/g,':'); // por si el usuario usa coma/punto en vez de :
+    if(!/^\d{1,3}(:[0-5]?\d)?$/.test(dur)){alert('Duración: escribe minutos ("37") o minutos:segundos ("37:02").');return;}
+  }
+  let dist=(document.getElementById('l-dist').value||'').trim();
+  if(dist){
+    dist=dist.replace(',','.'); // coma decimal española → punto
+    if(!/^\d{1,3}(\.\d{1,2})?$/.test(dist)){alert('Distancia: escribe los km como "7" o "7,34".');return;}
+  }
   const kcal=document.getElementById('l-kcal')?document.getElementById('l-kcal').value:'';
   const hr=document.getElementById('l-hr')?document.getElementById('l-hr').value:'';
   const feel=document.querySelector('.feel-b.sel').dataset.f;
@@ -1314,7 +1345,7 @@ function saveLog(){
   if(type.includes('IA')&&aiIdx>=0){S.schedule[key][aiIdx].done=true;S.schedule[key][aiIdx].log=log;}
   else{
     const fIdx=S.schedule[key].findIndex(s=>s.type==='free'&&!s.done);
-    if(fIdx>=0){S.schedule[key][fIdx].done=true;S.schedule[key][fIdx].log=log;S.schedule[key][fIdx].title=type;S.schedule[key][fIdx].meta=dur+'min'+(dist?' · '+dist+'km':'');}
+    if(fIdx>=0){S.schedule[key][fIdx].done=true;S.schedule[key][fIdx].log=log;S.schedule[key][fIdx].title=type;S.schedule[key][fIdx].meta=(dur.includes(':')?dur+' min':dur+' min')+(dist?' · '+dist+' km':'');}
     else S.schedule[key].push({type:'free',title:type,meta:dur+'min'+(dist?' · '+dist+'km':''),done:true,log});
   }
   S.history.unshift({key,...log,title:type});

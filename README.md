@@ -302,3 +302,19 @@ semanal con lo entrenado; marcadores solo cada mes.
 - La tarjeta Mesociclo de Perfil muestra el enfoque propuesto (solo lectura) y la semana del
   programa; las semanas por bloque quedan como ajuste avanzado opcional.
 - El análisis del entrenador muestra "🗓️ Fase del mesociclo: … — justificación".
+
+## v29: corrección del conteo semanal de la tarjeta "Hoy"
+- El anillo solo miraba S.schedule y se saltaba los días libres "implícitos" (marcados como
+  libres pero aún sin sesión materializada en la agenda), por lo que el denominador salía
+  corto (p. ej. "5 de 8" en vez de los 9 reales).
+- Nuevo conteo coherente con el calendario: por cada día suma las sesiones reales de la
+  agenda (deduplicadas por firma para evitar duplicados accidentales) MÁS las previstas
+  implícitas de los días marcados como IA/libres. Desglose visible "X de Y completadas ·
+  a/b IA, c/d libres".
+
+## v30: corrección de teclado en duración y distancia
+- Duración: el campo usaba inputmode="numeric", que en iOS abre un teclado sin ":". Ahora es
+  texto con teclado completo, admite "37" o "37:02" (y convierte coma/punto a ":").
+- Distancia: era type="number", que en configuración española rechaza la coma. Ahora es texto
+  con inputmode="decimal"; admite "7,34" o "7.34" y se normaliza a punto internamente.
+- Validación clara con mensajes específicos si el formato no es válido.
