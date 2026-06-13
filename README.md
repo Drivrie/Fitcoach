@@ -318,3 +318,16 @@ semanal con lo entrenado; marcadores solo cada mes.
 - Distancia: era type="number", que en configuración española rechaza la coma. Ahora es texto
   con inputmode="decimal"; admite "7,34" o "7.34" y se normaliza a punto internamente.
 - Validación clara con mensajes específicos si el formato no es válido.
+
+## v31: compartir prompt como texto en iPhone
+- Nuevo botón "Compartir con Claude" que usa la hoja de compartir nativa (navigator.share)
+  para enviar el prompt como TEXTO, evitando que iOS lo adjunte como archivo .txt al pegarlo.
+- Nota explicativa en el puente para iPhone.
+- Las notas del historial viajan ÍNTEGRAS al prompt (sin recortes); el problema del adjunto .txt se resuelve solo con el botón Compartir.
+
+## v32: ventana de historial ampliada a ~4 semanas (mesociclo)
+- El prompt de adaptación incluye hasta 38 sesiones (antes 20) ≈ 4 semanas al ritmo
+  del usuario, para que Claude valore la trayectoria del mesociclo (progreso/estancamiento/
+  fatiga), no solo la última semana. Notas íntegras. Se instruye dar más peso a lo reciente
+  para la carga inmediata y usar el conjunto para la trayectoria. Tamaño del prompt resultante
+  ~13k caracteres (~3,3k tokens), holgadamente dentro de límites.
