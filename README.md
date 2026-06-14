@@ -363,3 +363,9 @@ semanal con lo entrenado; marcadores solo cada mes.
 - El prompt incluye la lista COMPLETA de pesos disponibles y las bandas, con instrucción de
   no limitarse a 12/16 kg y de subir de escalón cuando los registros lo justifiquen. Resuelve
   que la progresión se topara con los pesos iniciales.
+
+## v38: parser de JSON tolerante (comillas tipográficas iOS)
+- applyBridge ahora normaliza antes de parsear: comillas tipográficas “ ” ‘ ’ → rectas,
+  espacios duros, guiones largos y comas colgantes. Resuelve el "no se pudo leer el JSON"
+  cuando el texto pegado desde la app de Claude en iPhone trae comillas curvas.
+- Mensaje de error más útil (sugiere pedir "en texto plano, solo el JSON").

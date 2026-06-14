@@ -415,7 +415,7 @@ body{font-size:calc(15px*var(--fs))}
       <p class="note" style="margin-bottom:9px">Pitidos en los últimos 3 segundos de cada cuenta atrás. Si apenas se oyen: sube el volumen del móvil con los botones laterales <b>mientras suena</b>, y comprueba que el interruptor de silencio (lateral del iPhone) no esté activado.</p>
       <button class="btn btn-block" onclick="testBeep()">▶ Probar sonido</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 37</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 38</div>
   </div>
 </div>
 
@@ -1694,10 +1694,18 @@ function applyBridge(){
   if(!raw){alert('Pega la respuesta de Claude primero.');return;}
   let plan;
   try{
-    const clean=raw.replace(/```json|```/g,'').trim();
+    let clean=raw.replace(/```json|```/g,'').trim();
+    // Normaliza comillas tipográficas y otros caracteres de iOS que rompen el JSON
+    clean=clean
+      .replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g,'"') // comillas dobles curvas → "
+      .replace(/[\u2018\u2019\u201A\u201B\u2032\u2035]/g,"'") // comillas simples curvas → '
+      .replace(/\u00A0/g,' ')   // espacio duro → espacio normal
+      .replace(/[\u2013\u2014]/g,'-') // guiones largos → guion
+      .replace(/,\s*([}\]])/g,'$1'); // comas colgantes antes de } o ]
     const start=clean.indexOf('{');const end=clean.lastIndexOf('}');
+    if(start<0||end<0)throw new Error('sin objeto');
     plan=JSON.parse(clean.slice(start,end+1));
-  }catch(e){alert('No se pudo leer el JSON. Asegúrate de copiar la respuesta completa de Claude.');return;}
+  }catch(e){alert('No se pudo leer el JSON. Copia la respuesta COMPLETA de Claude (desde la primera { hasta la última }). Si el problema persiste, pide a Claude que la repita "en texto plano, solo el JSON".');return;}
   const dates=weekDates(S.currentWeek);
   (plan.sesiones_ia||[]).forEach(s=>{
     const idx=DAYS.indexOf(s.dia_codigo);if(idx<0)return;
