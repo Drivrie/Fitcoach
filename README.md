@@ -354,3 +354,12 @@ semanal con lo entrenado; marcadores solo cada mes.
 - Los días en el prompt (completos, breves, libres) se ordenan de lunes a domingo, no en el
   orden en que se marcaron.
 - La línea final de instrucción de dia_codigo refleja completos y breves explícitamente.
+
+## v37: pesos de mancuernas y bandas configurables (progresión sin techo falso)
+- Al seleccionar "mancuernas" aparece un selector de rango (desde/hasta/salto, kg por
+  mancuerna) con vista previa de los pesos; se guarda en S.dumbbells.
+- Al seleccionar "bandas" aparecen las resistencias baja/media/alta como casillas
+  (S.bands).
+- El prompt incluye la lista COMPLETA de pesos disponibles y las bandas, con instrucción de
+  no limitarse a 12/16 kg y de subir de escalón cuando los registros lo justifiquen. Resuelve
+  que la progresión se topara con los pesos iniciales.

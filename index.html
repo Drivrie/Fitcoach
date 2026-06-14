@@ -389,6 +389,7 @@ body{font-size:calc(15px*var(--fs))}
       </div>
       <div class="field"><label>Equipo disponible (puedes elegir varios)</label>
         <div id="equip-chips"></div>
+        <div id="equip-detail" style="margin-top:10px"></div>
       </div>
     </div>
     <button class="btn btn-primary btn-block" onclick="buildWeekOffline()">⚡ Generar semana (offline)</button>
@@ -414,7 +415,7 @@ body{font-size:calc(15px*var(--fs))}
       <p class="note" style="margin-bottom:9px">Pitidos en los últimos 3 segundos de cada cuenta atrás. Si apenas se oyen: sube el volumen del móvil con los botones laterales <b>mientras suena</b>, y comprueba que el interruptor de silencio (lateral del iPhone) no esté activado.</p>
       <button class="btn btn-block" onclick="testBeep()">▶ Probar sonido</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 36</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 37</div>
   </div>
 </div>
 
@@ -598,6 +599,8 @@ function initState(){
   if(typeof S.profile.minutos==='string')S.profile.minutos=parseInt(S.profile.minutos)||45;
   if(!S.aiDays)S.aiDays=['L','X','V'];
   if(!S.briefDays)S.briefDays=[]; // días IA de fuerza breve (los que coinciden con carrera, p. ej. M/J)
+  if(!S.dumbbells)S.dumbbells={min:8,max:24,step:2}; // rango de mancuernas disponible (kg por mancuerna)
+  if(!S.bands)S.bands={baja:true,media:true,alta:true}; // resistencias de bandas disponibles
   if(!S.freeDays)S.freeDays=['M','J'];
   if(!S.schedule)S.schedule={};
   if(!S.history)S.history=[];
@@ -1488,11 +1491,21 @@ function buildPrompt(mode){
   const bioTxt=`Peso ${p.peso}kg, altura ${p.altura}cm, edad ${p.edad}, sexo ${p.sexo}`;
   const objLabels=(p.objetivos||['bienestar']).map(o=>GOAL_LABELS[o]||o).join(' + ');
   const eqLabels=(p.equipos||['ninguno']).map(e=>({ninguno:'peso corporal',mancuernas:'mancuernas',bandas:'bandas elásticas',barra:'barra y discos',kettlebell:'kettlebell',gimnasio:'gimnasio completo'}[e]||e)).join(', ');
+  // detalle de cargas disponibles (para que la progresión no se limite a los pesos iniciales)
+  let eqDetail='';
+  if((p.equipos||[]).includes('mancuernas')){
+    const l=dumbbellList();
+    if(l.length)eqDetail+=`\nMancuernas disponibles (kg por mancuerna, una en cada mano): ${l.join(', ')}. Usa el peso adecuado de esta lista según mi progresión real; puedes subir de escalón cuando los registros lo justifiquen. NO te limites a 12 y 16 kg.`;
+  }
+  if((p.equipos||[]).includes('bandas')){
+    const b=S.bands||{};const res=['baja','media','alta'].filter(r=>b[r]);
+    if(res.length)eqDetail+=`\nBandas elásticas disponibles, resistencias: ${res.join(', ')}. Indica qué banda usar en cada ejercicio.`;
+  }
   const ordDays=arr=>DAYS.filter(d=>arr.includes(d));
   const fullDays=ordDays(S.aiDays.filter(d=>!S.briefDays.includes(d)));
   const briefDays=ordDays(S.aiDays.filter(d=>S.briefDays.includes(d)));
   const freeOrd=ordDays(S.freeDays);
-  const cfg=`Objetivos (combinar de forma coherente): ${objLabels}. Nivel: ${p.nivel}. Equipo disponible: ${eqLabels}.
+  const cfg=`Objetivos (combinar de forma coherente): ${objLabels}. Nivel: ${p.nivel}. Equipo disponible: ${eqLabels}.${eqDetail}
 Días de fuerza COMPLETA (~${p.minutos} min, cuerpo entero): ${fullDays.join(', ')||'ninguno'}.
 Días de fuerza BREVE (15-20 min, complementaria porque ese día también hago carrera): ${briefDays.join(', ')||'ninguno'}.
 Días de entrenamiento libre (cardio/paseo): ${freeOrd.join(', ')||'ninguno'}.
@@ -2514,6 +2527,58 @@ function renderEquipChips(){
     el.onclick=()=>{toggleArr(S.profile.equipos,k);if(S.profile.equipos.length===0)S.profile.equipos=['ninguno'];save();renderEquipChips();};
     c.appendChild(el);
   });
+  renderEquipDetail();
+}
+function renderEquipDetail(){
+  const d=document.getElementById('equip-detail');if(!d)return;
+  const eq=S.profile.equipos||[];let h='';
+  if(eq.includes('mancuernas')){
+    const db=S.dumbbells||{min:8,max:24,step:2};
+    h+=`<div style="background:var(--surface2);border-radius:12px;padding:11px 12px;margin-bottom:8px">
+      <div style="font-size:calc(12px*var(--fs));font-weight:600;margin-bottom:8px">🏋 Mancuernas disponibles (kg por mancuerna)</div>
+      <div class="row2">
+        <div class="field"><label>Desde</label><input type="number" id="db-min" value="${db.min}" inputmode="numeric" onchange="saveDumbbells()"></div>
+        <div class="field"><label>Hasta</label><input type="number" id="db-max" value="${db.max}" inputmode="numeric" onchange="saveDumbbells()"></div>
+      </div>
+      <div class="field"><label>Salto entre pesos (kg)</label><select id="db-step" onchange="saveDumbbells()">
+        ${[1,2,2.5,5].map(s=>`<option value="${s}"${db.step===s?' selected':''}>${s} kg</option>`).join('')}</select></div>
+      <div id="db-preview" style="font-size:calc(11px*var(--fs));color:var(--text3);margin-top:4px"></div>
+    </div>`;
+  }
+  if(eq.includes('bandas')){
+    const b=S.bands||{baja:true,media:true,alta:true};
+    h+=`<div style="background:var(--surface2);border-radius:12px;padding:11px 12px;margin-bottom:8px">
+      <div style="font-size:calc(12px*var(--fs));font-weight:600;margin-bottom:8px">🎗 Bandas elásticas disponibles</div>
+      <div style="display:flex;gap:8px">
+        ${['baja','media','alta'].map(r=>`<span class="chip${b[r]?' sel':''}" onclick="toggleBand('${r}')" style="text-transform:capitalize">${r}</span>`).join('')}
+      </div>
+    </div>`;
+  }
+  d.innerHTML=h;
+  if(eq.includes('mancuernas'))updateDbPreview();
+}
+function dumbbellList(){
+  const db=S.dumbbells||{min:8,max:24,step:2};
+  const out=[];for(let w=db.min;w<=db.max+1e-9;w+=db.step)out.push(+w.toFixed(2));
+  return out;
+}
+function updateDbPreview(){
+  const p=document.getElementById('db-preview');if(!p)return;
+  const l=dumbbellList();
+  p.textContent=l.length?('Pesos: '+l.join(', ')+' kg'):'Revisa el rango.';
+}
+function saveDumbbells(){
+  const min=parseFloat(document.getElementById('db-min').value);
+  const max=parseFloat(document.getElementById('db-max').value);
+  const step=parseFloat(document.getElementById('db-step').value);
+  S.dumbbells={min:isNaN(min)?8:min,max:isNaN(max)?24:max,step:isNaN(step)?2:step};
+  save();updateDbPreview();
+}
+function toggleBand(r){
+  if(!S.bands)S.bands={baja:true,media:true,alta:true};
+  S.bands[r]=!S.bands[r];
+  if(!S.bands.baja&&!S.bands.media&&!S.bands.alta)S.bands[r]=true; // al menos una
+  save();renderEquipDetail();
 }
 function setMin(v){S.profile.minutos=v;document.getElementById('minutos').value=v;document.getElementById('min-out').textContent=v;save();}
 
