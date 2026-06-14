@@ -65,6 +65,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
   border:1px solid var(--border);background:var(--surface2);color:var(--text2);margin:3px 3px 3px 0;cursor:pointer;transition:all .12s}
 .chip.sel{background:var(--accent);color:#fff;border-color:var(--accent)}
 .chip.ai-c{border-color:#4a3fb0;color:#a99af9}.chip.ai-c.sel{background:var(--ai);color:#fff;border-color:var(--ai)}
+.chip.ai-c.sel.brief{background:#0a5a8f;border-color:#0a84ff}
 .chip.free-c{border-color:#1f7a5a;color:#5ee0b0}.chip.free-c.sel{background:var(--free);color:#04261b;border-color:var(--free)}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:13px}
 .cal-day{min-height:62px;border-radius:11px;border:1px solid var(--border);padding:5px 3px;background:var(--surface);cursor:pointer;transition:all .12s;position:relative;display:flex;flex-direction:column;align-items:center}
@@ -362,7 +363,8 @@ body{font-size:calc(15px*var(--fs))}
     <div class="card">
       <div class="card-t">Estructura semanal</div>
       <label style="font-size:11px;font-weight:600;color:#a99af9;text-transform:uppercase;letter-spacing:.5px">Días con sesión IA</label>
-      <div id="ai-days" style="margin:6px 0 12px"></div>
+      <div id="ai-days" style="margin:6px 0 4px"></div>
+      <p class="note" style="margin:0 0 12px;font-size:calc(11px*var(--fs))">Toca un día para alternar: <b>completo</b> (fuerza de ~50 min) → <b>·breve</b> (fuerza corta de 15-20 min para días con carrera, p. ej. martes y jueves) → quitar.</p>
       <label style="font-size:11px;font-weight:600;color:#5ee0b0;text-transform:uppercase;letter-spacing:.5px">Días de entrenamiento libre</label>
       <div id="free-days" style="margin-top:6px"></div>
     </div>
@@ -412,7 +414,7 @@ body{font-size:calc(15px*var(--fs))}
       <p class="note" style="margin-bottom:9px">Pitidos en los últimos 3 segundos de cada cuenta atrás. Si apenas se oyen: sube el volumen del móvil con los botones laterales <b>mientras suena</b>, y comprueba que el interruptor de silencio (lateral del iPhone) no esté activado.</p>
       <button class="btn btn-block" onclick="testBeep()">▶ Probar sonido</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 33</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 35</div>
   </div>
 </div>
 
@@ -595,6 +597,7 @@ function initState(){
   if(S.profile.minutos==null)S.profile.minutos=45;
   if(typeof S.profile.minutos==='string')S.profile.minutos=parseInt(S.profile.minutos)||45;
   if(!S.aiDays)S.aiDays=['L','X','V'];
+  if(!S.briefDays)S.briefDays=[]; // días IA de fuerza breve (los que coinciden con carrera, p. ej. M/J)
   if(!S.freeDays)S.freeDays=['M','J'];
   if(!S.schedule)S.schedule={};
   if(!S.history)S.history=[];
@@ -755,9 +758,12 @@ function buildWeekOffline(){
     const idx=DAYS.indexOf(code);if(idx<0)return;
     const key=fmt(dates[idx]);
     if(!S.schedule[key])S.schedule[key]=[];
-    const sess=buildSessionOffline(eq,objetivo,p.nivel,p.minutos,code,(S.currentWeek+1)*7+i,isDeload);
+    const isBrief=S.briefDays.includes(code);
+    const mins=isBrief?18:p.minutos;
+    const sess=buildSessionOffline(eq,objetivo,p.nivel,mins,code,(S.currentWeek+1)*7+i,isDeload);
+    if(isBrief)sess.titulo='Fuerza breve · complemento de carrera';
     const ex=S.schedule[key].findIndex(x=>x.type==='ai');
-    const entry={type:'ai',title:sess.titulo,meta:sess.meta,warmup:sess.calentamiento,cooldown:sess.vuelta_calma,exercises:sess.ejercicios,done:false};
+    const entry={type:'ai',title:sess.titulo,meta:sess.meta,warmup:sess.calentamiento,cooldown:sess.vuelta_calma,exercises:sess.ejercicios,done:false,brief:isBrief};
     if(ex>=0)S.schedule[key][ex]=entry;else S.schedule[key].push(entry);
   });
   S.freeDays.forEach(code=>{
@@ -1482,18 +1488,28 @@ function buildPrompt(mode){
   const bioTxt=`Peso ${p.peso}kg, altura ${p.altura}cm, edad ${p.edad}, sexo ${p.sexo}`;
   const objLabels=(p.objetivos||['bienestar']).map(o=>GOAL_LABELS[o]||o).join(' + ');
   const eqLabels=(p.equipos||['ninguno']).map(e=>({ninguno:'peso corporal',mancuernas:'mancuernas',bandas:'bandas elásticas',barra:'barra y discos',kettlebell:'kettlebell',gimnasio:'gimnasio completo'}[e]||e)).join(', ');
-  const cfg=`Objetivos (combinar de forma coherente): ${objLabels}. Nivel: ${p.nivel}. Equipo disponible: ${eqLabels}. Sesiones IA de ${p.minutos} min los días: ${S.aiDays.join(', ')||'ninguno'}. Días de entrenamiento libre: ${S.freeDays.join(', ')||'ninguno'}.
+  const fullDays=S.aiDays.filter(d=>!S.briefDays.includes(d));
+  const briefDays=S.aiDays.filter(d=>S.briefDays.includes(d));
+  const cfg=`Objetivos (combinar de forma coherente): ${objLabels}. Nivel: ${p.nivel}. Equipo disponible: ${eqLabels}.
+Días de fuerza COMPLETA (~${p.minutos} min, cuerpo entero): ${fullDays.join(', ')||'ninguno'}.
+Días de fuerza BREVE (15-20 min, complementaria porque ese día también hago carrera): ${briefDays.join(', ')||'ninguno'}.
+Días de entrenamiento libre (cardio/paseo): ${S.freeDays.join(', ')||'ninguno'}.
+Para los días de fuerza breve: 3-4 ejercicios enfocados y de menor volumen, pensados para hacerse el mismo día que la carrera; prioriza tren superior o core y evita cargar piernas en exceso si ese día hay carrera intensa.
 Si se combinan varios objetivos, prioriza un esquema de fuerza/hipertrofia para el entrenamiento y ajusta SOLO la nutrición para el componente de composición corporal (p. ej. músculo+grasa = recomposición: déficit ligero con proteína alta; grasa = déficit; músculo/fuerza = superávit ligero).`;
   // contexto de mesociclo (semana del programa que se va a planificar)
   let mesoTxt='';
   const targetWeek=programWeekFor(fmt(weekDates(S.currentWeek)[0]));
   const mi=mesoInfo(targetWeek);
   if(mi){
-    mesoTxt=`\n\nFASE DEL PROGRAMA: vas a planificar la SEMANA ${mi.weekNum} desde que empecé a registrar. Estoy en el bloque/mesociclo ${mi.block}, semana ${mi.wInBlock} de ${mi.len}. Enfoque vigente que propusiste antes: "${mi.focus}".
+    const wd0=weekDates(S.currentWeek);
+    const rango=fmt(wd0[0])+' a '+fmt(wd0[6]);
+    const focusTxt=mi.focus&&mi.focus.trim()?mi.focus:'aún sin definir (esta es la primera adaptación; decídelo tú)';
+    mesoTxt=`\n\nFASE DEL PROGRAMA: vas a planificar la semana del ${rango} (semana ${mi.weekNum} desde mi primer registro). Estoy en el bloque/mesociclo ${mi.block}, semana ${mi.wInBlock} de ${mi.len}. Enfoque vigente: "${focusTxt}".
+- IMPORTANTE: planifica esa semana destino indicada arriba, que debe ser POSTERIOR a las sesiones del historial; si ves que el historial ya incluye sesiones de esa misma semana, asume que estoy planificando la semana siguiente a la última registrada.
 - ACTÚA COMO ENTRENADOR PROFESIONAL: TÚ decides el enfoque del mesociclo en función de mi objetivo global y mi progreso; no me lo preguntes. Devuélvelo en el campo "mesociclo".
 - Si sigo dentro del mismo bloque (semana ${mi.wInBlock} de ${mi.len}), mantén el enfoque y progresa el volumen/carga de forma ascendente respecto a la semana anterior.
-- Si he llegado al final del bloque (semana ${mi.wInBlock} = ${mi.len}, o si el progreso/fatiga lo aconsejan), propón el enfoque del SIGUIENTE bloque (p. ej. pasar de acumulación de hipertrofia a un bloque de intensificación de fuerza, o de recomposición a fuerza), explicándolo en "mesociclo.justificacion".
-- IMPORTANTE: NO programes semanas de descarga completa (entreno todas las semanas); gestiona la fatiga con volumen y proximidad al fallo. Una "descarga activa" como enfoque de bloque solo si la fatiga acumulada es clara según mis sensaciones y marcadores.`;
+- Si he llegado al final del bloque (semana ${mi.wInBlock} = ${mi.len}, o si el progreso/fatiga lo aconsejan), propón el enfoque del SIGUIENTE bloque, explicándolo en "mesociclo.justificacion".
+- IMPORTANTE: NO programes semanas de descarga completa (entreno todas las semanas); gestiona la fatiga con volumen y proximidad al fallo.`;
   }
   let histTxt='';
   if(mode==='adapt'){
@@ -2449,11 +2465,20 @@ function renderDayChips(){
   const ai=document.getElementById('ai-days'),fr=document.getElementById('free-days');
   ai.innerHTML='';fr.innerHTML='';
   DAYS.forEach(c=>{
-    const a=document.createElement('span');a.className='chip ai-c'+(S.aiDays.includes(c)?' sel':'');a.textContent=c;
-    a.onclick=()=>{toggleArr(S.aiDays,c);if(S.aiDays.includes(c)){const i=S.freeDays.indexOf(c);if(i>=0)S.freeDays.splice(i,1);}save();renderDayChips();};
+    const isAI=S.aiDays.includes(c),isBrief=S.briefDays.includes(c);
+    const a=document.createElement('span');
+    a.className='chip ai-c'+(isAI?' sel':'')+(isBrief?' brief':'');
+    a.textContent=c+(isBrief?' ·breve':'');
+    a.onclick=()=>{
+      // ciclo: ninguno → completo → breve → ninguno
+      if(!isAI){S.aiDays.push(c);const i=S.freeDays.indexOf(c);if(i>=0)S.freeDays.splice(i,1);}
+      else if(!isBrief){S.briefDays.push(c);}
+      else {const i=S.aiDays.indexOf(c);if(i>=0)S.aiDays.splice(i,1);const j=S.briefDays.indexOf(c);if(j>=0)S.briefDays.splice(j,1);}
+      save();renderDayChips();
+    };
     ai.appendChild(a);
     const f=document.createElement('span');f.className='chip free-c'+(S.freeDays.includes(c)?' sel':'');f.textContent=c;
-    f.onclick=()=>{toggleArr(S.freeDays,c);if(S.freeDays.includes(c)){const i=S.aiDays.indexOf(c);if(i>=0)S.aiDays.splice(i,1);}save();renderDayChips();};
+    f.onclick=()=>{toggleArr(S.freeDays,c);if(S.freeDays.includes(c)){const i=S.aiDays.indexOf(c);if(i>=0)S.aiDays.splice(i,1);const j=S.briefDays.indexOf(c);if(j>=0)S.briefDays.splice(j,1);}save();renderDayChips();};
     fr.appendChild(f);
   });
 }

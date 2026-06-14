@@ -331,3 +331,21 @@ semanal con lo entrenado; marcadores solo cada mes.
   fatiga), no solo la última semana. Notas íntegras. Se instruye dar más peso a lo reciente
   para la carga inmediata y usar el conjunto para la trayectoria. Tamaño del prompt resultante
   ~13k caracteres (~3,3k tokens), holgadamente dentro de límites.
+
+## v34: coherencia del prompt de adaptación
+- El prompt indica las FECHAS REALES de la semana destino (no solo "semana N") y avisa a
+  Claude de que debe planificar la semana posterior al historial (evita planificar una
+  semana ya entrenada si el usuario no avanzó de semana).
+- Enfoque de mesociclo vacío ahora se expresa como "aún sin definir (primera adaptación)".
+- Aclaración de días de doble propósito: en martes/jueves (carrera + IA), la sesión IA debe
+  ser fuerza breve complementaria (~15-20 min), no una sesión completa; las completas van en
+  los días sin carrera.
+
+## v35: días de fuerza completa vs. fuerza breve (M/J con carrera)
+- Nuevo concepto S.briefDays: días IA de fuerza BREVE (15-20 min) para los días que también
+  tienen carrera (p. ej. martes/jueves), frente a los días de fuerza COMPLETA (L/X/V).
+- Chips de día en Perfil: tocar un día IA alterna completo → ·breve → quitar (color azul más
+  oscuro para breve), con nota explicativa.
+- El prompt distingue explícitamente días completos y breves, e instruye sesiones cortas
+  enfocadas (tren superior/core) en los días con carrera para no solapar fatiga.
+- El motor offline genera ~18 min y título "Fuerza breve · complemento de carrera" en esos días.
