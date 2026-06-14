@@ -349,3 +349,8 @@ semanal con lo entrenado; marcadores solo cada mes.
 - El prompt distingue explícitamente días completos y breves, e instruye sesiones cortas
   enfocadas (tren superior/core) en los días con carrera para no solapar fatiga.
 - El motor offline genera ~18 min y título "Fuerza breve · complemento de carrera" en esos días.
+
+## v36: orden de días y línea final coherente
+- Los días en el prompt (completos, breves, libres) se ordenan de lunes a domingo, no en el
+  orden en que se marcaron.
+- La línea final de instrucción de dia_codigo refleja completos y breves explícitamente.

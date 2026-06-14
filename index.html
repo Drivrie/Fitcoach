@@ -414,7 +414,7 @@ body{font-size:calc(15px*var(--fs))}
       <p class="note" style="margin-bottom:9px">Pitidos en los últimos 3 segundos de cada cuenta atrás. Si apenas se oyen: sube el volumen del móvil con los botones laterales <b>mientras suena</b>, y comprueba que el interruptor de silencio (lateral del iPhone) no esté activado.</p>
       <button class="btn btn-block" onclick="testBeep()">▶ Probar sonido</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 35</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 36</div>
   </div>
 </div>
 
@@ -1488,12 +1488,14 @@ function buildPrompt(mode){
   const bioTxt=`Peso ${p.peso}kg, altura ${p.altura}cm, edad ${p.edad}, sexo ${p.sexo}`;
   const objLabels=(p.objetivos||['bienestar']).map(o=>GOAL_LABELS[o]||o).join(' + ');
   const eqLabels=(p.equipos||['ninguno']).map(e=>({ninguno:'peso corporal',mancuernas:'mancuernas',bandas:'bandas elásticas',barra:'barra y discos',kettlebell:'kettlebell',gimnasio:'gimnasio completo'}[e]||e)).join(', ');
-  const fullDays=S.aiDays.filter(d=>!S.briefDays.includes(d));
-  const briefDays=S.aiDays.filter(d=>S.briefDays.includes(d));
+  const ordDays=arr=>DAYS.filter(d=>arr.includes(d));
+  const fullDays=ordDays(S.aiDays.filter(d=>!S.briefDays.includes(d)));
+  const briefDays=ordDays(S.aiDays.filter(d=>S.briefDays.includes(d)));
+  const freeOrd=ordDays(S.freeDays);
   const cfg=`Objetivos (combinar de forma coherente): ${objLabels}. Nivel: ${p.nivel}. Equipo disponible: ${eqLabels}.
 Días de fuerza COMPLETA (~${p.minutos} min, cuerpo entero): ${fullDays.join(', ')||'ninguno'}.
 Días de fuerza BREVE (15-20 min, complementaria porque ese día también hago carrera): ${briefDays.join(', ')||'ninguno'}.
-Días de entrenamiento libre (cardio/paseo): ${S.freeDays.join(', ')||'ninguno'}.
+Días de entrenamiento libre (cardio/paseo): ${freeOrd.join(', ')||'ninguno'}.
 Para los días de fuerza breve: 3-4 ejercicios enfocados y de menor volumen, pensados para hacerse el mismo día que la carrera; prioriza tren superior o core y evita cargar piernas en exceso si ese día hay carrera intensa.
 Si se combinan varios objetivos, prioriza un esquema de fuerza/hipertrofia para el entrenamiento y ajusta SOLO la nutrición para el componente de composición corporal (p. ej. músculo+grasa = recomposición: déficit ligero con proteína alta; grasa = déficit; músculo/fuerza = superávit ligero).`;
   // contexto de mesociclo (semana del programa que se va a planificar)
@@ -1599,7 +1601,7 @@ Responde ÚNICAMENTE con un objeto JSON válido, sin texto antes ni después, si
       {"momento":"Cena","hora":"20:30","plato":"string","kcal":480,"proteina_g":36}
     ]}
 }
-Para "dia_codigo" usa solo los días IA indicados (${S.aiDays.join(', ')}). En "nombre" de ejercicios usa términos comunes en español (sentadilla, press de banca, remo, plancha, etc.).`;
+Para "dia_codigo" usa solo estos días: completos ${fullDays.join(', ')||'(ninguno)'} y breves ${briefDays.join(', ')||'(ninguno)'}. En "nombre" de ejercicios usa términos comunes en español (sentadilla, press de banca, remo, plancha, etc.).`;
 }
 
 function saveBaseline(){
