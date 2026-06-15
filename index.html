@@ -415,7 +415,7 @@ body{font-size:calc(15px*var(--fs))}
       <p class="note" style="margin-bottom:9px">Pitidos en los últimos 3 segundos de cada cuenta atrás. Si apenas se oyen: sube el volumen del móvil con los botones laterales <b>mientras suena</b>, y comprueba que el interruptor de silencio (lateral del iPhone) no esté activado.</p>
       <button class="btn btn-block" onclick="testBeep()">▶ Probar sonido</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 38</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 39</div>
   </div>
 </div>
 
@@ -2321,6 +2321,7 @@ function renderPlayer(){
         <div style="width:130px;height:104px;margin:0 auto 10px">${exSVG(ex.nombre)}</div>
         <div style="font-weight:700;font-size:calc(16px*var(--fs))">${ex.nombre}</div>
         <div class="pl-cue" style="margin-top:4px">${ex.series>1?`${ex.series} series`:'1 serie'} · ${ex.reps}${/^\d+$/.test(String(ex.reps))?' reps':''}${ex.rir?' · RIR '+ex.rir:''}</div>
+        ${ex.peso?`<div style="margin-top:6px;color:var(--ring-ex);font-weight:600;font-size:calc(14px*var(--fs))">🏋 ${ex.peso}</div>`:''}
         ${ex.descripcion?`<div class="pl-cue" style="margin-top:6px">${ex.descripcion}</div>`:''}
         ${errs.length?`<div class="pl-cue" style="margin-top:6px;color:var(--danger)">⚠ Evita: ${errs[0].toLowerCase()}</div>`:''}
       </div>`;

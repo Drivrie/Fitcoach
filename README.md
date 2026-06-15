@@ -369,3 +369,8 @@ semanal con lo entrenado; marcadores solo cada mes.
   espacios duros, guiones largos y comas colgantes. Resuelve el "no se pudo leer el JSON"
   cuando el texto pegado desde la app de Claude en iPhone trae comillas curvas.
 - Mensaje de error más útil (sugiere pedir "en texto plano, solo el JSON").
+
+## v39: peso en la vista previa durante el descanso
+- La tarjeta "A continuación" que se muestra durante el descanso entre ejercicios ahora
+  incluye el peso propuesto (🏋), igual que el resumen de sesión y la pantalla de inicio de
+  serie. Antes solo mostraba series/reps/RIR.
