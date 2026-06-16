@@ -374,3 +374,22 @@ semanal con lo entrenado; marcadores solo cada mes.
 - La tarjeta "A continuación" que se muestra durante el descanso entre ejercicios ahora
   incluye el peso propuesto (🏋), igual que el resumen de sesión y la pantalla de inicio de
   serie. Antes solo mostraba series/reps/RIR.
+
+## v40: barra de dominadas opcional y pesos de kettlebell
+- Nueva opción de equipo "Barra de dominadas" (independiente de "Gimnasio"). El prompt solo
+  permite dominadas/colgarse si está seleccionada; si no, instruye explícitamente NO proponer
+  dominadas y usar remos para la espalda. El ejercicio "Dominadas" del motor offline pasa a
+  requerir 'dominadas' o 'gimnasio'.
+- Al seleccionar "Kettlebell" aparece un campo para indicar los pesos disponibles (kg,
+  separados por comas); el prompt los incluye e instruye usar solo esos pesos.
+
+## v41: cabecera del calendario por semana del programa
+- La cabecera deja de mostrar el contador relativo a hoy ("Semana 1/2", que confundía al
+  navegar entre semanas) y muestra "Semana N del programa", coherente con programWeekFor y con
+  la tarjeta "Hoy". Calcula N para la semana MOSTRADA (no la actual), así al avanzar/retroceder
+  con ‹ › el número refleja la semana real del programa.
+- Helper único weekHeaderLabel()/setWeekHeader() reemplaza los tres puntos que fijaban la
+  cabecera (changeWeek, renderCal y arranque). Si aún no hay programStart (usuario sin datos),
+  conserva el contador relativo como respaldo.
+- Eliminado el sufijo "· descarga" cada 4ª semana relativa: contradecía el modelo de progresión
+  continua sin descargas forzadas (la fase la decide Claude, no un módulo %4).

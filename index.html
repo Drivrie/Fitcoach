@@ -415,7 +415,7 @@ body{font-size:calc(15px*var(--fs))}
       <p class="note" style="margin-bottom:9px">Pitidos en los últimos 3 segundos de cada cuenta atrás. Si apenas se oyen: sube el volumen del móvil con los botones laterales <b>mientras suena</b>, y comprueba que el interruptor de silencio (lateral del iPhone) no esté activado.</p>
       <button class="btn btn-block" onclick="testBeep()">▶ Probar sonido</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 39</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 41</div>
   </div>
 </div>
 
@@ -534,7 +534,7 @@ const EXDB=[
   {n:'Press banda por encima',p:'empuje',eq:['bandas'],yt:'2yjwXTZQDDI',m:'Hombros',comp:1},
   {n:'Fondos en banco',p:'empuje',eq:['ninguno','gimnasio'],yt:'0326dy_-CzM',m:'Tríceps',comp:0},
   {n:'Elevaciones laterales',p:'empuje',eq:['mancuernas','bandas','gimnasio'],yt:'3VcKaXpzqRo',m:'Hombro lateral',comp:0},
-  {n:'Dominadas',p:'tiron',eq:['gimnasio'],yt:'eGo4IYlbE5g',m:'Espalda, bíceps',comp:1},
+  {n:'Dominadas',p:'tiron',eq:['dominadas','gimnasio'],yt:'eGo4IYlbE5g',m:'Espalda, bíceps',comp:1},
   {n:'Remo con barra',p:'tiron',eq:['barra','gimnasio'],yt:'9efgcAjQe7E',m:'Espalda, bíceps',comp:1},
   {n:'Remo con mancuerna',p:'tiron',eq:['mancuernas','gimnasio'],yt:'pYcpY20QaE8',m:'Espalda, bíceps',comp:1},
   {n:'Remo con banda',p:'tiron',eq:['bandas'],yt:'xQNrFHEMhI4',m:'Espalda',comp:1},
@@ -601,6 +601,7 @@ function initState(){
   if(!S.briefDays)S.briefDays=[]; // días IA de fuerza breve (los que coinciden con carrera, p. ej. M/J)
   if(!S.dumbbells)S.dumbbells={min:8,max:24,step:2}; // rango de mancuernas disponible (kg por mancuerna)
   if(!S.bands)S.bands={baja:true,media:true,alta:true}; // resistencias de bandas disponibles
+  if(!S.kettlebells)S.kettlebells={list:'8, 12, 16'}; // pesos de kettlebell disponibles (kg), texto
   if(!S.freeDays)S.freeDays=['M','J'];
   if(!S.schedule)S.schedule={};
   if(!S.history)S.history=[];
@@ -650,6 +651,13 @@ function weekDates(off){const n=new Date();const d=n.getDay()||7;const mon=new D
 function fmt(d){return d.toISOString().split('T')[0]}
 function fLabel(d){return d.toLocaleDateString('es-ES',{day:'numeric',month:'short'})}
 function realWeekNum(){return S.currentWeek+1}
+// Etiqueta de la cabecera: nº de semana del PROGRAMA para la semana MOSTRADA
+// (independiente del contador relativo a hoy). Sin programa aún → contador relativo.
+function weekHeaderLabel(){
+  const pw=programWeekFor(fmt(weekDates(S.currentWeek)[0]));
+  return (pw&&pw>=1)?('Semana '+pw+' del programa'):('Semana '+realWeekNum());
+}
+function setWeekHeader(){const el=document.getElementById('hdr-week');if(el)el.textContent=weekHeaderLabel();}
 
 /* --- Cálculos biométricos --- */
 function calcBio(){
@@ -797,7 +805,7 @@ function tab(t){
   if(t==='nutri')renderNutri();
 }
 
-function changeWeek(d){S.currentWeek+=d;save();renderCal();renderProg();document.getElementById('hdr-week').textContent='Semana '+realWeekNum();}
+function changeWeek(d){S.currentWeek+=d;save();renderCal();renderProg();setWeekHeader();}
 
 function renderTodayHero(){
   const hero=document.getElementById('today-hero');if(!hero)return;
@@ -895,7 +903,7 @@ function sundayRitualHtml(dates,todayKey){
 function renderCal(){
   renderTodayHero();
   const dates=weekDates(S.currentWeek);
-  document.getElementById('hdr-week').textContent='Semana '+realWeekNum()+(realWeekNum()%4===0?' · descarga':'');
+  setWeekHeader();
   const today=fmt(new Date());
   const grid=document.getElementById('cal');grid.innerHTML='';
   dates.forEach((d,i)=>{
@@ -1501,6 +1509,14 @@ function buildPrompt(mode){
     const b=S.bands||{};const res=['baja','media','alta'].filter(r=>b[r]);
     if(res.length)eqDetail+=`\nBandas elásticas disponibles, resistencias: ${res.join(', ')}. Indica qué banda usar en cada ejercicio.`;
   }
+  if((p.equipos||[]).includes('kettlebell')){
+    const kl=kettlebellList();
+    if(kl.length)eqDetail+=`\nKettlebells disponibles (kg): ${kl.join(', ')}. Usa solo estos pesos en los ejercicios con kettlebell.`;
+  }
+  // Barra de dominadas: SOLO proponer dominadas/colgarse si está disponible
+  const tieneDominadas=(p.equipos||[]).includes('dominadas')||(p.equipos||[]).includes('gimnasio');
+  if(tieneDominadas)eqDetail+=`\nDispongo de barra de dominadas: puedes incluir dominadas, colgarse y ejercicios que la requieran.`;
+  else eqDetail+=`\nIMPORTANTE: NO dispongo de barra de dominadas ni de máquinas. NO propongas dominadas, jalones en barra fija, ni ningún ejercicio que necesite barra para colgarse. Para la espalda usa remos con el material disponible (mancuernas/kettlebell/bandas).`;
   const ordDays=arr=>DAYS.filter(d=>arr.includes(d));
   const fullDays=ordDays(S.aiDays.filter(d=>!S.briefDays.includes(d)));
   const briefDays=ordDays(S.aiDays.filter(d=>S.briefDays.includes(d)));
@@ -2509,7 +2525,7 @@ function renderDayChips(){
 function toggleArr(arr,v){const i=arr.indexOf(v);if(i>=0)arr.splice(i,1);else arr.push(v);}
 
 const OBJ_LIST=[['fuerza','Fuerza'],['musculo','Ganar músculo'],['grasa','Perder grasa'],['resistencia','Resistencia'],['tonificar','Tonificar'],['bienestar','Bienestar']];
-const EQUIP_LIST=[['ninguno','Sin equipo'],['mancuernas','Mancuernas'],['bandas','Bandas elásticas'],['barra','Barra + discos'],['kettlebell','Kettlebell'],['gimnasio','Gimnasio completo']];
+const EQUIP_LIST=[['ninguno','Sin equipo'],['mancuernas','Mancuernas'],['bandas','Bandas elásticas'],['dominadas','Barra de dominadas'],['barra','Barra + discos'],['kettlebell','Kettlebell'],['gimnasio','Gimnasio completo']];
 function renderObjChips(){
   const c=document.getElementById('obj-chips');c.innerHTML='';
   OBJ_LIST.forEach(([k,lab])=>{
@@ -2563,6 +2579,14 @@ function renderEquipDetail(){
       </div>
     </div>`;
   }
+  if(eq.includes('kettlebell')){
+    const kb=S.kettlebells||{list:'8, 12, 16'};
+    h+=`<div style="background:var(--surface2);border-radius:12px;padding:11px 12px;margin-bottom:8px">
+      <div style="font-size:calc(12px*var(--fs));font-weight:600;margin-bottom:8px">🔔 Kettlebells disponibles (kg)</div>
+      <input type="text" id="kb-list" value="${kb.list}" placeholder="p. ej. 8, 12, 16, 20" inputmode="text" onchange="saveKettlebells()" style="width:100%">
+      <div style="font-size:calc(11px*var(--fs));color:var(--text3);margin-top:5px">Escribe los pesos que tengas, separados por comas.</div>
+    </div>`;
+  }
   d.innerHTML=h;
   if(eq.includes('mancuernas'))updateDbPreview();
 }
@@ -2588,6 +2612,14 @@ function toggleBand(r){
   S.bands[r]=!S.bands[r];
   if(!S.bands.baja&&!S.bands.media&&!S.bands.alta)S.bands[r]=true; // al menos una
   save();renderEquipDetail();
+}
+function saveKettlebells(){
+  const v=document.getElementById('kb-list').value;
+  S.kettlebells={list:v};save();
+}
+function kettlebellList(){
+  const raw=(S.kettlebells&&S.kettlebells.list)||'';
+  return raw.split(/[,;\s]+/).map(x=>parseFloat(x)).filter(x=>!isNaN(x)&&x>0);
 }
 function setMin(v){S.profile.minutos=v;document.getElementById('minutos').value=v;document.getElementById('min-out').textContent=v;save();}
 
@@ -2648,7 +2680,7 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch
 
 /* Arranque */
 loadProfile();renderDayChips();renderCal();renderProg();renderNutri();renderHealth();updateImportInfo();renderFsChips();renderMeso();
-document.getElementById('hdr-week').textContent='Semana '+realWeekNum();
+setWeekHeader();
 </script>
 </body>
 </html>
