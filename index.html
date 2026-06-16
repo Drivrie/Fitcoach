@@ -259,7 +259,7 @@ body{font-size:calc(15px*var(--fs))}
     </div>
     <div class="card">
       <div class="card-t">📋 Historial</div>
-      <div id="history"></div>
+      <div id="history" style="max-height:360px;overflow-y:auto;-webkit-overflow-scrolling:touch"></div>
     </div>
   </div>
 
@@ -415,7 +415,7 @@ body{font-size:calc(15px*var(--fs))}
       <p class="note" style="margin-bottom:9px">Pitidos en los últimos 3 segundos de cada cuenta atrás. Si apenas se oyen: sube el volumen del móvil con los botones laterales <b>mientras suena</b>, y comprueba que el interruptor de silencio (lateral del iPhone) no esté activado.</p>
       <button class="btn btn-block" onclick="testBeep()">▶ Probar sonido</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 41</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 42</div>
   </div>
 </div>
 
@@ -1399,7 +1399,7 @@ function renderProg(){
   const bi=document.getElementById('baseline-in');if(bi&&document.activeElement!==bi)bi.value=S.baseline||'';
   const hl=document.getElementById('history');
   if(!S.history.length){hl.innerHTML='<p style="font-size:13px;color:var(--text2)">Sin sesiones registradas.</p>';}
-  else hl.innerHTML=S.history.slice(0,10).map(h=>`
+  else hl.innerHTML=S.history.map(h=>`
     <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border)">
       <div style="flex:1"><div style="font-size:13px;font-weight:600">${h.title}</div>
         <div style="font-size:11px;color:var(--text2)">${h.key} · ${h.duration}min${h.distance?' · '+h.distance+'km':''}</div>

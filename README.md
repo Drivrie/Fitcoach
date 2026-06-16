@@ -393,3 +393,12 @@ semanal con lo entrenado; marcadores solo cada mes.
   conserva el contador relativo como respaldo.
 - Eliminado el sufijo "· descarga" cada 4ª semana relativa: contradecía el modelo de progresión
   continua sin descargas forzadas (la fase la decide Claude, no un módulo %4).
+
+## v42: el historial muestra todas las sesiones (con scroll)
+- La tarjeta "Historial" (pestaña Progreso) mostraba solo las 10 sesiones más recientes por un
+  recorte de visualización (S.history.slice(0,10)); las más antiguas quedaban ocultas aunque en
+  el calendario sí aparecían como "hecho". Los datos nunca se perdieron: S.history conserva todo.
+- Se elimina ese recorte y se pintan TODAS las sesiones. El contenedor #history pasa a tener
+  max-height:360px con overflow-y:auto (scroll con momentum en iOS), así con pocas sesiones se ve
+  compacto y con muchas se desplaza sin alargar la tarjeta.
+- Sin cambios en el almacenamiento ni en initState: solo afecta a cómo se visualiza el historial.
