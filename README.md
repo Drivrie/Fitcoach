@@ -402,3 +402,17 @@ semanal con lo entrenado; marcadores solo cada mes.
   max-height:360px con overflow-y:auto (scroll con momentum en iOS), así con pocas sesiones se ve
   compacto y con muchas se desplaza sin alargar la tarjeta.
 - Sin cambios en el almacenamiento ni en initState: solo afecta a cómo se visualiza el historial.
+
+## v43: gráficos de ejercicio correctos (fin del "todo sale como sentadilla")
+- Muchos ejercicios sin figura propia (p. ej. elevación de talones, extensión de tríceps sobre
+  la cabeza, press de hombro, sentadilla sumo) caían a una figura comodín (la sentadilla), por lo
+  que ejercicios muy distintos compartían el mismo dibujo.
+- Nuevas figuras animadas: gemelo (elevación de talones), tríceps (extensión sobre la cabeza) y
+  sumo (sentadilla sumo con mancuerna).
+- figKey amplía el enrutado por nombre: sumo→sumo, talones/gemelo/pantorrilla→gemelo,
+  tríceps/press francés/extensión sobre la cabeza→tríceps, "press de hombro"→press militar.
+- Fallback inteligente: si no hay figura específica, se infiere el grupo muscular del NOMBRE
+  (patFromName) y se usa una figura representativa de ese grupo (empuje→flexión, tirón→remo,
+  core→plancha, cardio→jumping jack, pierna→sentadilla), en vez de la sentadilla por defecto.
+  Se pasa además ex.p como pista. Robusto para ejercicios generados por Claude (sin ex.p).
+- Solo afecta a la visualización (SVG); sin cambios en estado, almacenamiento ni initState.

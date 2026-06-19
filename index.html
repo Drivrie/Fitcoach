@@ -415,7 +415,7 @@ body{font-size:calc(15px*var(--fs))}
       <p class="note" style="margin-bottom:9px">Pitidos en los últimos 3 segundos de cada cuenta atrás. Si apenas se oyen: sube el volumen del móvil con los botones laterales <b>mientras suena</b>, y comprueba que el interruptor de silencio (lateral del iPhone) no esté activado.</p>
       <button class="btn btn-block" onclick="testBeep()">▶ Probar sonido</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 42</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 43</div>
   </div>
 </div>
 
@@ -1128,12 +1128,22 @@ const FIGS={
   jumpingjack:{c:'#60a5fa',
     A:{hd:[60,16],sh:[60,30],hip:[60,58],elL:[52,42],haL:[50,55],elR:[68,42],haR:[70,55],knL:[58,76],ftL:[58,92],knR:[62,76],ftR:[62,92]},
     B:{hd:[60,16],sh:[60,30],hip:[60,58],elL:[48,28],haL:[40,18],elR:[72,28],haR:[80,18],knL:[50,76],ftL:[42,92],knR:[70,76],ftR:[78,92]}},
+  gemelo:{c:'#7c6cf5',extra:p=>_db(p.haL,'#fbbf24')+_db(p.haR,'#fbbf24'),
+    A:{hd:[60,18],sh:[60,32],hip:[60,60],elL:[50,46],haL:[47,58],elR:[70,46],haR:[73,58],knL:[56,78],ftL:[55,93],knR:[64,78],ftR:[65,93]},
+    B:{hd:[60,10],sh:[60,24],hip:[60,52],elL:[50,38],haL:[47,50],elR:[70,38],haR:[73,50],knL:[56,72],ftL:[55,86],knR:[64,72],ftR:[65,86]}},
+  triceps:{c:'#34d399',extra:p=>_db([(p.haL[0]+p.haR[0])/2,(p.haL[1]+p.haR[1])/2],'#fbbf24'),
+    A:{hd:[60,22],sh:[60,34],hip:[60,60],elL:[54,20],haL:[58,30],elR:[66,20],haR:[62,30],knL:[56,78],ftL:[55,93],knR:[64,78],ftR:[65,93]},
+    B:{hd:[60,22],sh:[60,34],hip:[60,60],elL:[55,20],haL:[58,12],elR:[65,20],haR:[62,12],knL:[56,78],ftL:[55,93],knR:[64,78],ftR:[65,93]}},
+  sumo:{c:'#7c6cf5',extra:p=>_db([(p.haL[0]+p.haR[0])/2,(p.haL[1]+p.haR[1])/2],'#fbbf24'),
+    A:{hd:[60,16],sh:[60,30],hip:[60,56],elL:[56,42],haL:[59,52],elR:[64,42],haR:[61,52],knL:[48,74],ftL:[44,93],knR:[72,74],ftR:[76,93]},
+    B:{hd:[60,28],sh:[60,40],hip:[60,58],elL:[56,50],haL:[59,62],elR:[64,50],haR:[61,62],knL:[44,66],ftL:[42,92],knR:[76,66],ftR:[78,92]}},
 };
 
 /* mapeo nombre de ejercicio → archetipo de figura */
 function figKey(name){
   const n=(name||'').toLowerCase();
   if(/goblet/.test(n))return 'goblet';
+  if(/sumo/.test(n))return 'sumo';
   if(/sentadilla.*barra|barra.*sentadilla/.test(n))return 'sqbarra';
   if(/sentadilla/.test(n))return 'sentadilla';
   if(/prensa/.test(n))return 'prensa';
@@ -1147,8 +1157,11 @@ function figKey(name){
   if(/press de banca|press banca/.test(n))return 'pressbanca';
   if(/press.*banda|banda.*press/.test(n))return 'militar';
   if(/press militar|militar/.test(n))return 'militar';
+  if(/press.*hombro|hombro.*press/.test(n))return 'militar';
   if(/press.*mancuern|mancuern.*press|press con/.test(n))return 'pressdb';
   if(/fondo/.test(n))return 'fondos';
+  if(/gemelo|talones|pantorrilla|\bcalf\b/.test(n))return 'gemelo';
+  if(/tr[ií]ceps|press franc[eé]s|extensi[oó]n.*cabeza|copa de triceps/.test(n))return 'triceps';
   if(/elevaci[oó]n.*lateral|elevaciones laterales|\blateral\b/.test(n))return 'lateral';
   if(/dominada/.test(n))return 'dominada';
   if(/remo.*barra|barra.*remo/.test(n))return 'remobarra';
@@ -1156,6 +1169,7 @@ function figKey(name){
   if(/remo|jal[oó]n/.test(n)&&/jal[oó]n/.test(n))return 'jalon';
   if(/remo/.test(n))return 'remodb';
   if(/jal[oó]n/.test(n))return 'jalon';
+  if(/femoral|isquiosural|leg ?curl|curl de pierna|curl tumbad|curl n[oó]rdico/.test(n))return 'rdl';
   if(/curl/.test(n))return 'curl';
   if(/crunch|abdominal/.test(n))return 'crunch';
   if(/elevaci[oó]n de pierna|elevacion de pierna|elevaci[oó]n de piernas/.test(n))return 'legraise';
@@ -1168,15 +1182,27 @@ function figKey(name){
 }
 
 const _svgCache={};
-function exSVG(arg){
+// Infiere el grupo muscular a partir del NOMBRE, para elegir una figura representativa
+// cuando no hay una específica (evita que todo caiga en la sentadilla por defecto).
+function patFromName(n){
+  n=(n||'').toLowerCase();
+  if(/plancha|crunch|abdominal|\bcore\b|obliqu|oblicu|hollow|isom[eé]tr|hueco/.test(n))return 'core';
+  if(/salto|burpee|jumping|mountain|escalador|sprint|comba|tijera|rodillas al pecho|\bcardio\b/.test(n))return 'cardio';
+  if(/remo|jal[oó]n|dominada|curl|b[ií]ceps|espalda|encogimiento|shrug|face ?pull|tir[oó]n|pull|aperturas? invertidas?|p[aá]jaro/.test(n))return 'tiron';
+  if(/sentadilla|zancada|prensa|gemelo|talones|pantorrilla|gl[uú]teo|hip thrust|puente|cu[aá]driceps|femoral|isquio|pierna|peso muerto|rumano|abductor|aductor|step ?up|subida al caj[oó]n/.test(n))return 'pierna';
+  if(/press|flexi[oó]n|fondo|empuje|pecho|hombro|tr[ií]ceps|militar|elevaci[oó]n lateral|\blateral\b|apertura|pec/.test(n))return 'empuje';
+  return null;
+}
+function exSVG(arg,patHint){
   if(_svgCache[arg])return _svgCache[arg];
-  // arg puede ser un nombre de ejercicio o un patrón (fallback)
   let key=figKey(arg);
   let f=key?FIGS[key]:null;
   if(!f){
-    // fallback por patrón: usa una figura representativa
+    // sin figura específica: figura representativa del grupo muscular,
+    // usando la pista ex.p si la hay, o infiriéndolo del nombre.
     const mapPat={pierna:'sentadilla',empuje:'flexion',tiron:'remodb',core:'plancha',cardio:'jumpingjack'};
-    f=FIGS[mapPat[arg]]||FIGS.sentadilla;
+    const pat=(patHint&&mapPat[patHint])?patHint:patFromName(arg);
+    f=FIGS[mapPat[pat]]||FIGS.sentadilla;
   }
   const c=f.c;
   const exA=f.extra?f.extra(f.A,'A'):'';
@@ -1271,7 +1297,7 @@ function showSess(key){
       <button class="btn btn-xs" onclick="event.stopPropagation();startTimer(${ex.descanso_seg},${JSON.stringify(ex.nombre)})">⏱</button>
     </div><div class="ex-b" id="exb-${i}">
       <div style="display:flex;gap:11px;padding:11px 13px">
-        <div style="width:96px;height:76px;flex-shrink:0">${exSVG(ex.nombre)}</div>
+        <div style="width:96px;height:76px;flex-shrink:0">${exSVG(ex.nombre,ex.p)}</div>
         <div style="flex:1;font-size:12.5px">${ex.descripcion||''}<div style="color:var(--text2);margin-top:5px">💪 ${ex.musculos||''}</div>
         ${ex.nota_progresion?`<div class="ex-tag">📈 ${ex.nota_progresion}</div>`:''}</div>
       </div>
@@ -2334,7 +2360,7 @@ function renderPlayer(){
       const errs=ex.errores&&ex.errores.length?ex.errores:(ERRORS[figKey(ex.nombre)]||[]);
       preview=`<div style="margin-top:14px;padding:12px;background:rgba(255,255,255,.08);border-radius:12px">
         <div style="font-size:calc(12px*var(--fs));color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">A continuación</div>
-        <div style="width:130px;height:104px;margin:0 auto 10px">${exSVG(ex.nombre)}</div>
+        <div style="width:130px;height:104px;margin:0 auto 10px">${exSVG(ex.nombre,ex.p)}</div>
         <div style="font-weight:700;font-size:calc(16px*var(--fs))">${ex.nombre}</div>
         <div class="pl-cue" style="margin-top:4px">${ex.series>1?`${ex.series} series`:'1 serie'} · ${ex.reps}${/^\d+$/.test(String(ex.reps))?' reps':''}${ex.rir?' · RIR '+ex.rir:''}</div>
         ${ex.peso?`<div style="margin-top:6px;color:var(--ring-ex);font-weight:600;font-size:calc(14px*var(--fs))">🏋 ${ex.peso}</div>`:''}
@@ -2354,7 +2380,7 @@ function renderPlayer(){
       <div class="pl-next">${ex.nombre} · serie ${P.set}/${ex.series}${side}</div>`;
   } else {
     const errs=ex.errores&&ex.errores.length?ex.errores:(ERRORS[figKey(ex.nombre)]||[]);
-    mid=`<div style="width:170px;height:135px;margin:0 auto 14px">${exSVG(ex.nombre)}</div>
+    mid=`<div style="width:170px;height:135px;margin:0 auto 14px">${exSVG(ex.nombre,ex.p)}</div>
       <div class="pl-reps">${ex.series>1?`Serie ${P.set} de ${ex.series}`:'1 serie'} · ${ex.reps}${/^\d+$/.test(String(ex.reps))?' reps':''}</div>
       ${ex.peso?`<div class="pl-cue" style="margin-top:4px;color:var(--ring-ex);font-weight:600">🏋 ${ex.peso}</div>`:''}
       ${(ex.rir||ex.rpe)?`<div class="pl-cue">Deja ${ex.rir||ex.rpe} reps en reserva (RIR)${ex.tempo?' · tempo '+ex.tempo:''}</div>`:''}
