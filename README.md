@@ -416,3 +416,26 @@ semanal con lo entrenado; marcadores solo cada mes.
   core→plancha, cardio→jumping jack, pierna→sentadilla), en vez de la sentadilla por defecto.
   Se pasa además ex.p como pista. Robusto para ejercicios generados por Claude (sin ex.p).
 - Solo afecta a la visualización (SVG); sin cambios en estado, almacenamiento ni initState.
+
+## v44: formatos por bloque (AMRAP/EMOM/circuito) guiados + más figuras
+- BUG corregido: al proponer un AMRAP (p. ej. "12 min"), el reproductor lo trataba como una
+  pasada única de series×reps y terminaba en ~2 min, sin tope de tiempo ni rondas. Ahora la app
+  reconoce bloques y los guía de verdad.
+- Nuevo reproductor de bloques:
+  · AMRAP: cronómetro de cuenta atrás (tope de tiempo) + botón "Ronda completada (+1)" para contar
+    rondas; al agotarse el tiempo registra "N rondas en M min".
+  · EMOM: temporizador por minutos con pitido al inicio de cada minuto y contador minuto a minuto.
+  · Circuito: número fijo de rondas con contador de ronda.
+  El resultado (rondas) se muestra al finalizar y se vuelca a las notas del registro.
+- Esquema/prompt: Claude puede expresar estos formatos de forma estructurada con un ejercicio
+  {"tipo":"amrap|emom|circuito","duracion_min"|"rondas","movimientos":[{nombre,reps}],...}. Los
+  intervalos/HIIT/Tabata de un solo ejercicio siguen funcionando con series + reps en segundos
+  ("40s") + descanso_seg. Tanto en el plan semanal como en la modificación de sesión.
+- El detalle de sesión y la plantilla de notas muestran los bloques correctamente (antes habrían
+  mostrado "undefined×undefined").
+- Nota: el motor offline sigue generando fuerza clásica (series×reps); los formatos por bloque
+  llegan vía el puente con Claude.
+- FIGURAS: nuevas figuras animadas para movimientos comunes de HIIT/circuito en habitación:
+  rodillas al pecho, sentadilla con salto, sentadilla isométrica (wall sit), patinador, giro ruso,
+  saltar la cuerda y encogimientos. Más rutas por nombre (búlgara→zancada, Arnold→press militar,
+  good morning→peso muerto rumano, elevación frontal→lateral, etc.).

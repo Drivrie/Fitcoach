@@ -415,7 +415,7 @@ body{font-size:calc(15px*var(--fs))}
       <p class="note" style="margin-bottom:9px">Pitidos en los últimos 3 segundos de cada cuenta atrás. Si apenas se oyen: sube el volumen del móvil con los botones laterales <b>mientras suena</b>, y comprueba que el interruptor de silencio (lateral del iPhone) no esté activado.</p>
       <button class="btn btn-block" onclick="testBeep()">▶ Probar sonido</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 43</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 44</div>
   </div>
 </div>
 
@@ -1137,6 +1137,27 @@ const FIGS={
   sumo:{c:'#7c6cf5',extra:p=>_db([(p.haL[0]+p.haR[0])/2,(p.haL[1]+p.haR[1])/2],'#fbbf24'),
     A:{hd:[60,16],sh:[60,30],hip:[60,56],elL:[56,42],haL:[59,52],elR:[64,42],haR:[61,52],knL:[48,74],ftL:[44,93],knR:[72,74],ftR:[76,93]},
     B:{hd:[60,28],sh:[60,40],hip:[60,58],elL:[56,50],haL:[59,62],elR:[64,50],haR:[61,62],knL:[44,66],ftL:[42,92],knR:[76,66],ftR:[78,92]}},
+  rodillas:{c:'#60a5fa',
+    A:{hd:[60,16],sh:[60,30],hip:[60,56],elL:[50,40],haL:[50,30],elR:[70,44],haR:[70,54],knL:[54,56],ftL:[52,66],knR:[64,76],ftR:[65,92]},
+    B:{hd:[60,16],sh:[60,30],hip:[60,56],elL:[50,44],haL:[50,54],elR:[70,40],haR:[70,30],knL:[56,76],ftL:[55,92],knR:[66,56],ftR:[68,66]}},
+  squatjump:{c:'#60a5fa',
+    A:{hd:[60,30],sh:[60,42],hip:[60,58],elL:[50,48],haL:[46,52],elR:[70,48],haR:[74,52],knL:[48,66],ftL:[46,90],knR:[72,66],ftR:[74,90]},
+    B:{hd:[60,12],sh:[60,26],hip:[60,52],elL:[54,18],haL:[50,8],elR:[66,18],haR:[70,8],knL:[56,72],ftL:[55,84],knR:[64,72],ftR:[65,84]}},
+  wallsit:{c:'#7c6cf5',extra:()=>'<rect x="34" y="20" width="4" height="72" rx="2" fill="#9aa4b1"/>',
+    A:{hd:[48,30],sh:[48,42],hip:[48,62],elL:[58,54],haL:[68,60],elR:[58,54],haR:[68,60],knL:[72,62],ftL:[72,90],knR:[72,62],ftR:[72,90]},
+    B:{hd:[48,32],sh:[48,44],hip:[48,63],elL:[58,55],haL:[68,61],elR:[58,55],haR:[68,61],knL:[72,63],ftL:[72,90],knR:[72,63],ftR:[72,90]}},
+  skater:{c:'#60a5fa',
+    A:{hd:[48,18],sh:[48,32],hip:[50,56],elL:[40,40],haL:[36,48],elR:[58,42],haR:[64,36],knL:[46,74],ftL:[44,92],knR:[60,70],ftR:[70,84]},
+    B:{hd:[72,18],sh:[72,32],hip:[70,56],elR:[80,40],haR:[84,48],elL:[62,42],haL:[56,36],knR:[74,74],ftR:[76,92],knL:[60,70],ftL:[50,84]}},
+  twist:{c:'#60a5fa',extra:p=>_db([(p.haL[0]+p.haR[0])/2,(p.haL[1]+p.haR[1])/2],'#fbbf24'),
+    A:{hd:[50,40],sh:[54,48],hip:[66,60],elL:[50,52],haL:[44,54],elR:[56,52],haR:[46,54],knL:[76,54],ftL:[88,64],knR:[76,58],ftR:[90,68]},
+    B:{hd:[60,40],sh:[58,48],hip:[66,60],elL:[60,52],haL:[70,56],elR:[60,52],haR:[72,56],knL:[76,54],ftL:[88,64],knR:[76,58],ftR:[90,68]}},
+  comba:{c:'#60a5fa',extra:(p,f)=>`<path d="M${p.haL[0]} ${p.haL[1]} Q 60 ${f==='A'?100:6} ${p.haR[0]} ${p.haR[1]}" stroke="#fbbf24" fill="none" stroke-width="2"/>`,
+    A:{hd:[60,18],sh:[60,32],hip:[60,58],elL:[52,42],haL:[50,50],elR:[68,42],haR:[70,50],knL:[57,76],ftL:[56,90],knR:[63,76],ftR:[64,90]},
+    B:{hd:[60,14],sh:[60,28],hip:[60,54],elL:[52,40],haL:[50,46],elR:[68,40],haR:[70,46],knL:[57,72],ftL:[56,84],knR:[63,72],ftR:[64,84]}},
+  shrug:{c:'#fbbf24',extra:p=>_db(p.haL,'#7c6cf5')+_db(p.haR,'#7c6cf5'),
+    A:{hd:[60,16],sh:[60,34],hip:[60,58],elL:[50,46],haL:[48,58],elR:[70,46],haR:[72,58],knL:[56,76],ftL:[55,92],knR:[64,76],ftR:[65,92]},
+    B:{hd:[60,16],sh:[60,28],hip:[60,58],elL:[50,40],haL:[48,52],elR:[70,40],haR:[72,52],knL:[56,76],ftL:[55,92],knR:[64,76],ftR:[65,92]}},
 };
 
 /* mapeo nombre de ejercicio → archetipo de figura */
@@ -1144,6 +1165,9 @@ function figKey(name){
   const n=(name||'').toLowerCase();
   if(/goblet/.test(n))return 'goblet';
   if(/sumo/.test(n))return 'sumo';
+  if(/sentadilla con salto|squat ?jump|sentadilla saltando|salto de sentadilla|sentadilla pl[ií]om|pliom[eé]trica/.test(n))return 'squatjump';
+  if(/sentadilla isom[eé]trica|wall ?sit|silla|isom[eé]tric.*pierna|sentadilla a la pared/.test(n))return 'wallsit';
+  if(/b[uú]lgara|split squat|sentadilla b[uú]lgara/.test(n))return 'zancada';
   if(/sentadilla.*barra|barra.*sentadilla/.test(n))return 'sqbarra';
   if(/sentadilla/.test(n))return 'sentadilla';
   if(/prensa/.test(n))return 'prensa';
@@ -1161,6 +1185,14 @@ function figKey(name){
   if(/press.*mancuern|mancuern.*press|press con/.test(n))return 'pressdb';
   if(/fondo/.test(n))return 'fondos';
   if(/gemelo|talones|pantorrilla|\bcalf\b/.test(n))return 'gemelo';
+  if(/rodillas al pecho|high ?knees|skipping|elevaci[oó]n de rodillas|rodillas arriba|carrera en el sitio|correr en el sitio/.test(n))return 'rodillas';
+  if(/patinador|skater|salto lateral|saltos laterales/.test(n))return 'skater';
+  if(/giro ruso|russian ?twist|giros? rusos?|twist ruso|rotaci[oó]n de tronco|bicicleta abdominal/.test(n))return 'twist';
+  if(/comba|saltar (a |la )?(la )?cuerda|jump ?rope|salto a la comba|cuerda de saltar/.test(n))return 'comba';
+  if(/encogimiento|shrug|trapecio/.test(n))return 'shrug';
+  if(/good ?morning|buenos d[ií]as/.test(n))return 'rdl';
+  if(/arnold/.test(n))return 'militar';
+  if(/elevaci[oó]n frontal|frontal raise|elevaciones frontales/.test(n))return 'lateral';
   if(/tr[ií]ceps|press franc[eé]s|extensi[oó]n.*cabeza|copa de triceps/.test(n))return 'triceps';
   if(/elevaci[oó]n.*lateral|elevaciones laterales|\blateral\b/.test(n))return 'lateral';
   if(/dominada/.test(n))return 'dominada';
@@ -1269,6 +1301,26 @@ function swapExercise(key,i,optIdx){
   save();showSess(key);
 }
 
+function blockCard(ex,i){
+  const t=blockType(ex);
+  const label=t==='amrap'?`AMRAP · ${ex.duracion_min||'?'} min`
+    :t==='emom'?`EMOM · ${ex.duracion_min||'?'} min`
+    :`Circuito · ${ex.rondas||'?'} rondas`;
+  const movs=(ex.movimientos||[]).map(m=>`
+    <div style="display:flex;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
+      <div style="width:60px;height:48px;flex-shrink:0">${exSVG(m.nombre,m.p)}</div>
+      <div style="flex:1"><div style="font-size:14px;font-weight:600">${m.nombre}</div>
+        <div style="font-size:12px;color:var(--text2)">${m.reps||''}</div></div></div>`).join('');
+  return `<div class="ex"><div class="ex-h" onclick="toggleEx(${i})">
+      <div class="ex-n" style="background:var(--free)">⚡</div>
+      <div style="flex:1"><div class="ex-nm">${ex.nombre}</div>
+        <div class="ex-mt">${label}${ex.descanso_seg?` · descanso ${ex.descanso_seg}s tras el bloque`:''}</div></div>
+    </div><div class="ex-b" id="exb-${i}">
+      <div style="padding:11px 13px">
+        ${ex.descripcion?`<div style="font-size:13px;color:var(--text2);margin-bottom:8px">${ex.descripcion}</div>`:''}
+        ${movs}
+      </div></div></div>`;
+}
 function showSess(key){
   const sess=(S.schedule[key]||[]).find(s=>s.type==='ai');
   if(!sess||!sess.exercises){document.getElementById('sess-content').innerHTML='<div class="empty"><span class="ic">🏋</span><p>Esta sesión aún no tiene ejercicios. Genera la semana primero.</p></div>';tab('sess');return;}
@@ -1278,6 +1330,7 @@ function showSess(key){
     <button class="btn btn-primary btn-block" style="margin-top:12px" onclick="startPlayer('${key}')">▶ Empezar sesión guiada</button></div>`;
   if(sess.warmup)h+=`<div class="note" style="margin-bottom:11px">🔥 <b>Calentamiento:</b> ${sess.warmup}</div>`;
   sess.exercises.forEach((ex,i)=>{
+    if(isBlock(ex)){h+=blockCard(ex,i);return;}
     const errs=(ex.errores&&ex.errores.length?ex.errores:(ERRORS[figKey(ex.nombre)]||[]));
     const alts=altsFor(ex);
     let altHtml='';
@@ -1345,6 +1398,7 @@ function openLog(key,mode){
     <div class="field"><label style="display:flex;justify-content:space-between;align-items:center">Notas (pesos, series reales, sensaciones)${isAdd?'':`<button class="btn btn-xs" onclick="insertLoadTemplate('${key}')">＋ Plantilla cargas</button>`}</label>
       <textarea id="l-notes" placeholder="${isAdd?'Ej: 7,1 km, 5:30/km, 412 kcal, FC media 152...':'Ej: goblet 16kg llegué a 12, press 16kg 3×10 justo...'}"></textarea></div>`;
   openSheet('log-bg');
+  if(window._blkNote){const ta=document.getElementById('l-notes');if(ta)ta.value=window._blkNote;window._blkNote=null;}
 }
 /* Inserta en notas el esqueleto de cargas con los ejercicios de la sesión IA del día */
 function insertLoadTemplate(key){
@@ -1353,7 +1407,7 @@ function insertLoadTemplate(key){
   let tpl;
   if(sess&&sess.exercises&&sess.exercises.length){
     // prellenado con lo propuesto: solo corriges lo que difiera y añades comentario
-    tpl=sess.exercises.map(e=>`${e.nombre} ${e.series}×${e.reps}${e.peso?' · '+e.peso:''}: ✓`).join('\n');
+    tpl=sess.exercises.map(e=>isBlock(e)?`${e.nombre} (${blockType(e)}): ___ rondas`:`${e.nombre} ${e.series}×${e.reps}${e.peso?' · '+e.peso:''}: ✓`).join('\n');
     tpl='(✓ = según lo previsto; corrige solo lo que cambió y añade comentario)\n'+tpl;
   } else {
     tpl='Ejercicio 1 (kg × reps logradas): \nEjercicio 2: ';
@@ -1625,7 +1679,13 @@ PRINCIPIOS BASADOS EN EVIDENCIA (ACSM 2026 Position Stand; meta-análisis de Sch
 - Indica el esfuerzo como RIR (repeticiones en reserva), no como RPE.
 - En "peso" especifica SIEMPRE la carga propuesta de forma inequívoca: para mancuernas aclara si es "X kg por mancuerna (una en cada mano)" o "una sola mancuerna de X kg" (p. ej. goblet); para barra "X kg en total incluida la barra"; si es sin carga, "solo peso corporal". Nunca dejes un número de kg sin aclarar a qué se refiere.
 - REPARTO MUSCULAR: el tren inferior (cuádriceps, isquios, glúteos) debe recibir AL MENOS un tercio de los ejercicios de la semana y ≥2 ejercicios en cada sesión completa de cuerpo entero. Las piernas son los grupos más grandes y relevantes; no las relegues frente a empuje/tirón/core.
-- VARIEDAD DE MÉTODOS: además del esquema clásico de series×repeticiones, puedes proponer ocasionalmente (1 sesión/semana como mucho, idealmente en las sesiones breves o la 3ª semana del ciclo) formatos como EMOM, AMRAP, HIIT o circuito metabólico, expresándolos en el mismo JSON (reps en segundos tipo "40s", meta describiendo el formato, descripcion con la mecánica). La base para hipertrofia sigue siendo series×reps cerca del fallo; estos formatos son variación y estímulo metabólico, no el plato principal.
+- VARIEDAD DE MÉTODOS: además del esquema clásico de series×repeticiones, puedes proponer formatos como HIIT/intervalos, AMRAP, EMOM o circuito metabólico (útiles para acondicionamiento, pérdida de grasa y variedad; hechos en una habitación, con o sin material). Dos formas de expresarlos en el JSON:
+  (a) Intervalos/HIIT/Tabata de UN ejercicio: usa el ejercicio normal con "reps" en segundos (p. ej. "40s"), "series" = número de rondas y "descanso_seg" = descanso entre rondas. Ej.: {"nombre":"Burpees","series":8,"reps":"20s","descanso_seg":10,...} (Tabata).
+  (b) AMRAP / EMOM / circuito (varios movimientos por ronda): usa un objeto de ejercicio CON ESTA FORMA EXACTA, que la app guía con cronómetro y conteo de rondas:
+     {"nombre":"AMRAP 12 min","tipo":"amrap","duracion_min":12,"descanso_seg":120,"movimientos":[{"nombre":"Flexiones","reps":"10"},{"nombre":"Sentadilla goblet","reps":"15"},{"nombre":"Burpees","reps":"8"}],"descripcion":"Tantas rondas como puedas en 12 min; anota las rondas.","musculos":"cuerpo completo"}
+     - "tipo": "amrap" | "emom" | "circuito". Para amrap/emom usa "duracion_min" (tope de tiempo). Para circuito usa "rondas" (nº fijo). "descanso_seg" es el descanso TRAS el bloque.
+     - "movimientos": lista ordenada con "nombre" y "reps" de cada movimiento de la ronda.
+  Estos formatos son variación y estímulo metabólico; para hipertrofia la base sigue siendo series×reps cerca del fallo. Como máximo 1 bloque de este tipo por sesión.
 - CARDIO PRESCRITO: en "recomendacion_cardio" da instrucciones concretas y accionables para los días libres y el fin de semana (tipo de actividad, duración, e intensidad orientada por FC o sensación: p. ej. "carrera Z2 cómoda 35-40 min, FC ~125-140" o "paseo ligero 60 min"), coherentes con el objetivo y la fatiga semanal, en lugar de una frase genérica.
 - Proteína 1.6-2.2 g/kg/día (hacia el extremo alto si hay déficit calórico para preservar músculo).
 - Incluye SIEMPRE 2-3 "errores" comunes de técnica a evitar por cada ejercicio.`;
@@ -1831,6 +1891,7 @@ function modifyWithClaude(){
 - Tiempo disponible hoy: ${mins} minutos
 - Mis objetivos: ${objLabels} (prioriza hipertrofia: 6-12 reps, 3-4 series, 1-3 RIR, descansos 90-150s, sobrecarga progresiva).
 - Incluye 2-3 errores comunes de técnica por ejercicio.
+- Puedes incluir como mucho UN bloque AMRAP/EMOM/circuito (la app lo guía con cronómetro y conteo de rondas) usando un ejercicio con esta forma: {"nombre":"AMRAP 10 min","tipo":"amrap","duracion_min":10,"descanso_seg":90,"movimientos":[{"nombre":"Sentadilla goblet","reps":"12"},{"nombre":"Flexiones","reps":"10"}],"descripcion":"...","musculos":"..."} ("tipo": amrap|emom|circuito; amrap/emom→"duracion_min"; circuito→"rondas").
 
 Responde SOLO con JSON válido, sin backticks ni texto extra, con esta estructura (una sola sesión):
 {"titulo":"string","meta":"string breve","calentamiento":"string","vuelta_calma":"string","ejercicios":[{"nombre":"string","series":3,"reps":"8-12","descanso_seg":90,"rir":"1-3","tempo":"2-1-2","peso":"16 kg por mancuerna","descripcion":"string","musculos":"string","errores":["e1","e2"]}]}
@@ -2275,6 +2336,13 @@ function countdownCue(sec){
 function testBeep(){initAudio();beep(1000,0.18,0.85);setTimeout(()=>beep(1500,0.4,0.95),350);}
 
 function parseReps(r){const m=String(r).match(/(\d+)\s*s/);return m?+m[1]:null;} // segundos si es "40s"
+// --- Formatos por bloque (AMRAP / EMOM / circuito) ---
+function blockType(ex){const t=((ex&&(ex.tipo||ex.formato))||'').toString().toLowerCase();
+  if(/amrap/.test(t))return 'amrap';
+  if(/emom/.test(t))return 'emom';
+  if(/circuito|circuit|rondas?|rounds?/.test(t))return 'circuito';
+  return null;}
+function isBlock(ex){return !!blockType(ex)&&Array.isArray(ex&&ex.movimientos)&&ex.movimientos.length>0;}
 
 let WL=null;
 async function acquireWakeLock(){
@@ -2348,6 +2416,7 @@ function toggleMusic(){
 
 function renderPlayer(){
   const ex=P.sess.exercises[P.exi];
+  if(isBlock(ex))return renderBlock();
   const total=P.sess.exercises.length;
   const repSecs=parseReps(ex.reps);
   const pct=Math.round(((P.exi)/total)*100);
@@ -2439,6 +2508,122 @@ function runRest(){
 }
 function skipRest(){clearInterval(P.int);P.phase='ready';renderPlayer();}
 
+/* ============================================================
+   BLOQUES: AMRAP / EMOM / CIRCUITO
+   ============================================================ */
+function _movList(ex){return (ex.movimientos||[]).map(m=>`
+  <div style="display:flex;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.1)">
+    <div style="width:54px;height:43px;flex-shrink:0">${exSVG(m.nombre,m.p)}</div>
+    <div style="flex:1;text-align:left"><div style="font-weight:600;font-size:calc(14px*var(--fs))">${m.nombre}</div>
+      <div class="pl-cue">${m.reps||''}</div></div></div>`).join('');}
+function _fmtBlock(ex,t){return t==='amrap'?`AMRAP · ${ex.duracion_min||10} min`
+  :t==='emom'?`EMOM · ${ex.duracion_min||10} min`
+  :`Circuito · ${ex.rondas||3} rondas`;}
+function renderBlock(){
+  const ex=P.sess.exercises[P.exi];
+  const total=P.sess.exercises.length;
+  const t=blockType(ex);
+  const pct=Math.round((P.exi/total)*100);
+  const fmtLabel=_fmtBlock(ex,t);
+  let mid;
+  if(P.phase!=='block'){
+    const defDesc=t==='amrap'?'Tantas rondas como puedas en el tiempo. Pulsa “Ronda completada” al cerrar cada vuelta; anota cuántas haces.'
+      :t==='emom'?'Cada minuto (al pitido): completa los movimientos y descansa el resto del minuto.'
+      :'Completa todas las rondas a buen ritmo. Pulsa “Ronda completada” al cerrar cada vuelta.';
+    mid=`<div class="pl-phase" style="color:var(--free)">${fmtLabel}</div>
+      <div class="pl-cue" style="margin:8px 0 4px">${ex.descripcion||defDesc}</div>
+      <div style="margin-top:10px">${_movList(ex)}</div>
+      <button class="btn btn-primary btn-block" style="margin-top:16px" onclick="startBlock()">▶ Iniciar bloque</button>`;
+  } else {
+    const b=P.blk;
+    const counter=t==='circuito'
+      ? `<div class="pl-next">Ronda <b style="color:var(--ring-stand)">${Math.min(b.rounds+1,b.totalRounds)}</b> de ${b.totalRounds}</div>`
+      : `<div class="pl-next">Rondas completadas: <b style="color:var(--ring-stand)">${b.rounds}</b></div>`;
+    const timer=(t==='amrap'||t==='emom')
+      ? `<div class="pl-timer" id="pl-timer">${fmtSec(b.leftSec)}</div>${t==='emom'?`<div class="pl-cue">Minuto ${Math.min(b.minute,b.totalMin)} de ${b.totalMin}</div>`:''}`
+      : '';
+    mid=`<div class="pl-phase" style="color:var(--free)">${fmtLabel}${b.paused?' · PAUSA':''}</div>
+      ${timer}
+      ${counter}
+      <div style="margin-top:10px">${_movList(ex)}</div>
+      ${t!=='emom'?`<button class="btn btn-primary btn-block" style="margin-top:12px" onclick="blockRound()">✓ Ronda completada (+1)</button>`:''}
+      <div style="display:flex;gap:8px;margin-top:8px">
+        ${(t==='amrap'||t==='emom')?`<button class="btn btn-block" style="background:rgba(255,255,255,.15);border-color:transparent;color:#fff" onclick="pauseBlock()">${b.paused?'▶ Reanudar':'⏸ Pausa'}</button>`:''}
+        <button class="btn btn-block" style="background:rgba(255,255,255,.15);border-color:transparent;color:#fff" onclick="endBlock(false)">${t==='circuito'?'Terminar bloque':'Terminar antes'}</button>
+      </div>`;
+  }
+  document.getElementById('player-body').innerHTML=`
+    <div class="pl-prog"><div class="pl-prog-i" style="width:${pct}%"></div></div>
+    <div class="pl-count">Ejercicio ${P.exi+1} de ${total}</div>
+    <div class="pl-name">${ex.nombre}</div>
+    <div class="pl-mid">${mid}</div>`;
+}
+function startBlock(){
+  clearInterval(P.int);
+  const ex=P.sess.exercises[P.exi];
+  const t=blockType(ex);
+  const cap=(+ex.duracion_min||0)*60;
+  P.blk={type:t,rounds:0,paused:false,
+    leftSec:(t==='amrap'||t==='emom')?(cap||600):0,
+    totalRounds:(t==='circuito')?(+ex.rondas||3):0,
+    minute:1,totalMin:(t==='emom')?(+ex.duracion_min||10):0};
+  P.phase='block';
+  renderBlock();
+  if(navigator.vibrate)navigator.vibrate(40);beep(900,0.3,0.8);
+  if(t==='amrap'||t==='emom')runBlockTimer();
+}
+function runBlockTimer(){
+  clearInterval(P.int);
+  P.int=setInterval(()=>{
+    if(!P.blk||P.blk.paused)return;
+    P.blk.leftSec--;
+    const el=document.getElementById('pl-timer');if(el)el.textContent=fmtSec(P.blk.leftSec);
+    countdownCue(P.blk.leftSec);
+    if(P.blk.type==='emom'&&P.blk.leftSec>0){
+      const elapsed=P.blk.totalMin*60-P.blk.leftSec;
+      const nm=Math.floor(elapsed/60)+1;
+      if(nm!==P.blk.minute){P.blk.minute=nm;P.blk.rounds=nm-1;beep(1100,0.25,0.85);if(navigator.vibrate)navigator.vibrate([60,40,60]);renderBlock();}
+    }
+    if(P.blk.leftSec<=0){clearInterval(P.int);if(P.blk.type==='emom')P.blk.rounds=P.blk.totalMin;
+      if(navigator.vibrate)navigator.vibrate([120,60,120,60,200]);beep(1600,0.4,0.95);endBlock(true);}
+  },1000);
+}
+function blockRound(){
+  if(!P.blk||P.blk.paused)return;
+  P.blk.rounds++;beep(1000,0.15,0.7);if(navigator.vibrate)navigator.vibrate(30);
+  if(P.blk.type==='circuito'&&P.blk.rounds>=P.blk.totalRounds){endBlock(true);return;}
+  renderBlock();
+}
+function pauseBlock(){if(P.blk){P.blk.paused=!P.blk.paused;renderBlock();}}
+function endBlock(auto){
+  clearInterval(P.int);
+  const ex=P.sess.exercises[P.exi];
+  const t=(P.blk&&P.blk.type)||blockType(ex);
+  const r=P.blk?P.blk.rounds:0;
+  const label=t==='amrap'?`${ex.nombre}: ${r} ronda${r===1?'':'s'} en ${ex.duracion_min||'?'} min`
+    :t==='emom'?`${ex.nombre}: EMOM ${ex.duracion_min||'?'} min`
+    :`${ex.nombre}: ${r} de ${(P.blk&&P.blk.totalRounds)||ex.rondas||'?'} rondas`;
+  P.blockResults=P.blockResults||[];P.blockResults.push(label);
+  if(navigator.vibrate)navigator.vibrate([120,60,120]);
+  document.getElementById('player-body').innerHTML=`
+    <div style="text-align:center;padding:28px 18px">
+      <div style="font-size:42px;margin-bottom:8px">⏱️</div>
+      <div style="font-size:calc(18px*var(--fs));font-weight:700;margin-bottom:8px">Bloque terminado</div>
+      <div style="color:rgba(255,255,255,.85);font-size:calc(15px*var(--fs));margin-bottom:18px">${label}</div>
+      <button class="btn btn-primary btn-block" onclick="blockContinue()">Continuar →</button>
+    </div>`;
+  P._afterBlock=ex;
+}
+function blockContinue(){const ex=P._afterBlock;P._afterBlock=null;P.blk=null;advanceAfter(ex);}
+function advanceAfter(ex){
+  if(P.exi<P.sess.exercises.length-1){
+    P.exi++;P.set=1;
+    const rest=+ex.descanso_seg||0;const next=P.sess.exercises[P.exi];
+    if(rest>0&&!isBlock(next)){P.phase='rest';P.sec=rest;P.tot=rest;renderPlayer();runRest();}
+    else{P.phase='ready';renderPlayer();}
+  } else { finishSession(); }
+}
+
 /* --- Logros y racha --- */
 function weekKeyOf(dateStr){const d=new Date(dateStr+'T00:00:00');const day=d.getDay()||7;d.setDate(d.getDate()-day+1);return d.toISOString().split('T')[0];}
 function computeStats(){
@@ -2477,6 +2662,8 @@ function finishSession(){
   // celebrar: estadísticas reales de la sesión y logros
   const mins=P.startedAt?Math.max(1,Math.round((Date.now()-P.startedAt)/60000)):null;
   const totalSets=(P.sess.exercises||[]).reduce((a,e)=>a+(+e.series||0),0);
+  const blockRes=P.blockResults||[];
+  if(blockRes.length)window._blkNote=blockRes.join('\n');
   const st=computeStats();
   const prevIds=new Set(S.earnedBadges||[]);
   // simular el logro tras registrar esta sesión (total+1)
@@ -2491,6 +2678,9 @@ function finishSession(){
       <div><div style="font-size:calc(20px*var(--fs));font-weight:700">${totalSets}</div><div style="font-size:calc(10px*var(--fs));color:rgba(255,255,255,.6);text-transform:uppercase">series</div></div>
       <div><div style="font-size:calc(20px*var(--fs));font-weight:700">🔥 ${st.streak}</div><div style="font-size:calc(10px*var(--fs));color:rgba(255,255,255,.6);text-transform:uppercase">racha sem.</div></div>
     </div>
+    ${blockRes.length?`<div style="background:rgba(255,255,255,.1);border-radius:14px;padding:12px;margin-bottom:16px">
+      <div style="font-size:calc(11px*var(--fs));text-transform:uppercase;letter-spacing:.6px;color:var(--free);margin-bottom:6px">Resultado de bloques</div>
+      ${blockRes.map(r=>`<div style="font-size:calc(14px*var(--fs))">⚡ ${r}</div>`).join('')}</div>`:''}
     ${newly.length?`<div style="background:rgba(255,255,255,.1);border-radius:14px;padding:12px;margin-bottom:16px">
       <div style="font-size:calc(11px*var(--fs));text-transform:uppercase;letter-spacing:.6px;color:#ffd60a;margin-bottom:6px">¡Logro desbloqueado!</div>
       ${newly.map(b=>`<div style="font-size:calc(15px*var(--fs));font-weight:600">${b.icon} ${b.name}</div>`).join('')}</div>`:''}
