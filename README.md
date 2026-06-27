@@ -439,3 +439,32 @@ semanal con lo entrenado; marcadores solo cada mes.
   rodillas al pecho, sentadilla con salto, sentadilla isométrica (wall sit), patinador, giro ruso,
   saltar la cuerda y encogimientos. Más rutas por nombre (búlgara→zancada, Arnold→press militar,
   good morning→peso muerto rumano, elevación frontal→lateral, etc.).
+
+## v45: generar sesión IA bajo demanda en cualquier día (sesión adicional)
+- Nuevo botón "✨ Generar IA" en el detalle de CUALQUIER día (con sesión IA, libre o vacío). Abre
+  un panel con selector completo: objetivo, nivel, tiempo y material (precargados desde el perfil,
+  ajustables solo para esa sesión, sin tocar el perfil).
+- La sesión se AÑADE como adicional (no sustituye lo que ya hubiera ese día; pueden convivir varias).
+- Consciente del histórico: opción "Complementar mi entrenamiento reciente" (activada por defecto)
+  que, en el modo offline, prioriza el grupo muscular menos entrenado en los últimos ~10 días y
+  evita repetir ejercicios ya presentes ese mismo día. En el modo Claude, el mensaje incluye el
+  resumen del entrenamiento reciente y la fase del mesociclo para que complemente sin interferir
+  en el objetivo global.
+- Base reutilizada: pickExercises/buildSessionOffline admiten ahora opciones (exclusiones y patrón
+  de arranque) de forma aditiva; las sesiones offline guardan el patrón muscular (p) para análisis.
+- Sin cambios en initState ni en el almacenamiento de datos del usuario.
+
+## v46: "Generar IA" puede sustituir la planificada + "Modificar con Claude" usa histórico/mesociclo
+- En el panel "✨ Generar IA", nuevo selector de modo: "Añadir como sesión nueva" o "Sustituir la
+  planificada (será la principal)". Al sustituir, la sesión planificada se marca como NO realizada
+  y la nueva pasa a ser la principal del día (offline o vía Claude). El modo "Sustituir" solo
+  aparece si el día tiene una sesión IA planificada pendiente.
+- Robustez con varias sesiones IA el mismo día: nuevo helper de "sesión IA principal" (la no
+  saltada/no hecha). Empezar sesión, ver sesión, plantilla de notas, intercambio de ejercicios y
+  el marcado de "hecho" al registrar ahora apuntan a la sesión correcta, no siempre a la primera.
+- "Modificar sesión → Pedir a Claude" ahora incluye el entrenamiento reciente y la fase del
+  mesociclo en el mensaje, para que la sesión regenerada complemente y respete el objetivo global
+  (mismos criterios que la generación complementaria), no solo material y tiempo.
+- Recordatorio de funcionamiento: la adaptación de la semana siguiente se alimenta de lo que
+  REGISTRAS (historial), no de las etiquetas; sustituir o añadir es indistinto para la adaptación.
+- Sin cambios en initState ni en el almacenamiento de datos del usuario.

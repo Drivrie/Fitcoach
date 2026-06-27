@@ -415,7 +415,7 @@ body{font-size:calc(15px*var(--fs))}
       <p class="note" style="margin-bottom:9px">Pitidos en los últimos 3 segundos de cada cuenta atrás. Si apenas se oyen: sube el volumen del móvil con los botones laterales <b>mientras suena</b>, y comprueba que el interruptor de silencio (lateral del iPhone) no esté activado.</p>
       <button class="btn btn-block" onclick="testBeep()">▶ Probar sonido</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 44</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 46</div>
   </div>
 </div>
 
@@ -503,6 +503,30 @@ body{font-size:calc(15px*var(--fs))}
       <div class="field" style="margin-top:10px"><label>Pega aquí la respuesta JSON de Claude</label>
         <textarea class="bridge-out" id="mod-in" placeholder='{ "titulo":..., "ejercicios":[...] }'></textarea></div>
       <button class="btn btn-primary btn-block" onclick="applyModify()">✓ Aplicar a esta sesión</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet-bg" id="gen-bg">
+  <div class="sheet">
+    <div class="sheet-h"><h3>✨ Generar sesión IA</h3><button class="btn btn-sm" onclick="closeSheet('gen-bg')">✕</button></div>
+    <p class="note" style="margin-bottom:11px">Crea una sesión a medida para este día. Se añade como sesión adicional y no altera tu plan de la semana.</p>
+    <div class="field"><label>Objetivo de esta sesión</label><div id="gen-obj"></div></div>
+    <div class="field"><label>Nivel</label><div id="gen-niv"></div></div>
+    <div class="field"><label>Material disponible</label><div id="gen-equip"></div></div>
+    <div class="field"><label>Tiempo disponible: <span id="gen-min-out" style="font-weight:600;color:var(--text)">45</span> min</label>
+      <input type="range" id="gen-min" min="15" max="120" step="5" value="45" style="width:100%"></div>
+    <div class="field"><label>¿Qué hacer con esta sesión?</label><div id="gen-mode"></div></div>
+    <label style="display:flex;align-items:center;gap:8px;margin:2px 0 12px;font-size:13px;color:var(--text2)"><input type="checkbox" id="gen-hist" checked style="width:auto"> Complementar mi entrenamiento reciente (priorizar grupos menos trabajados)</label>
+    <button class="btn btn-primary btn-block" onclick="generateDayOffline()">⚡ Generar (offline)</button>
+    <button class="btn btn-block" style="margin-top:8px" onclick="generateWithClaude()">✨ Pedir a Claude (más detallado)</button>
+    <div id="gen-claude" style="display:none;margin-top:12px">
+      <div class="divider"></div>
+      <button class="btn btn-primary btn-block" onclick="copyGenPrompt()" id="gen-copy">📋 Copiar mensaje para Claude</button>
+      <a class="btn btn-block" style="margin-top:8px;text-decoration:none" href="https://claude.ai/new" target="_blank" rel="noopener">↗ Abrir claude.ai</a>
+      <div class="field" style="margin-top:10px"><label>Pega aquí la respuesta JSON de Claude</label>
+        <textarea class="bridge-out" id="gen-in" placeholder='{ "titulo":..., "ejercicios":[...] }'></textarea></div>
+      <button class="btn btn-primary btn-block" onclick="applyGen()">✓ Añadir esta sesión</button>
     </div>
   </div>
 </div>
@@ -672,9 +696,11 @@ function calcBio(){
 }
 
 /* --- MOTOR OFFLINE: genera la semana sin IA --- */
-function pickExercises(equipSet,objetivo,minutos,seed){
+function pickExercises(equipSet,objetivo,minutos,seed,opts){
+  opts=opts||{};
+  const exclude=opts.exclude||new Set();
   // disponible: peso corporal SIEMPRE + lo que coincida con el equipo seleccionado
-  const avail=EXDB.filter(e=>e.eq.includes('ninguno')||e.eq.some(t=>equipSet.has(t)));
+  const avail=EXDB.filter(e=>(e.eq.includes('ninguno')||e.eq.some(t=>equipSet.has(t)))&&!exclude.has(e.n));
   const g=GOALS[objetivo];
   const isCircuit=g.split.includes('circuito');
   const count=minutos<=25?4:minutos<=40?5:minutos<=55?6:minutos<=75?7:8;
@@ -684,6 +710,8 @@ function pickExercises(equipSet,objetivo,minutos,seed){
   else if(objetivo==='musculo') order=['pierna','empuje','tiron','pierna','empuje','core','tiron','pierna'];
   else if(isCircuit) order=['pierna','empuje','tiron','cardio','core','cardio','pierna','empuje'];
   else order=['pierna','empuje','tiron','core','cardio','pierna','empuje','core'];
+  // sesgo de complemento: arrancar por un patrón concreto (el menos entrenado)
+  if(opts.lead){const li=order.indexOf(opts.lead);if(li>0)order=order.slice(li).concat(order.slice(0,li));}
   const used=new Set();const out=[];
   let si=seed;
   for(let i=0;i<count;i++){
@@ -698,15 +726,15 @@ function pickExercises(equipSet,objetivo,minutos,seed){
   return out;
 }
 
-function buildSessionOffline(equip,objetivo,nivel,minutos,dayCode,seed,isDeload){
+function buildSessionOffline(equip,objetivo,nivel,minutos,dayCode,seed,isDeload,opts){
   const g=GOALS[objetivo];
   const mult=LEVEL_MULT[nivel];
-  const exs=pickExercises(equip,objetivo,+minutos,seed);
+  const exs=pickExercises(equip,objetivo,+minutos,seed,opts);
   const setBase=Math.round((g.sets[0]+g.sets[1])/2*mult);
   const sets=isDeload?Math.max(2,setBase-1):setBase;
   const rest=Math.round((g.rest[0]+g.rest[1])/2);
   const ejercicios=exs.map(ex=>({
-    nombre:ex.n, yt:ex.yt,
+    nombre:ex.n, yt:ex.yt, p:ex.p,
     series:ex.comp?sets:Math.max(2,sets-1),
     reps: ex.p==='cardio'? (objetivo==='fuerza'?'30s':'40s') : g.reps,
     descanso_seg: ex.p==='cardio'?Math.round(rest*0.6):rest,
@@ -726,6 +754,40 @@ function buildSessionOffline(equip,objetivo,nivel,minutos,dayCode,seed,isDeload)
     vuelta_calma:'5 min de estiramientos de los grupos trabajados + respiración.',
     ejercicios
   };
+}
+
+/* --- Conciencia del histórico para sesiones complementarias --- */
+function recentPatternLoad(beforeKey){
+  const tally={pierna:0,empuje:0,tiron:0,core:0,cardio:0};
+  let cutoff;try{cutoff=new Date(beforeKey+'T00:00:00');}catch(e){return tally;}
+  if(isNaN(cutoff))return tally;
+  const start=new Date(cutoff);start.setDate(start.getDate()-10);
+  Object.keys(S.schedule||{}).forEach(k=>{
+    const d=new Date(k+'T00:00:00');if(isNaN(d)||d<start||d>=cutoff)return;
+    (S.schedule[k]||[]).forEach(s=>{if(s.type!=='ai'||!s.exercises)return;
+      s.exercises.forEach(e=>{
+        if(isBlock(e)){(e.movimientos||[]).forEach(m=>{const p=patFromName(m.nombre);if(p&&tally[p]!=null)tally[p]++;});return;}
+        const p=e.p||patFromName(e.nombre);if(p&&tally[p]!=null)tally[p]++;
+      });
+    });
+  });
+  return tally;
+}
+function leastTrainedPattern(beforeKey){
+  const t=recentPatternLoad(beforeKey);
+  return ['pierna','empuje','tiron'].sort((a,b)=>t[a]-t[b])[0];
+}
+function recentSummaryLines(beforeKey){
+  let cutoff;try{cutoff=new Date(beforeKey+'T00:00:00');}catch(e){return '';}
+  const items=[];
+  Object.keys(S.schedule||{}).sort().forEach(k=>{
+    const d=new Date(k+'T00:00:00');if(isNaN(d)||d>=cutoff)return;
+    (S.schedule[k]||[]).forEach(s=>{if(s.type==='ai'&&s.exercises){
+      const pats=[...new Set(s.exercises.map(e=>e.p||patFromName(e.nombre)).filter(Boolean))];
+      items.push(`  · ${k}: ${s.title} (${pats.join(', ')})`);
+    }});
+  });
+  return items.slice(-5).join('\n');
 }
 
 function descFor(ex){
@@ -952,6 +1014,7 @@ function selDay(key,idx,keep){
   }
   h+=`<div style="display:flex;gap:7px;margin-top:8px;flex-wrap:wrap">
     <button class="btn btn-sm" onclick="openLog('${key}')">✎ Registrar</button>
+    <button class="btn btn-sm" onclick="openGen('${key}',${idx})">✨ Generar IA</button>
     <button class="btn btn-sm" onclick="openAddForDay('${key}',${idx})">＋ Añadir</button>`;
   if(sess.some(s=>s.type==='ai'&&!s.skipped))h+=`<button class="btn btn-primary btn-sm" onclick="showSess('${key}')">▶ Ver sesión</button>`;
   h+=`</div>`;
@@ -1290,7 +1353,7 @@ const ALT={
 };
 function altsFor(ex){const k=figKey((ex._orig&&ex._orig.nombre)||ex.nombre);return ALT[k]||null;}
 function swapExercise(key,i,optIdx){
-  const sess=(S.schedule[key]||[]).find(s=>s.type==='ai');if(!sess)return;
+  const sess=mainAISess(key);if(!sess)return;
   const ex=sess.exercises[i];if(!ex)return;
   if(!ex._orig)ex._orig={nombre:ex.nombre,descripcion:ex.descripcion,musculos:ex.musculos,errores:ex.errores,yt:ex.yt};
   const opts=[ex._orig].concat(altsFor(ex)||[]);
@@ -1301,6 +1364,15 @@ function swapExercise(key,i,optIdx){
   save();showSess(key);
 }
 
+/* sesión IA principal del día (ignora las saltadas/hechas si hay alternativa) */
+function mainAIIdx(key){
+  const a=S.schedule[key]||[];
+  let i=a.findIndex(s=>s.type==='ai'&&!s.skipped&&!s.done);
+  if(i<0)i=a.findIndex(s=>s.type==='ai'&&!s.skipped);
+  if(i<0)i=a.findIndex(s=>s.type==='ai');
+  return i;
+}
+function mainAISess(key){const i=mainAIIdx(key);return i>=0?(S.schedule[key]||[])[i]:null;}
 function blockCard(ex,i){
   const t=blockType(ex);
   const label=t==='amrap'?`AMRAP · ${ex.duracion_min||'?'} min`
@@ -1322,7 +1394,7 @@ function blockCard(ex,i){
       </div></div></div>`;
 }
 function showSess(key){
-  const sess=(S.schedule[key]||[]).find(s=>s.type==='ai');
+  const sess=mainAISess(key);
   if(!sess||!sess.exercises){document.getElementById('sess-content').innerHTML='<div class="empty"><span class="ic">🏋</span><p>Esta sesión aún no tiene ejercicios. Genera la semana primero.</p></div>';tab('sess');return;}
   S.viewKey=key;
   let h=`<div class="card"><div style="font-size:16px;font-weight:600">${sess.title}</div>
@@ -1403,7 +1475,7 @@ function openLog(key,mode){
 /* Inserta en notas el esqueleto de cargas con los ejercicios de la sesión IA del día */
 function insertLoadTemplate(key){
   const ta=document.getElementById('l-notes');if(!ta)return;
-  const sess=(S.schedule[key]||[]).find(s=>s.type==='ai');
+  const sess=mainAISess(key);
   let tpl;
   if(sess&&sess.exercises&&sess.exercises.length){
     // prellenado con lo propuesto: solo corriges lo que difiera y añades comentario
@@ -1438,7 +1510,7 @@ function saveLog(){
   const notes=document.getElementById('l-notes').value;
   if(!S.schedule[key])S.schedule[key]=[];
   const log={type,duration:dur,distance:dist,kcal,hr,feeling:feel,notes,date:key};
-  const aiIdx=S.schedule[key].findIndex(s=>s.type==='ai');
+  const aiIdx=mainAIIdx(key);
   if(type.includes('IA')&&aiIdx>=0){S.schedule[key][aiIdx].done=true;S.schedule[key][aiIdx].log=log;}
   else{
     const fIdx=S.schedule[key].findIndex(s=>s.type==='free'&&!s.done);
@@ -1865,6 +1937,7 @@ function renderModEquip(){
   });
 }
 document.getElementById('mod-min').addEventListener('input',e=>{document.getElementById('mod-min-out').textContent=e.target.value;});
+document.getElementById('gen-min').addEventListener('input',e=>{document.getElementById('gen-min-out').textContent=e.target.value;});
 
 function regenerateDayOffline(){
   const key=MOD.key;if(!key)return;
@@ -1883,14 +1956,17 @@ function regenerateDayOffline(){
 }
 
 function modifyWithClaude(){
-  const eqLabels=MOD.equipos.map(e=>({ninguno:'peso corporal',mancuernas:'mancuernas',bandas:'bandas elásticas',barra:'barra y discos',kettlebell:'kettlebell',gimnasio:'gimnasio completo'}[e]||e)).join(', ');
+  const eqLabels=MOD.equipos.map(e=>({ninguno:'peso corporal',mancuernas:'mancuernas',bandas:'bandas elásticas',barra:'barra y discos',kettlebell:'kettlebell',gimnasio:'gimnasio completo',dominadas:'barra de dominadas'}[e]||e)).join(', ');
   const mins=document.getElementById('mod-min').value;
   const objLabels=(S.profile.objetivos||['bienestar']).map(o=>GOAL_LABELS[o]||o).join(' + ');
-  window._modPrompt=`Actúa como mi entrenador personal. Modifica UNA sola sesión de fuerza con estas restricciones nuevas para hoy:
+  const mi=mesoInfo(programWeekFor(MOD.key));
+  const mesoTxt=mi?`Fase del mesociclo: bloque ${mi.block}, semana ${mi.wInBlock} de ${mi.len}${mi.focus?' ('+mi.focus+')':''}.`:(S.mesoFocus?`Fase actual del programa: ${S.mesoFocus}.`:'');
+  const hist=recentSummaryLines(MOD.key);
+  window._modPrompt=`Actúa como mi entrenador personal. Modifica/regenera UNA sola sesión de fuerza para hoy con estas restricciones, manteniéndola coherente con mi plan y mi objetivo global:
 - Material disponible hoy: ${eqLabels}
 - Tiempo disponible hoy: ${mins} minutos
-- Mis objetivos: ${objLabels} (prioriza hipertrofia: 6-12 reps, 3-4 series, 1-3 RIR, descansos 90-150s, sobrecarga progresiva).
-- Incluye 2-3 errores comunes de técnica por ejercicio.
+- Mis objetivos: ${objLabels} (prioriza hipertrofia: 6-12 reps, 3-4 series, 1-3 RIR, descansos 90-150s, sobrecarga progresiva).${mesoTxt?`\n- ${mesoTxt}`:''}${hist?`\n- Entrenamiento reciente (tenlo en cuenta para complementar y repartir bien los grupos, no repetir en exceso):\n${hist}`:''}
+- Indica el esfuerzo como RIR. En "peso" especifica la carga de forma inequívoca. Incluye 2-3 errores comunes de técnica por ejercicio.
 - Puedes incluir como mucho UN bloque AMRAP/EMOM/circuito (la app lo guía con cronómetro y conteo de rondas) usando un ejercicio con esta forma: {"nombre":"AMRAP 10 min","tipo":"amrap","duracion_min":10,"descanso_seg":90,"movimientos":[{"nombre":"Sentadilla goblet","reps":"12"},{"nombre":"Flexiones","reps":"10"}],"descripcion":"...","musculos":"..."} ("tipo": amrap|emom|circuito; amrap/emom→"duracion_min"; circuito→"rondas").
 
 Responde SOLO con JSON válido, sin backticks ni texto extra, con esta estructura (una sola sesión):
@@ -1911,6 +1987,116 @@ function applyModify(){
   const ix=S.schedule[key].findIndex(x=>x.type==='ai');
   if(ix>=0)S.schedule[key][ix]=entry;else S.schedule[key].push(entry);
   save();closeSheet('mod-bg');renderCal();
+  selDay(key,weekDates(S.currentWeek).map(fmt).indexOf(key),true);
+}
+
+/* ============================================================
+   GENERAR SESIÓN IA BAJO DEMANDA (cualquier día, sesión adicional)
+   ============================================================ */
+let GEN={key:null,idx:null,objetivo:null,nivel:null,equipos:[]};
+const GEN_NIV=[['principiante','Principiante'],['intermedio','Intermedio'],['avanzado','Avanzado']];
+const GEN_OBJ=['fuerza','musculo','grasa','resistencia','tonificar','bienestar'];
+function openGen(key,idx){
+  GEN={key,idx,mode:'add',
+    objetivo:primaryGoal(S.profile.objetivos),
+    nivel:S.profile.nivel||'intermedio',
+    equipos:[...(S.profile.equipos||['ninguno'])]};
+  const mins=S.profile.minutos||45;
+  const ms=document.getElementById('gen-min');if(ms)ms.value=mins;
+  const mo=document.getElementById('gen-min-out');if(mo)mo.textContent=mins;
+  const gc=document.getElementById('gen-claude');if(gc)gc.style.display='none';
+  const gi=document.getElementById('gen-in');if(gi)gi.value='';
+  renderGenObj();renderGenNiv();renderGenEquip();renderGenMode();
+  openSheet('gen-bg');
+}
+function _chipRow(host,items,isSel,onPick){
+  const c=document.getElementById(host);if(!c)return;c.innerHTML='';
+  items.forEach(([k,lab])=>{
+    const el=document.createElement('span');el.className='chip'+(isSel(k)?' sel':'');el.textContent=lab;
+    el.onclick=()=>{onPick(k);};
+    c.appendChild(el);
+  });
+}
+function renderGenObj(){_chipRow('gen-obj',GEN_OBJ.map(k=>[k,GOAL_LABELS[k]||k]),k=>GEN.objetivo===k,k=>{GEN.objetivo=k;renderGenObj();});}
+function renderGenNiv(){_chipRow('gen-niv',GEN_NIV,k=>GEN.nivel===k,k=>{GEN.nivel=k;renderGenNiv();});}
+function renderGenEquip(){_chipRow('gen-equip',MOD_EQUIP,k=>GEN.equipos.includes(k),k=>{
+  const i=GEN.equipos.indexOf(k);if(i>=0)GEN.equipos.splice(i,1);else GEN.equipos.push(k);
+  if(!GEN.equipos.length)GEN.equipos=['ninguno'];renderGenEquip();});}
+function renderGenMode(){
+  const hasAI=(S.schedule[GEN.key]||[]).some(s=>s.type==='ai'&&!s.skipped&&!s.done);
+  const opts=[['add','➕ Añadir como sesión nueva']];
+  if(hasAI)opts.push(['replace','♻ Sustituir la planificada (será la principal)']);
+  if(GEN.mode==='replace'&&!hasAI)GEN.mode='add';
+  _chipRow('gen-mode',opts,k=>GEN.mode===k,k=>{GEN.mode=k;renderGenMode();});
+}
+function _genModeTag(key){
+  // En modo "sustituir": marca la sesión IA planificada principal como NO realizada.
+  if(GEN.mode==='replace'){
+    const pIdx=mainAIIdx(key);
+    if(pIdx>=0&&!S.schedule[key][pIdx].done){
+      S.schedule[key][pIdx].skipped=true;S.schedule[key][pIdx].done=false;delete S.schedule[key][pIdx].log;
+      return ' · principal (sustituye a la planificada)';
+    }
+    return ' · principal';
+  }
+  return null;
+}
+function generateDayOffline(){
+  const key=GEN.key;if(!key)return;
+  const objetivo=GEN.objetivo||primaryGoal(S.profile.objetivos);
+  const nivel=GEN.nivel||S.profile.nivel||'intermedio';
+  const eq=new Set(GEN.equipos.length?GEN.equipos:['ninguno']);
+  const mins=parseInt(document.getElementById('gen-min').value)||45;
+  const compl=document.getElementById('gen-hist').checked;
+  const opts={};let tag=' · extra';
+  if(compl){
+    const exclude=new Set();
+    (S.schedule[key]||[]).forEach(s=>{(s.exercises||[]).forEach(e=>{if(e.nombre)exclude.add(e.nombre);});});
+    opts.exclude=exclude;opts.lead=leastTrainedPattern(key);tag=' · complementaria';
+  }
+  if(!S.schedule[key])S.schedule[key]=[];
+  const repTag=_genModeTag(key);if(repTag!==null)tag=repTag;
+  const seed=Math.floor(Math.random()*9999);
+  const sess=buildSessionOffline(eq,objetivo,nivel,mins,'X',seed,false,opts);
+  S.schedule[key].push({type:'ai',title:sess.titulo,meta:sess.meta+tag,warmup:sess.calentamiento,cooldown:sess.vuelta_calma,exercises:sess.ejercicios,done:false});
+  save();closeSheet('gen-bg');renderCal();
+  selDay(key,weekDates(S.currentWeek).map(fmt).indexOf(key),true);
+}
+function generateWithClaude(){
+  const objetivo=GEN.objetivo||primaryGoal(S.profile.objetivos);
+  const nivel=GEN.nivel||S.profile.nivel||'intermedio';
+  const mins=document.getElementById('gen-min').value;
+  const eqLabels=GEN.equipos.map(e=>({ninguno:'peso corporal',mancuernas:'mancuernas',bandas:'bandas elásticas',barra:'barra y discos',kettlebell:'kettlebell',gimnasio:'gimnasio completo',dominadas:'barra de dominadas'}[e]||e)).join(', ');
+  const compl=document.getElementById('gen-hist').checked;
+  const mi=mesoInfo(programWeekFor(GEN.key));
+  const mesoTxt=mi?`Fase del mesociclo: bloque ${mi.block}, semana ${mi.wInBlock} de ${mi.len}${mi.focus?' ('+mi.focus+')':''}.`:(S.mesoFocus?`Fase actual del programa: ${S.mesoFocus}.`:'');
+  const hist=compl?recentSummaryLines(GEN.key):'';
+  window._genPrompt=`Actúa como mi entrenador personal. Crea UNA sesión ADICIONAL para un día concreto que COMPLEMENTE mi entrenamiento reciente sin interferir en mi objetivo global.
+- Objetivo de esta sesión: ${GOAL_LABELS[objetivo]||objetivo}
+- Nivel: ${nivel}
+- Tiempo disponible: ${mins} min
+- Material disponible: ${eqLabels}${mesoTxt?`\n- ${mesoTxt}`:''}${hist?`\n- Entrenamiento reciente (para COMPLEMENTAR, no repetir en exceso los mismos grupos):\n${hist}`:''}
+- Prioriza los grupos musculares menos trabajados últimamente; respeta el reparto (las piernas son grupos grandes, no las relegues).
+- Indica el esfuerzo como RIR. En "peso" especifica la carga de forma inequívoca (p. ej. "16 kg por mancuerna" o "solo peso corporal"). Incluye 2-3 errores comunes por ejercicio.
+- Puedes incluir como mucho UN bloque AMRAP/EMOM/circuito (la app lo guía con cronómetro y conteo de rondas) con la forma {"nombre":"AMRAP 10 min","tipo":"amrap","duracion_min":10,"descanso_seg":90,"movimientos":[{"nombre":"...","reps":"12"}],...} ("tipo": amrap|emom|circuito; amrap/emom→"duracion_min"; circuito→"rondas").
+
+Responde SOLO con JSON válido (una sola sesión), sin backticks ni texto extra:
+{"titulo":"string","meta":"string breve","calentamiento":"string","vuelta_calma":"string","ejercicios":[{"nombre":"string","series":3,"reps":"8-12","descanso_seg":90,"rir":"1-3","tempo":"2-1-2","peso":"16 kg por mancuerna","descripcion":"string","musculos":"string","errores":["e1","e2"]}]}
+En "nombre" usa términos comunes en español (sentadilla, press de banca, remo, plancha, etc.).`;
+  document.getElementById('gen-claude').style.display='block';
+}
+function copyGenPrompt(){
+  navigator.clipboard.writeText(window._genPrompt).then(()=>{const b=document.getElementById('gen-copy');b.textContent='✓ Copiado';setTimeout(()=>b.textContent='📋 Copiar mensaje para Claude',1800);}).catch(()=>{alert('Copia manual: '+window._genPrompt);});
+}
+function applyGen(){
+  const raw=document.getElementById('gen-in').value.trim();if(!raw){alert('Pega la respuesta de Claude primero.');return;}
+  let s;try{const clean=raw.replace(/```json|```/g,'').trim();s=JSON.parse(clean.slice(clean.indexOf('{'),clean.lastIndexOf('}')+1));}catch(e){alert('No se pudo leer el JSON. Copia la respuesta completa de Claude.');return;}
+  if(!s.ejercicios){alert('El JSON no contiene "ejercicios".');return;}
+  const key=GEN.key;s.ejercicios=s.ejercicios.map(matchYT);
+  if(!S.schedule[key])S.schedule[key]=[];
+  const repTag=_genModeTag(key);const tag=repTag!==null?repTag:' · extra';
+  S.schedule[key].push({type:'ai',title:s.titulo||'Sesión IA',meta:(s.meta||'')+tag,warmup:s.calentamiento,cooldown:s.vuelta_calma,exercises:s.ejercicios,done:false});
+  save();closeSheet('gen-bg');renderCal();
   selDay(key,weekDates(S.currentWeek).map(fmt).indexOf(key),true);
 }
 
@@ -2352,7 +2538,7 @@ function releaseWakeLock(){try{if(WL){WL.release();WL=null;}}catch(e){}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&P.active)acquireWakeLock();});
 
 function startPlayer(key){
-  const sess=(S.schedule[key]||[]).find(s=>s.type==='ai');
+  const sess=mainAISess(key);
   if(!sess||!sess.exercises)return;
   initAudio();
   P={active:true,sess,exi:0,set:1,phase:'ready',int:null,sec:0,tot:0,key,startedAt:Date.now(),setsDone:0};
