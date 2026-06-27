@@ -217,7 +217,7 @@ body{font-size:calc(15px*var(--fs))}
       <span><span class="d" style="background:var(--done)"></span>Completado</span>
     </div>
     <div id="day-panel"></div>
-    <button class="btn btn-primary btn-block" style="margin-top:6px" onclick="openAdd()">+ Añadir actividad libre</button>
+    <button class="btn btn-primary btn-block" style="margin-top:6px" onclick="openAdd()">＋ Añadir actividad libre</button>
   </div>
 
   <!-- SESIÓN -->
@@ -415,7 +415,7 @@ body{font-size:calc(15px*var(--fs))}
       <p class="note" style="margin-bottom:9px">Pitidos en los últimos 3 segundos de cada cuenta atrás. Si apenas se oyen: sube el volumen del móvil con los botones laterales <b>mientras suena</b>, y comprueba que el interruptor de silencio (lateral del iPhone) no esté activado.</p>
       <button class="btn btn-block" onclick="testBeep()">▶ Probar sonido</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 46</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 47</div>
   </div>
 </div>
 
@@ -1014,8 +1014,7 @@ function selDay(key,idx,keep){
   }
   h+=`<div style="display:flex;gap:7px;margin-top:8px;flex-wrap:wrap">
     <button class="btn btn-sm" onclick="openLog('${key}')">✎ Registrar</button>
-    <button class="btn btn-sm" onclick="openGen('${key}',${idx})">✨ Generar IA</button>
-    <button class="btn btn-sm" onclick="openAddForDay('${key}',${idx})">＋ Añadir</button>`;
+    <button class="btn btn-sm" onclick="openGen('${key}',${idx})">✨ Generar IA</button>`;
   if(sess.some(s=>s.type==='ai'&&!s.skipped))h+=`<button class="btn btn-primary btn-sm" onclick="showSess('${key}')">▶ Ver sesión</button>`;
   h+=`</div>`;
   document.getElementById('day-panel').innerHTML=h;
@@ -1524,13 +1523,13 @@ function saveLog(){
 
 /* --- ADD --- */
 function openAdd(){
-  // "Añadir" ahora abre el formulario de registro completo para el día de hoy (o el primero de la semana mostrada)
+  // Botón único de "Añadir actividad libre": usa el día seleccionado si lo hay,
+  // si no el día de hoy, y si hoy no está en la semana mostrada, el primero de ella.
   const dates=weekDates(S.currentWeek).map(fmt);
   const todayKey=fmt(new Date());
-  const key=dates.includes(todayKey)?todayKey:dates[0];
+  const key=(S.selDay&&dates.includes(S.selDay))?S.selDay:(dates.includes(todayKey)?todayKey:dates[0]);
   openLog(key,'add');
 }
-function openAddForDay(key,idx){openLog(key,'add');}
 
 /* --- PROGRESO --- */
 function renderProg(){

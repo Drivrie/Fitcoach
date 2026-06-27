@@ -468,3 +468,10 @@ semanal con lo entrenado; marcadores solo cada mes.
 - Recordatorio de funcionamiento: la adaptación de la semana siguiente se alimenta de lo que
   REGISTRAS (historial), no de las etiquetas; sustituir o añadir es indistinto para la adaptación.
 - Sin cambios en initState ni en el almacenamiento de datos del usuario.
+
+## v47: un único botón "＋ Añadir actividad libre" (sin duplicidad)
+- Se elimina el botón duplicado "＋ Añadir" del detalle del día. Queda un único botón
+  "＋ Añadir actividad libre" (el de abajo del calendario), que ahora apunta de forma inteligente
+  al DÍA SELECCIONADO si hay uno abierto; si no, a hoy; y si hoy no está en la semana mostrada, al
+  primer día de esa semana. El formulario mantiene el desplegable de día para cambiarlo.
+- Sin cambios de datos ni de almacenamiento.
