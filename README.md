@@ -475,3 +475,15 @@ semanal con lo entrenado; marcadores solo cada mes.
   al DÍA SELECCIONADO si hay uno abierto; si no, a hoy; y si hoy no está en la semana mostrada, al
   primer día de esa semana. El formulario mantiene el desplegable de día para cambiarlo.
 - Sin cambios de datos ni de almacenamiento.
+
+## v48: entrada de decimales con coma (41,4) en marcadores, peso y mancuernas
+- Problema: los campos de marcadores de salud y otros eran type="number", que en iOS bloquea la
+  coma como separador decimal, y parseFloat("41,4") truncaba a 41.
+- Campos afectados pasan a type="text" con inputmode="decimal" (teclado numérico con coma en iOS):
+  FC reposo, HRV, VO₂max, % grasa, sueño, pasos, kcal activas, peso, y mancuernas (desde/hasta,
+  admite 2,5 kg). La distancia de actividad ya lo permitía.
+- Parseo tolerante: nuevo helper toNum() (coma→punto) usado en saveManualHealth, calcBio,
+  saveProfile (normaliza a punto al guardar) y saveDumbbells. Los marcadores enteros (FC, HRV,
+  pasos, kcal) se siguen redondeando; los decimales (VO₂max, % grasa, sueño, peso) conservan decimal.
+- Altura, edad, kcal y FC del registro siguen como enteros (sin caso decimal).
+- Sin cambios en initState ni en el almacenamiento; los datos existentes se conservan.

@@ -320,19 +320,19 @@ body{font-size:calc(15px*var(--fs))}
         <summary style="cursor:pointer;font-size:13px;color:var(--accent)">✏️ Introducir / actualizar marcadores a mano (medias del mes)</summary>
         <p class="note" style="margin:8px 0">La forma recomendada. En la app Salud abre cada dato, filtra por mes (pestaña <b>M</b>) y apunta el <b>PROMEDIO</b>; para VO₂max y % grasa usa el valor más reciente. Rutas: FC reposo, HRV y VO₂max → Examinar → Corazón. Pasos y energía activa → Examinar → Actividad. % grasa → Examinar → Medidas corporales. Déjalo en blanco si no lo tienes; se prellenan tus valores anteriores para que solo cambies lo necesario.</p>
         <div class="row2">
-          <div class="field"><label>FC reposo (lpm)</label><input type="number" id="m-rhr" inputmode="numeric" placeholder="58"></div>
-          <div class="field"><label>HRV / VFC (ms)</label><input type="number" id="m-hrv" inputmode="numeric" placeholder="45"></div>
+          <div class="field"><label>FC reposo (lpm)</label><input type="text" id="m-rhr" inputmode="decimal" placeholder="58"></div>
+          <div class="field"><label>HRV / VFC (ms)</label><input type="text" id="m-hrv" inputmode="decimal" placeholder="45"></div>
         </div>
         <div class="row2">
-          <div class="field"><label>VO₂max</label><input type="number" id="m-vo2" inputmode="decimal" placeholder="44"></div>
-          <div class="field"><label>% grasa (opcional)</label><input type="number" id="m-bf" inputmode="decimal" placeholder="déjalo vacío"></div>
+          <div class="field"><label>VO₂max</label><input type="text" id="m-vo2" inputmode="decimal" placeholder="44"></div>
+          <div class="field"><label>% grasa (opcional)</label><input type="text" id="m-bf" inputmode="decimal" placeholder="déjalo vacío"></div>
         </div>
         <div class="row2">
-          <div class="field"><label>Pasos/día (media)</label><input type="number" id="m-steps" inputmode="numeric" placeholder="9000"></div>
-          <div class="field"><label>kcal activas/día</label><input type="number" id="m-akcal" inputmode="numeric" placeholder="500"></div>
+          <div class="field"><label>Pasos/día (media)</label><input type="text" id="m-steps" inputmode="numeric" placeholder="9000"></div>
+          <div class="field"><label>kcal activas/día</label><input type="text" id="m-akcal" inputmode="numeric" placeholder="500"></div>
         </div>
         <div class="row2">
-          <div class="field"><label>Sueño (h/noche, media)</label><input type="number" id="m-sleep" inputmode="decimal" step="0.1" placeholder="7.2"></div>
+          <div class="field"><label>Sueño (h/noche, media)</label><input type="text" id="m-sleep" inputmode="decimal" placeholder="7.2"></div>
           <div class="field"></div>
         </div>
         <button class="btn btn-primary btn-block" onclick="saveManualHealth()">💾 Guardar marcadores</button>
@@ -347,7 +347,7 @@ body{font-size:calc(15px*var(--fs))}
     <div class="card">
       <div class="card-t">Datos personales</div>
       <div class="row2">
-        <div class="field"><label>Peso (kg)</label><input type="number" id="peso" placeholder="75" inputmode="decimal"></div>
+        <div class="field"><label>Peso (kg)</label><input type="text" id="peso" placeholder="75" inputmode="decimal"></div>
         <div class="field"><label>Altura (cm)</label><input type="number" id="altura" placeholder="175" inputmode="numeric"></div>
       </div>
       <div class="row2">
@@ -415,7 +415,7 @@ body{font-size:calc(15px*var(--fs))}
       <p class="note" style="margin-bottom:9px">Pitidos en los últimos 3 segundos de cada cuenta atrás. Si apenas se oyen: sube el volumen del móvil con los botones laterales <b>mientras suena</b>, y comprueba que el interruptor de silencio (lateral del iPhone) no esté activado.</p>
       <button class="btn btn-block" onclick="testBeep()">▶ Probar sonido</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 47</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 48</div>
   </div>
 </div>
 
@@ -685,7 +685,7 @@ function setWeekHeader(){const el=document.getElementById('hdr-week');if(el)el.t
 
 /* --- Cálculos biométricos --- */
 function calcBio(){
-  const p=parseFloat(peso.value),h=parseFloat(altura.value)/100,a=parseFloat(edad.value),s=sexo.value;
+  const p=toNum(peso.value),h=toNum(altura.value)/100,a=toNum(edad.value),s=sexo.value;
   if(!p||!h||!a)return;
   const imc=(p/(h*h)).toFixed(1);
   const tmb=Math.round(s==='hombre'?10*p+6.25*h*100-5*a+5:10*p+6.25*h*100-5*a-161);
@@ -2356,7 +2356,7 @@ function logHealthSnapshot(h){
   if(S.healthLog.length>24)S.healthLog=S.healthLog.slice(-24);
 }
 function saveManualHealth(){
-  const g=id=>{const v=parseFloat(document.getElementById(id).value);return isNaN(v)?null:v;};
+  const g=id=>{const v=toNum(document.getElementById(id).value);return isNaN(v)?null:v;};
   const h=Object.assign({},S.health||{});
   const rhr=g('m-rhr'),hrv=g('m-hrv'),vo2=g('m-vo2'),bf=g('m-bf'),st=g('m-steps'),ak=g('m-akcal'),sl=g('m-sleep');
   if(rhr!=null)h.restingHR=Math.round(rhr);
@@ -2521,6 +2521,8 @@ function countdownCue(sec){
 function testBeep(){initAudio();beep(1000,0.18,0.85);setTimeout(()=>beep(1500,0.4,0.95),350);}
 
 function parseReps(r){const m=String(r).match(/(\d+)\s*s/);return m?+m[1]:null;} // segundos si es "40s"
+// Convierte a número aceptando coma decimal española (41,4 → 41.4). NaN si no es número.
+function toNum(v){if(v==null)return NaN;return parseFloat(String(v).trim().replace(/\s/g,'').replace(/,/g,'.'));}
 // --- Formatos por bloque (AMRAP / EMOM / circuito) ---
 function blockType(ex){const t=((ex&&(ex.tipo||ex.formato))||'').toString().toLowerCase();
   if(/amrap/.test(t))return 'amrap';
@@ -2963,8 +2965,8 @@ function renderEquipDetail(){
     h+=`<div style="background:var(--surface2);border-radius:12px;padding:11px 12px;margin-bottom:8px">
       <div style="font-size:calc(12px*var(--fs));font-weight:600;margin-bottom:8px">🏋 Mancuernas disponibles (kg por mancuerna)</div>
       <div class="row2">
-        <div class="field"><label>Desde</label><input type="number" id="db-min" value="${db.min}" inputmode="numeric" onchange="saveDumbbells()"></div>
-        <div class="field"><label>Hasta</label><input type="number" id="db-max" value="${db.max}" inputmode="numeric" onchange="saveDumbbells()"></div>
+        <div class="field"><label>Desde</label><input type="text" id="db-min" value="${db.min}" inputmode="decimal" onchange="saveDumbbells()"></div>
+        <div class="field"><label>Hasta</label><input type="text" id="db-max" value="${db.max}" inputmode="decimal" onchange="saveDumbbells()"></div>
       </div>
       <div class="field"><label>Salto entre pesos (kg)</label><select id="db-step" onchange="saveDumbbells()">
         ${[1,2,2.5,5].map(s=>`<option value="${s}"${db.step===s?' selected':''}>${s} kg</option>`).join('')}</select></div>
@@ -3002,9 +3004,9 @@ function updateDbPreview(){
   p.textContent=l.length?('Pesos: '+l.join(', ')+' kg'):'Revisa el rango.';
 }
 function saveDumbbells(){
-  const min=parseFloat(document.getElementById('db-min').value);
-  const max=parseFloat(document.getElementById('db-max').value);
-  const step=parseFloat(document.getElementById('db-step').value);
+  const min=toNum(document.getElementById('db-min').value);
+  const max=toNum(document.getElementById('db-max').value);
+  const step=toNum(document.getElementById('db-step').value);
   S.dumbbells={min:isNaN(min)?8:min,max:isNaN(max)?24:max,step:isNaN(step)?2:step};
   save();updateDbPreview();
 }
@@ -3053,7 +3055,8 @@ function renderFsChips(){
 }
 
 function saveProfile(){
-  S.profile.peso=peso.value;S.profile.altura=altura.value;S.profile.edad=edad.value;S.profile.sexo=sexo.value;
+  const norm=v=>String(v==null?'':v).trim().replace(/,/g,'.');
+  S.profile.peso=norm(peso.value);S.profile.altura=norm(altura.value);S.profile.edad=norm(edad.value);S.profile.sexo=sexo.value;
   S.profile.nivel=nivel.value;S.profile.minutos=parseInt(document.getElementById('minutos').value)||45;
   save();
 }
