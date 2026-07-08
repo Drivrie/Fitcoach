@@ -487,3 +487,13 @@ semanal con lo entrenado; marcadores solo cada mes.
   pasos, kcal) se siguen redondeando; los decimales (VO₂max, % grasa, sueño, peso) conservan decimal.
 - Altura, edad, kcal y FC del registro siguen como enteros (sin caso decimal).
 - Sin cambios en initState ni en el almacenamiento; los datos existentes se conservan.
+
+## v49: pegar la respuesta de Claude tolera comillas tipográficas (Generar IA y Modificar)
+- Problema: al pedir la sesión a Claude y pegar el texto en "Generar IA" (o "Modificar"), fallaba
+  con "No se pudo leer el JSON" porque el texto llegaba con comillas tipográficas (“ ”) en vez de
+  rectas ("), que JSON.parse no acepta.
+- El puente semanal ya toleraba esto; ahora se ha extraído esa lógica a un helper común looseJSON()
+  que normaliza comillas dobles/simples curvas, guiones largos, espacios duros y comas colgantes, y
+  recorta texto sobrante. Lo usan applyGen (Generar IA), applyModify (Modificar) y queda disponible.
+- Verificado con el texto real que fallaba (3 ejercicios): ahora se pega y crea la sesión sin error.
+- Sin cambios en initState ni en el almacenamiento.

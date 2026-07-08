@@ -415,7 +415,7 @@ body{font-size:calc(15px*var(--fs))}
       <p class="note" style="margin-bottom:9px">Pitidos en los últimos 3 segundos de cada cuenta atrás. Si apenas se oyen: sube el volumen del móvil con los botones laterales <b>mientras suena</b>, y comprueba que el interruptor de silencio (lateral del iPhone) no esté activado.</p>
       <button class="btn btn-block" onclick="testBeep()">▶ Probar sonido</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 48</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 49</div>
   </div>
 </div>
 
@@ -1978,7 +1978,7 @@ function copyModPrompt(){
 }
 function applyModify(){
   const raw=document.getElementById('mod-in').value.trim();if(!raw){alert('Pega la respuesta de Claude primero.');return;}
-  let s;try{const clean=raw.replace(/```json|```/g,'').trim();s=JSON.parse(clean.slice(clean.indexOf('{'),clean.lastIndexOf('}')+1));}catch(e){alert('No se pudo leer el JSON. Copia la respuesta completa de Claude.');return;}
+  let s;try{s=looseJSON(raw);}catch(e){alert('No se pudo leer el JSON. Copia la respuesta completa de Claude (desde la primera { hasta la última }).');return;}
   if(!s.ejercicios){alert('El JSON no contiene "ejercicios".');return;}
   const key=MOD.key;s.ejercicios=s.ejercicios.map(matchYT);
   const entry={type:'ai',title:s.titulo||'Sesión modificada',meta:(s.meta||'')+' · modificada',warmup:s.calentamiento,cooldown:s.vuelta_calma,exercises:s.ejercicios,done:false};
@@ -2089,7 +2089,7 @@ function copyGenPrompt(){
 }
 function applyGen(){
   const raw=document.getElementById('gen-in').value.trim();if(!raw){alert('Pega la respuesta de Claude primero.');return;}
-  let s;try{const clean=raw.replace(/```json|```/g,'').trim();s=JSON.parse(clean.slice(clean.indexOf('{'),clean.lastIndexOf('}')+1));}catch(e){alert('No se pudo leer el JSON. Copia la respuesta completa de Claude.');return;}
+  let s;try{s=looseJSON(raw);}catch(e){alert('No se pudo leer el JSON. Copia la respuesta completa de Claude (desde la primera { hasta la última }).');return;}
   if(!s.ejercicios){alert('El JSON no contiene "ejercicios".');return;}
   const key=GEN.key;s.ejercicios=s.ejercicios.map(matchYT);
   if(!S.schedule[key])S.schedule[key]=[];
@@ -2523,6 +2523,20 @@ function testBeep(){initAudio();beep(1000,0.18,0.85);setTimeout(()=>beep(1500,0.
 function parseReps(r){const m=String(r).match(/(\d+)\s*s/);return m?+m[1]:null;} // segundos si es "40s"
 // Convierte a número aceptando coma decimal española (41,4 → 41.4). NaN si no es número.
 function toNum(v){if(v==null)return NaN;return parseFloat(String(v).trim().replace(/\s/g,'').replace(/,/g,'.'));}
+// Parsea el JSON pegado de Claude tolerando comillas tipográficas, guiones largos,
+// espacios duros, comas colgantes y texto alrededor. Lanza si no hay objeto válido.
+function looseJSON(raw){
+  let clean=String(raw||'').replace(/```json|```/g,'').trim();
+  clean=clean
+    .replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g,'"')   // comillas dobles curvas → "
+    .replace(/[\u2018\u2019\u201A\u201B\u2032\u2035]/g,"'")   // comillas simples curvas → '
+    .replace(/\u00A0/g,' ')          // espacio duro → espacio normal
+    .replace(/[\u2013\u2014]/g,'-')  // guiones largos → guion
+    .replace(/,\s*([}\]])/g,'$1');   // comas colgantes antes de } o ]
+  const start=clean.indexOf('{'),end=clean.lastIndexOf('}');
+  if(start<0||end<0)throw new Error('sin objeto JSON');
+  return JSON.parse(clean.slice(start,end+1));
+}
 // --- Formatos por bloque (AMRAP / EMOM / circuito) ---
 function blockType(ex){const t=((ex&&(ex.tipo||ex.formato))||'').toString().toLowerCase();
   if(/amrap/.test(t))return 'amrap';
