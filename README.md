@@ -497,3 +497,43 @@ semanal con lo entrenado; marcadores solo cada mes.
   recorta texto sobrante. Lo usan applyGen (Generar IA), applyModify (Modificar) y queda disponible.
 - Verificado con el texto real que fallaba (3 ejercicios): ahora se pega y crea la sesión sin error.
 - Sin cambios en initState ni en el almacenamiento.
+
+## v50: "Modificar" y "Generar IA" respetan el material real (pesos, bandas y barra)
+- Problema 1: al modificar/generar sesión, el mensaje para Claude solo enviaba etiquetas genéricas
+  ("mancuernas, bandas") sin los pesos de mancuernas/kettlebell ni las resistencias de banda.
+- Problema 2: ese mensaje NUNCA decía que no se dispone de barra ni de barra de dominadas, así que
+  Claude proponía ejercicios con barra aunque no estuviera seleccionada. (El motor offline sí
+  filtraba bien; el fallo era solo del prompt.)
+- Solución: se extrae la lógica del prompt semanal a un helper común equipDetailFor(equipos), que
+  inyecta los pesos/resistencias reales y añade prohibiciones EXPLÍCITAS cuando falta material:
+  sin barra → no proponer ejercicios con barra; sin barra de dominadas → no proponer dominadas;
+  sin gimnasio → no proponer máquinas. Lo usan los tres prompts (semanal, modificar y generar).
+- Los selectores de material de Modificar/Generar incluyen ahora "B. dominadas", y muestran un
+  resumen del material configurado (pesos de mancuernas, resistencias de banda, kettlebells) con
+  enlace directo a Ajustes para editarlo.
+- Sin cambios en initState ni en el almacenamiento.
+
+## v51: motor y prompts a nivel "entrenador profesional" (bandas, variedad, explicaciones)
+- CATÁLOGO offline ampliado de 30 a 64 ejercicios, cada uno con su propia descripción técnica
+  (antes había solo 5 textos genéricos por patrón). Bandas pasan de 5 a 18 ejercicios, incluyendo
+  trabajo PROPIO de banda que las mancuernas no cubren: face pull, pull-apart, press Pallof,
+  leñador, paseo lateral, patada de glúteo, curl femoral tumbado, empuje de cadera, peso muerto
+  rumano con banda, press de pecho y aperturas con banda… y por fin pierna con banda (antes 0).
+  También más variedad de mancuernas/peso corporal (búlgara, zancada inversa, remo renegado,
+  pájaros, curl martillo, flexiones diamante/declinadas, bicho muerto, superman, subida al cajón…).
+- SESIONES OFFLINE más profesionales: cada ejercicio incluye ahora "peso" con guía concreta según
+  TU material (rango real de tus mancuernas y cuándo subir; cómo ajustar la tensión de la banda),
+  descripción técnica específica del ejercicio, reps 12-20 y vuelta lenta en ejercicios de banda
+  (curva de tensión), y meta que explica la orientación de la sesión. Calentamiento y vuelta a la
+  calma más útiles.
+- ANTI-MONOTONÍA (offline): el generador evita (de forma blanda) repetir ejercicios usados en los
+  últimos 14 días y también dentro de la misma semana; mantiene la cobertura por patrones. Probado:
+  3 sesiones seguidas sin un solo ejercicio repetido.
+- PROMPTS IA (semanal, modificar y generar) con principios de entrenador profesional:
+  · Explicar en "descripcion" la técnica Y el porqué de cada ejercicio; "meta" con el propósito.
+  · BANDAS: programar ejercicios propios de banda (no copias de mancuerna), reps 12-20, excéntrica
+    lenta, especificar anclaje/pisada y cómo ajustar tensión.
+  · VARIEDAD: se envía la lista de ejercicios usados en las últimas ~3 semanas con la instrucción
+    de rotar accesorios (manteniendo 2-3 básicos estables para progresar).
+- Corregido de paso: "Regenerar (offline)" en Modificar aún aplicaba la descarga %4 obsoleta.
+- Sin cambios en initState ni en el almacenamiento; los nombres antiguos del catálogo se conservan.

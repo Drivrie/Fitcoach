@@ -415,7 +415,7 @@ body{font-size:calc(15px*var(--fs))}
       <p class="note" style="margin-bottom:9px">Pitidos en los últimos 3 segundos de cada cuenta atrás. Si apenas se oyen: sube el volumen del móvil con los botones laterales <b>mientras suena</b>, y comprueba que el interruptor de silencio (lateral del iPhone) no esté activado.</p>
       <button class="btn btn-block" onclick="testBeep()">▶ Probar sonido</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 49</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 51</div>
   </div>
 </div>
 
@@ -492,6 +492,7 @@ body{font-size:calc(15px*var(--fs))}
     <div class="sheet-h"><h3>⚙ Modificar sesión</h3><button class="btn btn-sm" onclick="closeSheet('mod-bg')">✕</button></div>
     <p class="note" style="margin-bottom:11px">Ajusta el material o el tiempo disponible solo para esta sesión y regenérala, sin cambiar tu perfil.</p>
     <div class="field"><label>Material disponible para hoy</label><div id="mod-equip"></div></div>
+    <div id="mod-equip-sum"></div>
     <div class="field"><label>Tiempo disponible: <span id="mod-min-out" style="font-weight:600;color:var(--text)">45</span> min</label>
       <input type="range" id="mod-min" min="15" max="120" step="5" value="45" style="width:100%"></div>
     <button class="btn btn-primary btn-block" onclick="regenerateDayOffline()">⚡ Regenerar (offline)</button>
@@ -514,6 +515,7 @@ body{font-size:calc(15px*var(--fs))}
     <div class="field"><label>Objetivo de esta sesión</label><div id="gen-obj"></div></div>
     <div class="field"><label>Nivel</label><div id="gen-niv"></div></div>
     <div class="field"><label>Material disponible</label><div id="gen-equip"></div></div>
+    <div id="gen-equip-sum"></div>
     <div class="field"><label>Tiempo disponible: <span id="gen-min-out" style="font-weight:600;color:var(--text)">45</span> min</label>
       <input type="range" id="gen-min" min="15" max="120" step="5" value="45" style="width:100%"></div>
     <div class="field"><label>¿Qué hacer con esta sesión?</label><div id="gen-mode"></div></div>
@@ -544,36 +546,75 @@ const DAY_NAMES=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Dom
    patron: empuje/tiron/pierna/core/cardio
    eq (equipo): ninguno | mancuernas | bandas | barra | kettlebell | gimnasio */
 const EXDB=[
-  {n:'Sentadilla con barra',p:'pierna',eq:['barra','gimnasio'],yt:'gcNh17Ckjgg',m:'Cuádriceps, glúteos',comp:1},
-  {n:'Sentadilla goblet',p:'pierna',eq:['mancuernas','kettlebell','gimnasio'],yt:'MeIiIdhvXT4',m:'Cuádriceps, glúteos',comp:1},
-  {n:'Sentadilla libre',p:'pierna',eq:['ninguno'],yt:'YaXPRqUwItQ',m:'Cuádriceps, glúteos',comp:1},
-  {n:'Peso muerto rumano',p:'pierna',eq:['barra','mancuernas','gimnasio'],yt:'JCXUYuzwNrM',m:'Isquios, glúteos',comp:1},
-  {n:'Zancadas',p:'pierna',eq:['ninguno','mancuernas','barra','gimnasio'],yt:'QOVaHwm-Q6U',m:'Cuádriceps, glúteos',comp:1},
-  {n:'Hip thrust',p:'pierna',eq:['barra','mancuernas','gimnasio'],yt:'LM8XHLYJoYs',m:'Glúteos',comp:1},
-  {n:'Prensa de piernas',p:'pierna',eq:['gimnasio'],yt:'IZxyjW7MPJQ',m:'Cuádriceps, glúteos',comp:1},
-  {n:'Press de banca',p:'empuje',eq:['barra','gimnasio'],yt:'rT7DgCr-3pg',m:'Pecho, tríceps',comp:1},
-  {n:'Press con mancuernas',p:'empuje',eq:['mancuernas','gimnasio'],yt:'VmB1G1K7v94',m:'Pecho, hombro',comp:1},
-  {n:'Flexiones',p:'empuje',eq:['ninguno'],yt:'IODxDxX7oi4',m:'Pecho, tríceps',comp:1},
-  {n:'Press militar',p:'empuje',eq:['barra','mancuernas','gimnasio'],yt:'2yjwXTZQDDI',m:'Hombros',comp:1},
-  {n:'Press banda por encima',p:'empuje',eq:['bandas'],yt:'2yjwXTZQDDI',m:'Hombros',comp:1},
-  {n:'Fondos en banco',p:'empuje',eq:['ninguno','gimnasio'],yt:'0326dy_-CzM',m:'Tríceps',comp:0},
-  {n:'Elevaciones laterales',p:'empuje',eq:['mancuernas','bandas','gimnasio'],yt:'3VcKaXpzqRo',m:'Hombro lateral',comp:0},
-  {n:'Dominadas',p:'tiron',eq:['dominadas','gimnasio'],yt:'eGo4IYlbE5g',m:'Espalda, bíceps',comp:1},
-  {n:'Remo con barra',p:'tiron',eq:['barra','gimnasio'],yt:'9efgcAjQe7E',m:'Espalda, bíceps',comp:1},
-  {n:'Remo con mancuerna',p:'tiron',eq:['mancuernas','gimnasio'],yt:'pYcpY20QaE8',m:'Espalda, bíceps',comp:1},
-  {n:'Remo con banda',p:'tiron',eq:['bandas'],yt:'xQNrFHEMhI4',m:'Espalda',comp:1},
-  {n:'Jalón al pecho',p:'tiron',eq:['gimnasio'],yt:'CAwf7n6Luuc',m:'Dorsal',comp:1},
-  {n:'Jalón con banda',p:'tiron',eq:['bandas'],yt:'xQNrFHEMhI4',m:'Dorsal',comp:1},
-  {n:'Curl de bíceps',p:'tiron',eq:['mancuernas','barra','bandas','gimnasio'],yt:'ykJmrZ5v0Oo',m:'Bíceps',comp:0},
-  {n:'Plancha',p:'core',eq:['ninguno'],yt:'pSHjTRCQxIw',m:'Core',comp:0},
-  {n:'Plancha lateral',p:'core',eq:['ninguno'],yt:'K2VljzCC16g',m:'Oblicuos',comp:0},
-  {n:'Crunch abdominal',p:'core',eq:['ninguno'],yt:'Xyd_fa5zoEU',m:'Abdominales',comp:0},
-  {n:'Elevación de piernas',p:'core',eq:['ninguno'],yt:'JB2oyawG9KI',m:'Abdomen inferior',comp:0},
-  {n:'Mountain climbers',p:'cardio',eq:['ninguno'],yt:'nmwgirgXLYM',m:'Core, cardio',comp:0},
-  {n:'Burpees',p:'cardio',eq:['ninguno'],yt:'dZgVxmf6jkA',m:'Cuerpo completo',comp:1},
-  {n:'Swing con kettlebell',p:'cardio',eq:['kettlebell','gimnasio'],yt:'YSx5zAfsM9c',m:'Glúteos, cardio',comp:1},
-  {n:'Saltos al cajón',p:'cardio',eq:['gimnasio','ninguno'],yt:'52r_Ul5k03g',m:'Potencia, piernas',comp:1},
-  {n:'Jumping jacks',p:'cardio',eq:['ninguno'],yt:'c4DAnQ6DtF8',m:'Cardio',comp:0},
+  // ---- PIERNA ----
+  {n:'Sentadilla con barra',p:'pierna',eq:['barra','gimnasio'],yt:'gcNh17Ckjgg',m:'Cuádriceps, glúteos',comp:1,d:'Barra sobre trapecios, pecho alto; baja hasta romper paralela y empuja el suelo con todo el pie.'},
+  {n:'Sentadilla goblet',p:'pierna',eq:['mancuernas','kettlebell','gimnasio'],yt:'MeIiIdhvXT4',m:'Cuádriceps, glúteos',comp:1,d:'Mancuerna pegada al pecho a modo de copa; baja entre las rodillas con el torso erguido y sube empujando el suelo.'},
+  {n:'Sentadilla libre',p:'pierna',eq:['ninguno'],yt:'YaXPRqUwItQ',m:'Cuádriceps, glúteos',comp:1,d:'Pies al ancho de hombros, baja controlando 2-3 segundos y sube explosivo; si se hace fácil, ralentiza la bajada o añade pausa abajo.'},
+  {n:'Sentadilla búlgara',p:'pierna',eq:['ninguno','mancuernas'],m:'Cuádriceps, glúteos',comp:1,d:'Pie trasero elevado en banco o silla; baja vertical con el peso en la pierna adelantada. Trabaja fuerza y equilibrio unilateral.'},
+  {n:'Zancadas',p:'pierna',eq:['ninguno','mancuernas','barra','gimnasio'],yt:'QOVaHwm-Q6U',m:'Cuádriceps, glúteos',comp:1,d:'Paso amplio, rodilla trasera hacia el suelo sin tocarlo; el torso vertical y el impulso desde el talón delantero.'},
+  {n:'Zancada inversa',p:'pierna',eq:['ninguno','mancuernas'],m:'Cuádriceps, glúteos',comp:1,d:'El paso es hacia atrás: más estable y amable con la rodilla que la zancada frontal. Empuja con la pierna adelantada para volver.'},
+  {n:'Peso muerto rumano',p:'pierna',eq:['barra','mancuernas','gimnasio'],yt:'JCXUYuzwNrM',m:'Isquios, glúteos',comp:1,d:'Rodillas semiflexionadas fijas; lleva la cadera atrás y baja el peso pegado a las piernas hasta notar tensión en isquios.'},
+  {n:'Peso muerto rumano con banda',p:'pierna',eq:['bandas'],m:'Isquios, glúteos',comp:1,d:'Pisa la banda con ambos pies y sujeta el otro extremo; bisagra de cadera con espalda neutra. La banda aprieta más arriba, justo donde el glúteo remata.'},
+  {n:'Hip thrust',p:'pierna',eq:['barra','mancuernas','gimnasio'],yt:'LM8XHLYJoYs',m:'Glúteos',comp:1,d:'Espalda alta apoyada en banco, peso sobre la cadera; sube hasta alinear rodilla-cadera-hombro y aprieta glúteo 1s arriba.'},
+  {n:'Empuje de cadera con banda',p:'pierna',eq:['bandas'],m:'Glúteos',comp:1,d:'Banda anclada baja o pisada bajo los pies y pasada por la cadera; extiende la cadera contra la resistencia y aprieta arriba 1s. Máxima tensión donde el glúteo más trabaja.'},
+  {n:'Puente de glúteo',p:'pierna',eq:['ninguno'],m:'Glúteos, isquios',comp:0,d:'Tumbado, talones cerca del glúteo; eleva la cadera apretando glúteos sin arquear la lumbar. Versión a una pierna para progresar.'},
+  {n:'Puente de glúteo a una pierna',p:'pierna',eq:['ninguno'],m:'Glúteos, isquios',comp:0,d:'Como el puente pero con una pierna extendida: duplica la carga sobre el glúteo de apoyo y corrige asimetrías.'},
+  {n:'Paseo lateral con banda',p:'pierna',eq:['bandas'],m:'Glúteo medio',comp:0,d:'Banda alrededor de rodillas o tobillos, semisentadilla; pasos laterales manteniendo tensión constante. Clave para estabilizar cadera y rodilla.'},
+  {n:'Patada de glúteo con banda',p:'pierna',eq:['bandas'],m:'Glúteos',comp:0,d:'Banda pisada con el pie de apoyo y enganchada al otro; extiende la pierna atrás sin arquear la lumbar y aprieta el glúteo al final.'},
+  {n:'Curl femoral con banda',p:'pierna',eq:['bandas'],m:'Isquios',comp:0,d:'Tumbado boca abajo con la banda anclada baja y al tobillo; flexiona la rodilla llevando el talón al glúteo, vuelta lenta. El isquio no se trabaja igual con ningún gesto de mancuerna en casa.'},
+  {n:'Elevación de talones',p:'pierna',eq:['ninguno','mancuernas'],m:'Gemelos',comp:0,d:'De pie, sube a la punta de los pies con pausa de 1s arriba y bajada lenta de 3s; en un escalón el rango es mayor.'},
+  {n:'Sentadilla sumo con mancuerna',p:'pierna',eq:['mancuernas','kettlebell'],m:'Aductores, glúteos',comp:1,d:'Postura ancha con puntas hacia fuera, mancuerna colgando entre las piernas; enfatiza aductor y glúteo respecto a la sentadilla normal.'},
+  {n:'Prensa de piernas',p:'pierna',eq:['gimnasio'],yt:'IZxyjW7MPJQ',m:'Cuádriceps, glúteos',comp:1,d:'Pies a lo ancho de la plataforma; baja hasta 90° sin despegar la cadera del respaldo y empuja sin bloquear rodillas.'},
+  {n:'Subida al cajón',p:'pierna',eq:['ninguno','mancuernas'],m:'Cuádriceps, glúteos',comp:1,d:'Sube a un cajón o silla firme empujando SOLO con la pierna de arriba, baja controlado. Unilateral, funcional y sin impacto.'},
+  // ---- EMPUJE ----
+  {n:'Press de banca',p:'empuje',eq:['barra','gimnasio'],yt:'rT7DgCr-3pg',m:'Pecho, tríceps',comp:1,d:'Escápulas retraídas y pies firmes; baja la barra al pecho con control y empuja en línea ligeramente diagonal.'},
+  {n:'Press con mancuernas',p:'empuje',eq:['mancuernas','gimnasio'],yt:'VmB1G1K7v94',m:'Pecho, hombro',comp:1,d:'En suelo o banco; baja los codos a unos 45° del cuerpo y junta ligeramente las mancuernas arriba. Mayor rango y estabilización que la barra.'},
+  {n:'Flexiones',p:'empuje',eq:['ninguno'],yt:'IODxDxX7oi4',m:'Pecho, tríceps',comp:1,d:'Cuerpo en tabla, manos bajo los hombros; baja el pecho a 2-3 cm del suelo. Eleva pies para endurecer o manos para facilitar.'},
+  {n:'Flexiones diamante',p:'empuje',eq:['ninguno'],m:'Tríceps, pecho',comp:0,d:'Manos juntas formando un rombo bajo el pecho; los codos pegados cargan el tríceps mucho más que la flexión normal.'},
+  {n:'Flexiones declinadas',p:'empuje',eq:['ninguno'],m:'Pecho superior, hombro',comp:1,d:'Pies elevados en banco o silla; desplaza el trabajo al pecho superior y hombro. Progresión natural cuando la flexión normal se queda corta.'},
+  {n:'Press militar',p:'empuje',eq:['barra','mancuernas','gimnasio'],yt:'2yjwXTZQDDI',m:'Hombros',comp:1,d:'De pie con glúteo y abdomen apretados; empuja vertical hasta bloquear arriba sin arquear la lumbar.'},
+  {n:'Press Arnold',p:'empuje',eq:['mancuernas'],m:'Hombro completo',comp:1,d:'Comienza con palmas hacia ti y rota mientras empujas arriba; recorre las tres cabezas del deltoides en un solo gesto.'},
+  {n:'Press banda por encima',p:'empuje',eq:['bandas'],yt:'2yjwXTZQDDI',m:'Hombros',comp:1,d:'Pisa la banda y empuja vertical; la resistencia crece hacia el bloqueo, así que remata el gesto arriba y baja lento.'},
+  {n:'Press de pecho con banda',p:'empuje',eq:['bandas'],m:'Pecho, tríceps',comp:1,d:'Banda anclada a la espalda (o rodeando la espalda alta); empuja al frente juntando las manos. La tensión máxima llega al final, donde el pecho remata.'},
+  {n:'Aperturas con banda',p:'empuje',eq:['bandas'],m:'Pecho',comp:0,d:'Banda anclada detrás a la altura del pecho; abre y cierra los brazos semiextendidos como un abrazo. Aísla el pectoral sin carga axial.'},
+  {n:'Fondos en banco',p:'empuje',eq:['ninguno','gimnasio'],yt:'0326dy_-CzM',m:'Tríceps',comp:0,d:'Manos en el borde del banco, baja doblando codos hacia atrás (no abiertos) y sube sin bloquear de golpe.'},
+  {n:'Extensión de tríceps con banda',p:'empuje',eq:['bandas'],m:'Tríceps',comp:0,d:'Banda anclada arriba (puerta) o sujeta tras la nuca; extiende los codos sin mover los hombros y controla la vuelta.'},
+  {n:'Elevaciones laterales',p:'empuje',eq:['mancuernas','bandas','gimnasio'],yt:'3VcKaXpzqRo',m:'Hombro lateral',comp:0,d:'Sube los brazos a la altura del hombro con el codo semiflexionado, como sirviendo dos jarras; sin impulso del tronco.'},
+  {n:'Elevación frontal',p:'empuje',eq:['mancuernas','bandas'],m:'Hombro anterior',comp:0,d:'Brazos al frente hasta la altura del hombro alternando o a la vez; ligera y controlada, es un accesorio, no un básico.'},
+  // ---- TIRÓN ----
+  {n:'Dominadas',p:'tiron',eq:['dominadas','gimnasio'],yt:'eGo4IYlbE5g',m:'Espalda, bíceps',comp:1,d:'Agarre algo mayor que hombros; tira de los codos hacia el suelo y lleva el pecho a la barra. Usa banda de asistencia si hace falta.'},
+  {n:'Remo con barra',p:'tiron',eq:['barra','gimnasio'],yt:'9efgcAjQe7E',m:'Espalda, bíceps',comp:1,d:'Torso inclinado ~45° con espalda neutra; tira de la barra al abdomen y aprieta las escápulas al final.'},
+  {n:'Remo con mancuerna',p:'tiron',eq:['mancuernas','gimnasio'],yt:'pYcpY20QaE8',m:'Espalda, bíceps',comp:1,d:'Una mano apoyada en banco; tira de la mancuerna hacia la cadera (no al pecho) con el codo pegado y pausa arriba.'},
+  {n:'Remo renegado',p:'tiron',eq:['mancuernas'],m:'Espalda, core',comp:1,d:'En posición de plancha sobre las mancuernas, rema alternando sin girar la cadera; espalda y anti-rotación de core a la vez.'},
+  {n:'Remo con banda',p:'tiron',eq:['bandas'],yt:'xQNrFHEMhI4',m:'Espalda',comp:1,d:'Sentado con la banda en los pies o anclada al frente; tira de los codos atrás y junta escápulas con pausa de 1s. Vuelta lenta: ahí está la mitad del trabajo.'},
+  {n:'Jalón con banda',p:'tiron',eq:['bandas'],yt:'xQNrFHEMhI4',m:'Dorsal',comp:1,d:'Banda anclada arriba (puerta); tira de los codos hacia las costillas manteniendo el pecho alto. El dorsal manda, no el bíceps.'},
+  {n:'Jalón al pecho',p:'tiron',eq:['gimnasio'],yt:'CAwf7n6Luuc',m:'Dorsal',comp:1,d:'Agarre amplio; tira de la barra a la parte alta del pecho llevando los codos abajo y atrás, sin balancear el torso.'},
+  {n:'Face pull con banda',p:'tiron',eq:['bandas'],m:'Deltoides posterior, rotadores',comp:0,d:'Banda anclada a la altura de la cara; tira hacia la frente separando las manos y rotando los nudillos atrás. Oro para hombro sano y postura.'},
+  {n:'Pull-apart con banda',p:'tiron',eq:['bandas'],m:'Deltoides posterior, espalda alta',comp:0,d:'Brazos al frente sujetando la banda; sepárala hasta tocar el pecho apretando escápulas. Ideal entre series de press o como acabado.'},
+  {n:'Pájaros con mancuernas',p:'tiron',eq:['mancuernas'],m:'Deltoides posterior',comp:0,d:'Torso inclinado; abre los brazos semiflexionados hacia los lados como alas, sin impulso. Compensa todo el empuje que haces.'},
+  {n:'Curl de bíceps',p:'tiron',eq:['mancuernas','barra','bandas','gimnasio'],yt:'ykJmrZ5v0Oo',m:'Bíceps',comp:0,d:'Codos pegados al torso; sube sin balanceo y baja en 2-3 segundos. La bajada lenta construye tanto como la subida.'},
+  {n:'Curl martillo',p:'tiron',eq:['mancuernas'],m:'Bíceps, braquial',comp:0,d:'Como el curl pero con agarre neutro (palmas enfrentadas); carga el braquial y el antebrazo, y suele permitir algo más de peso.'},
+  {n:'Encogimientos de hombros',p:'tiron',eq:['mancuernas','barra'],m:'Trapecio',comp:0,d:'Mancuernas a los lados; encoge los hombros hacia las orejas con pausa arriba, sin girar ni doblar los codos.'},
+  // ---- CORE ----
+  {n:'Plancha',p:'core',eq:['ninguno'],yt:'pSHjTRCQxIw',m:'Core',comp:0,d:'Antebrazos y puntas de pies; glúteo y abdomen apretados formando una línea. Si aguantas más de 60s, endurece (pies elevados o toques de hombro).'},
+  {n:'Plancha lateral',p:'core',eq:['ninguno'],yt:'K2VljzCC16g',m:'Oblicuos',comp:0,d:'Apoyo en un antebrazo, cadera alta y alineada; trabaja el costado que la plancha frontal no toca.'},
+  {n:'Plancha con toque de hombro',p:'core',eq:['ninguno'],m:'Core, estabilidad',comp:0,d:'En plancha alta, toca el hombro contrario alternando sin balancear la cadera; anti-rotación real.'},
+  {n:'Press Pallof con banda',p:'core',eq:['bandas'],m:'Core anti-rotación',comp:0,d:'Banda anclada lateral a la altura del pecho; extiende los brazos al frente resistiendo el giro y aguanta 2s. El core entrenado como se usa: evitando rotar.'},
+  {n:'Leñador con banda',p:'core',eq:['bandas'],m:'Oblicuos, core',comp:0,d:'Banda anclada arriba o abajo; lleva las manos en diagonal cruzando el cuerpo con brazos semiextendidos, girando desde el tronco.'},
+  {n:'Crunch abdominal',p:'core',eq:['ninguno'],yt:'Xyd_fa5zoEU',m:'Abdominales',comp:0,d:'Despega solo la parte alta de la espalda enrollándote hacia las rodillas; la lumbar queda en el suelo.'},
+  {n:'Elevación de piernas',p:'core',eq:['ninguno'],yt:'JB2oyawG9KI',m:'Abdomen inferior',comp:0,d:'Tumbado, sube las piernas rectas y bájalas SIN que la lumbar se despegue; dobla rodillas si hace falta.'},
+  {n:'Bicho muerto',p:'core',eq:['ninguno'],m:'Core profundo',comp:0,d:'Tumbado con brazos y rodillas arriba; extiende lentamente brazo y pierna contrarios sin que la lumbar se arquee. Control puro.'},
+  {n:'Superman',p:'core',eq:['ninguno'],m:'Lumbar, glúteos',comp:0,d:'Boca abajo, eleva a la vez brazos y piernas 2s y baja lento; equilibra todo el trabajo abdominal con la cadena posterior.'},
+  {n:'Giro ruso',p:'core',eq:['ninguno','mancuernas'],m:'Oblicuos',comp:0,d:'Sentado con el torso inclinado atrás; gira el tronco de lado a lado con o sin peso, sin encorvar la espalda.'},
+  // ---- CARDIO / METABÓLICO ----
+  {n:'Mountain climbers',p:'cardio',eq:['ninguno'],yt:'nmwgirgXLYM',m:'Core, cardio',comp:0,d:'En plancha alta, lleva rodillas al pecho alternando rápido pero sin que la cadera suba; core firme todo el tiempo.'},
+  {n:'Burpees',p:'cardio',eq:['ninguno'],yt:'dZgVxmf6jkA',m:'Cuerpo completo',comp:1,d:'Pecho al suelo, sube y salta con palmada arriba; marca un ritmo sostenible que puedas mantener toda la ronda.'},
+  {n:'Swing con kettlebell',p:'cardio',eq:['kettlebell','gimnasio'],yt:'YSx5zAfsM9c',m:'Glúteos, cardio',comp:1,d:'Es una bisagra de cadera explosiva, no una sentadilla: la cadera lanza la kettlebell y los brazos solo la guían.'},
+  {n:'Saltos al cajón',p:'cardio',eq:['gimnasio','ninguno'],yt:'52r_Ul5k03g',m:'Potencia, piernas',comp:1,d:'Salta a un cajón o escalón estable y BAJA caminando; el salto entrena, la bajada saltando solo castiga rodillas.'},
+  {n:'Sentadilla con salto',p:'cardio',eq:['ninguno'],m:'Potencia, piernas',comp:1,d:'Baja a media sentadilla y explota hacia arriba; aterriza suave flexionando. Potencia de piernas sin material.'},
+  {n:'Saltos de patinador',p:'cardio',eq:['ninguno'],m:'Piernas, cardio lateral',comp:0,d:'Salta de lado a lado aterrizando en un pie como un patinador; trabaja plano lateral, que casi ningún ejercicio toca.'},
+  {n:'Rodillas al pecho',p:'cardio',eq:['ninguno'],m:'Cardio, core',comp:0,d:'Corre en el sitio subiendo las rodillas a la altura de la cadera con brazos activos; ritmo alto, impacto bajo.'},
+  {n:'Jumping jacks',p:'cardio',eq:['ninguno'],yt:'c4DAnQ6DtF8',m:'Cardio',comp:0,d:'Abre y cierra piernas y brazos con rebote suave; perfecto para calentar o como descanso activo entre ejercicios.'},
 ];
 
 /* --- Parámetros basados en evidencia (ACSM 2026 Position Stand; meta-análisis Schoenfeld/Grgic) ---
@@ -712,18 +753,57 @@ function pickExercises(equipSet,objetivo,minutos,seed,opts){
   else order=['pierna','empuje','tiron','core','cardio','pierna','empuje','core'];
   // sesgo de complemento: arrancar por un patrón concreto (el menos entrenado)
   if(opts.lead){const li=order.indexOf(opts.lead);if(li>0)order=order.slice(li).concat(order.slice(0,li));}
+  const avoid=opts.avoid||new Set(); // evitación BLANDA: preferir no repetir recientes
   const used=new Set();const out=[];
   let si=seed;
   for(let i=0;i<count;i++){
     const pat=order[i%order.length];
-    const cands=avail.filter(e=>e.p===pat&&!used.has(e.n));
-    const pool=cands.length?cands:avail.filter(e=>!used.has(e.n));
-    if(!pool.length)break;
+    let cands=avail.filter(e=>e.p===pat&&!used.has(e.n));
+    if(!cands.length)cands=avail.filter(e=>!used.has(e.n));
+    if(!cands.length)break;
+    const fresh=cands.filter(e=>!avoid.has(e.n)); // primero los no usados recientemente
+    const pool=fresh.length?fresh:cands;
     const ex=pool[(si+i)%pool.length];si++;
     used.add(ex.n);
     out.push(ex);
   }
   return out;
+}
+
+// Guía de carga concreta según el material del usuario (para el motor offline).
+function pesoHintFor(ex,eqSet,g){
+  const eq=ex.eq||[];
+  if(eqSet.has('mancuernas')&&eq.includes('mancuernas')){
+    const l=dumbbellList();
+    return l.length?`elige de tus mancuernas (${l[0]}–${l[l.length-1]} kg) la que te deje RIR ${g.rir}; cuando completes todas las series con buena técnica, sube un escalón`:`peso que te deje RIR ${g.rir}`;
+  }
+  if(eqSet.has('bandas')&&eq.includes('bandas')){
+    const b=S.bands||{};const r=['baja','media','alta'].filter(x=>b[x]);
+    return `banda ${r.length?r.join(' o '):'disponible'}; ajusta la tensión acortando el agarre o alejándote del anclaje hasta que las últimas reps cuesten de verdad`;
+  }
+  if(eqSet.has('kettlebell')&&eq.includes('kettlebell')){
+    const kl=kettlebellList();
+    return kl.length?`kettlebell de ${kl.join('/')} kg según el ejercicio (RIR ${g.rir})`:'kettlebell disponible';
+  }
+  if(eq.includes('barra')&&(eqSet.has('barra')||eqSet.has('gimnasio')))return `carga en barra que te deje RIR ${g.rir}`;
+  return 'solo peso corporal (ajusta con tempo más lento o pausas si se hace fácil)';
+}
+// Ejercicios usados en los últimos N días (para rotar y evitar monotonía).
+function recentExerciseNames(beforeKey,days){
+  const names=new Set();
+  let cutoff;try{cutoff=new Date(beforeKey+'T00:00:00');}catch(e){return names;}
+  if(isNaN(cutoff))return names;
+  const start=new Date(cutoff);start.setDate(start.getDate()-(days||14));
+  Object.keys(S.schedule||{}).forEach(k=>{
+    const d=new Date(k+'T00:00:00');if(isNaN(d)||d<start||d>=cutoff)return;
+    (S.schedule[k]||[]).forEach(s=>{if(s.type!=='ai'||!s.exercises)return;
+      s.exercises.forEach(e=>{
+        if(isBlock(e)){(e.movimientos||[]).forEach(m=>{if(m.nombre)names.add(m.nombre);});return;}
+        if(e.nombre)names.add(e.nombre);
+      });
+    });
+  });
+  return names;
 }
 
 function buildSessionOffline(equip,objetivo,nivel,minutos,dayCode,seed,isDeload,opts){
@@ -733,25 +813,30 @@ function buildSessionOffline(equip,objetivo,nivel,minutos,dayCode,seed,isDeload,
   const setBase=Math.round((g.sets[0]+g.sets[1])/2*mult);
   const sets=isDeload?Math.max(2,setBase-1):setBase;
   const rest=Math.round((g.rest[0]+g.rest[1])/2);
-  const ejercicios=exs.map(ex=>({
-    nombre:ex.n, yt:ex.yt, p:ex.p,
-    series:ex.comp?sets:Math.max(2,sets-1),
-    reps: ex.p==='cardio'? (objetivo==='fuerza'?'30s':'40s') : g.reps,
-    descanso_seg: ex.p==='cardio'?Math.round(rest*0.6):rest,
-    rir: isDeload?'4-5 (descarga)':g.rir,
-    tempo:g.tempo,
-    descripcion: descFor(ex),
-    musculos:ex.m,
-    errores: ERRORS[figKey(ex.n)]||[],
-  }));
+  const ejercicios=exs.map(ex=>{
+    const esBanda=(ex.eq||[]).includes('bandas')&&equip.has('bandas')&&!(ex.eq||[]).includes('mancuernas');
+    return {
+      nombre:ex.n, yt:ex.yt, p:ex.p,
+      series:ex.comp?sets:Math.max(2,sets-1),
+      reps: ex.p==='cardio'? (objetivo==='fuerza'?'30s':'40s') : (esBanda?'12-20':g.reps),
+      descanso_seg: ex.p==='cardio'?Math.round(rest*0.6):rest,
+      rir: isDeload?'4-5 (descarga)':g.rir,
+      tempo: esBanda?'2-1-3 (vuelta lenta)':g.tempo,
+      peso: pesoHintFor(ex,equip,g),
+      descripcion: ex.d||descFor(ex),
+      musculos:ex.m,
+      errores: ERRORS[figKey(ex.n)]||[],
+    };
+  });
   const tipoLabel={'pierna':'tren inferior','empuje':'empuje','tiron':'tirón','core':'core','cardio':'metabólico'};
   const focus=[...new Set(exs.map(e=>tipoLabel[e.p]))].slice(0,2).join(' + ');
+  const objLbl=GOAL_LABELS[objetivo]||objetivo;
   return {
     dia_codigo:dayCode,
     titulo:isDeload?'Sesión de descarga':(`Full body · ${focus}`),
-    meta:`${exs.length} ejercicios · ${minutos}min · RIR ${g.rir}`,
-    calentamiento:'5-8 min: movilidad articular + 1 serie ligera del primer ejercicio.',
-    vuelta_calma:'5 min de estiramientos de los grupos trabajados + respiración.',
+    meta:`${exs.length} ejercicios · ${minutos}min · RIR ${g.rir} · orientada a ${objLbl}; básicos primero y accesorios después`,
+    calentamiento:'5-8 min: movilidad de tobillo, cadera y hombro + 1 serie ligera del primer ejercicio (al 50%) para engrasar el gesto.',
+    vuelta_calma:'5 min: estira los grupos trabajados (30s por grupo) y termina con 1 min de respiración nasal lenta para bajar pulsaciones.',
     ejercicios
   };
 }
@@ -827,13 +912,17 @@ function buildWeekOffline(){
   const dates=weekDates(S.currentWeek);
   if(!S.programStart)S.programStart=fmt(dates[0]);
   const isDeload=false; // sin descarga forzada: el usuario entrena todas las semanas
+  // Anti-monotonía: evita (de forma blanda) repetir ejercicios de los últimos 14 días
+  // y acumula los de la propia semana para variar también entre días.
+  const avoid=recentExerciseNames(fmt(dates[0]),14);
   S.aiDays.forEach((code,i)=>{
     const idx=DAYS.indexOf(code);if(idx<0)return;
     const key=fmt(dates[idx]);
     if(!S.schedule[key])S.schedule[key]=[];
     const isBrief=S.briefDays.includes(code);
     const mins=isBrief?18:p.minutos;
-    const sess=buildSessionOffline(eq,objetivo,p.nivel,mins,code,(S.currentWeek+1)*7+i,isDeload);
+    const sess=buildSessionOffline(eq,objetivo,p.nivel,mins,code,(S.currentWeek+1)*7+i,isDeload,{avoid});
+    sess.ejercicios.forEach(e=>avoid.add(e.nombre));
     if(isBrief)sess.titulo='Fuerza breve · complemento de carrera';
     const ex=S.schedule[key].findIndex(x=>x.type==='ai');
     const entry={type:'ai',title:sess.titulo,meta:sess.meta,warmup:sess.calentamiento,cooldown:sess.vuelta_calma,exercises:sess.ejercicios,done:false,brief:isBrief};
@@ -1280,10 +1369,10 @@ const _svgCache={};
 // cuando no hay una específica (evita que todo caiga en la sentadilla por defecto).
 function patFromName(n){
   n=(n||'').toLowerCase();
-  if(/plancha|crunch|abdominal|\bcore\b|obliqu|oblicu|hollow|isom[eé]tr|hueco/.test(n))return 'core';
+  if(/plancha|crunch|abdominal|\bcore\b|obliqu|oblicu|hollow|isom[eé]tr|hueco|pallof|le[ñn]ador|bicho muerto|dead ?bug|superman|giro ruso/.test(n))return 'core';
   if(/salto|burpee|jumping|mountain|escalador|sprint|comba|tijera|rodillas al pecho|\bcardio\b/.test(n))return 'cardio';
   if(/remo|jal[oó]n|dominada|curl|b[ií]ceps|espalda|encogimiento|shrug|face ?pull|tir[oó]n|pull|aperturas? invertidas?|p[aá]jaro/.test(n))return 'tiron';
-  if(/sentadilla|zancada|prensa|gemelo|talones|pantorrilla|gl[uú]teo|hip thrust|puente|cu[aá]driceps|femoral|isquio|pierna|peso muerto|rumano|abductor|aductor|step ?up|subida al caj[oó]n/.test(n))return 'pierna';
+  if(/sentadilla|zancada|prensa|gemelo|talones|pantorrilla|gl[uú]teo|hip thrust|puente|cu[aá]driceps|femoral|isquio|pierna|peso muerto|rumano|abductor|aductor|step ?up|subida al caj[oó]n|paseo lateral|monster walk|patada/.test(n))return 'pierna';
   if(/press|flexi[oó]n|fondo|empuje|pecho|hombro|tr[ií]ceps|militar|elevaci[oó]n lateral|\blateral\b|apertura|pec/.test(n))return 'empuje';
   return null;
 }
@@ -1645,34 +1734,60 @@ function renderNutri(){
 /* ============================================================
    PUENTE CON CLAUDE (gratis — copiar/pegar en claude.ai)
    ============================================================ */
+// Detalle de material (pesos/resistencias reales) + prohibiciones explícitas.
+// Reutilizable por el prompt semanal, el de modificar y el de generar sesión.
+function equipDetailFor(equipos){
+  const eq=equipos||['ninguno'];
+  let d='';
+  if(eq.includes('mancuernas')){
+    const l=dumbbellList();
+    if(l.length)d+=`\nMancuernas disponibles (kg por mancuerna, una en cada mano): ${l.join(', ')}. Usa el peso adecuado de esta lista según mi progresión real; puedes subir de escalón cuando los registros lo justifiquen. NO te limites a 12 y 16 kg.`;
+  }
+  if(eq.includes('bandas')){
+    const b=S.bands||{};const res=['baja','media','alta'].filter(r=>b[r]);
+    if(res.length)d+=`\nBandas elásticas disponibles, resistencias: ${res.join(', ')}. Indica qué banda usar en cada ejercicio.`;
+  }
+  if(eq.includes('kettlebell')){
+    const kl=kettlebellList();
+    if(kl.length)d+=`\nKettlebells disponibles (kg): ${kl.join(', ')}. Usa solo estos pesos en los ejercicios con kettlebell.`;
+  }
+  // Barra y discos: solo si está seleccionada (o gimnasio)
+  const tieneBarra=eq.includes('barra')||eq.includes('gimnasio');
+  if(!tieneBarra)d+=`\nIMPORTANTE: NO dispongo de barra ni discos. NO propongas ejercicios con barra (sentadilla trasera/frontal con barra, press de banca con barra, peso muerto con barra, remo con barra, press militar con barra, hip thrust con barra, etc.). Usa solo el material listado arriba.`;
+  // Barra de dominadas: solo proponer dominadas/colgarse si está disponible
+  const tieneDominadas=eq.includes('dominadas')||eq.includes('gimnasio');
+  if(tieneDominadas)d+=`\nDispongo de barra de dominadas: puedes incluir dominadas, colgarse y ejercicios que la requieran.`;
+  else d+=`\nIMPORTANTE: NO dispongo de barra de dominadas ni de máquinas. NO propongas dominadas, jalones en barra fija, ni ningún ejercicio que necesite barra para colgarse. Para la espalda usa remos con el material disponible (mancuernas/kettlebell/bandas).`;
+  if(!eq.includes('gimnasio'))d+=`\nNO dispongo de máquinas de gimnasio (poleas, prensa, jalón, multipower).`;
+  return d;
+}
+function equipLabels(equipos){
+  return (equipos||['ninguno']).map(e=>({ninguno:'peso corporal',mancuernas:'mancuernas',bandas:'bandas elásticas',barra:'barra y discos',kettlebell:'kettlebell',gimnasio:'gimnasio completo',dominadas:'barra de dominadas'}[e]||e)).join(', ');
+}
+// Principios de entrenador profesional compartidos por los 3 prompts (semanal, modificar, generar).
+function coachExtrasFor(equipos,beforeKey){
+  let t=`\n- ACTÚA COMO ENTRENADOR PROFESIONAL: en "descripcion" de cada ejercicio explica en 1-2 frases la técnica clave Y por qué está en esta sesión (qué aporta al objetivo). En "meta" resume en una frase el propósito de la sesión.`;
+  if((equipos||[]).includes('bandas')){
+    t+=`\n- ENTRENAMIENTO CON BANDAS (importante): programa ejercicios PROPIOS de banda que aprovechen su curva de tensión creciente —face pull, pull-apart, press Pallof, paseo lateral, curl femoral tumbado con banda, empuje de cadera con banda, jalón con banda, aperturas con banda—, no solo versiones con banda de ejercicios de mancuerna. Usa repeticiones algo más altas (12-20), pide vuelta lenta (la excéntrica es donde la banda más trabaja) y especifica en cada ejercicio el anclaje (puerta/pie) o cómo pisar la banda y cómo ajustar la tensión (acortar agarre o alejarse).`;
+  }
+  const rot=beforeKey?[...recentExerciseNames(beforeKey,21)]:[];
+  if(rot.length){
+    t+=`\n- VARIEDAD (anti-monotonía): estos ejercicios se han usado en las últimas ~3 semanas: ${rot.slice(0,25).join(', ')}. Mantén 2-3 básicos estables para poder progresar en carga, pero ROTA los accesorios eligiendo variantes distintas de la misma familia (p. ej. cambia el ángulo, el agarre, unilateral/bilateral o el material).`;
+  }
+  return t;
+}
 function buildPrompt(mode){
   const p=S.profile;
   const bioTxt=`Peso ${p.peso}kg, altura ${p.altura}cm, edad ${p.edad}, sexo ${p.sexo}`;
   const objLabels=(p.objetivos||['bienestar']).map(o=>GOAL_LABELS[o]||o).join(' + ');
-  const eqLabels=(p.equipos||['ninguno']).map(e=>({ninguno:'peso corporal',mancuernas:'mancuernas',bandas:'bandas elásticas',barra:'barra y discos',kettlebell:'kettlebell',gimnasio:'gimnasio completo'}[e]||e)).join(', ');
+  const eqLabels=equipLabels(p.equipos||['ninguno']);
   // detalle de cargas disponibles (para que la progresión no se limite a los pesos iniciales)
-  let eqDetail='';
-  if((p.equipos||[]).includes('mancuernas')){
-    const l=dumbbellList();
-    if(l.length)eqDetail+=`\nMancuernas disponibles (kg por mancuerna, una en cada mano): ${l.join(', ')}. Usa el peso adecuado de esta lista según mi progresión real; puedes subir de escalón cuando los registros lo justifiquen. NO te limites a 12 y 16 kg.`;
-  }
-  if((p.equipos||[]).includes('bandas')){
-    const b=S.bands||{};const res=['baja','media','alta'].filter(r=>b[r]);
-    if(res.length)eqDetail+=`\nBandas elásticas disponibles, resistencias: ${res.join(', ')}. Indica qué banda usar en cada ejercicio.`;
-  }
-  if((p.equipos||[]).includes('kettlebell')){
-    const kl=kettlebellList();
-    if(kl.length)eqDetail+=`\nKettlebells disponibles (kg): ${kl.join(', ')}. Usa solo estos pesos en los ejercicios con kettlebell.`;
-  }
-  // Barra de dominadas: SOLO proponer dominadas/colgarse si está disponible
-  const tieneDominadas=(p.equipos||[]).includes('dominadas')||(p.equipos||[]).includes('gimnasio');
-  if(tieneDominadas)eqDetail+=`\nDispongo de barra de dominadas: puedes incluir dominadas, colgarse y ejercicios que la requieran.`;
-  else eqDetail+=`\nIMPORTANTE: NO dispongo de barra de dominadas ni de máquinas. NO propongas dominadas, jalones en barra fija, ni ningún ejercicio que necesite barra para colgarse. Para la espalda usa remos con el material disponible (mancuernas/kettlebell/bandas).`;
+  const eqDetail=equipDetailFor(p.equipos||['ninguno']);
   const ordDays=arr=>DAYS.filter(d=>arr.includes(d));
   const fullDays=ordDays(S.aiDays.filter(d=>!S.briefDays.includes(d)));
   const briefDays=ordDays(S.aiDays.filter(d=>S.briefDays.includes(d)));
   const freeOrd=ordDays(S.freeDays);
-  const cfg=`Objetivos (combinar de forma coherente): ${objLabels}. Nivel: ${p.nivel}. Equipo disponible: ${eqLabels}.${eqDetail}
+  const cfg=`Objetivos (combinar de forma coherente): ${objLabels}. Nivel: ${p.nivel}. Equipo disponible: ${eqLabels}.${eqDetail}${coachExtrasFor(p.equipos,fmt(weekDates(S.currentWeek)[0]))}
 Días de fuerza COMPLETA (~${p.minutos} min, cuerpo entero): ${fullDays.join(', ')||'ninguno'}.
 Días de fuerza BREVE (15-20 min, complementaria porque ese día también hago carrera): ${briefDays.join(', ')||'ninguno'}.
 Días de entrenamiento libre (cardio/paseo): ${freeOrd.join(', ')||'ninguno'}.
@@ -1916,7 +2031,16 @@ function matchYT(ex){
 
 /* --- Modificar una sesión IA de un día concreto --- */
 let MOD={key:null,equipos:[]};
-const MOD_EQUIP=[['ninguno','Sin equipo'],['mancuernas','Mancuernas'],['bandas','Bandas'],['barra','Barra'],['kettlebell','Kettlebell'],['gimnasio','Gimnasio']];
+const MOD_EQUIP=[['ninguno','Sin equipo'],['mancuernas','Mancuernas'],['bandas','Bandas'],['barra','Barra'],['kettlebell','Kettlebell'],['dominadas','B. dominadas'],['gimnasio','Gimnasio']];
+// Resumen legible del material configurado (pesos/resistencias) para los paneles.
+function equipSummaryHTML(equipos){
+  const eq=equipos||[];const parts=[];
+  if(eq.includes('mancuernas')){const l=dumbbellList();parts.push(l.length?`Mancuernas: ${l.join(', ')} kg`:'Mancuernas: sin pesos definidos');}
+  if(eq.includes('bandas')){const b=S.bands||{};const r=['baja','media','alta'].filter(x=>b[x]);parts.push(r.length?`Bandas: ${r.join(', ')}`:'Bandas: sin resistencias definidas');}
+  if(eq.includes('kettlebell')){const kl=kettlebellList();parts.push(kl.length?`Kettlebell: ${kl.join(', ')} kg`:'Kettlebell: sin pesos definidos');}
+  if(!parts.length)return '';
+  return `<div class="note" style="margin:-4px 0 10px">${parts.join(' · ')} — <a href="#" onclick="tab('set');closeSheet('mod-bg');closeSheet('gen-bg');return false;" style="color:var(--ai)">editar en Ajustes</a></div>`;
+}
 function openModify(key){
   MOD={key,equipos:[...(S.profile.equipos||['ninguno'])]};
   const mins=S.profile.minutos||45;
@@ -1934,6 +2058,7 @@ function renderModEquip(){
     el.onclick=()=>{const i=MOD.equipos.indexOf(k);if(i>=0)MOD.equipos.splice(i,1);else MOD.equipos.push(k);if(!MOD.equipos.length)MOD.equipos=['ninguno'];renderModEquip();};
     c.appendChild(el);
   });
+  const s=document.getElementById('mod-equip-sum');if(s)s.innerHTML=equipSummaryHTML(MOD.equipos);
 }
 document.getElementById('mod-min').addEventListener('input',e=>{document.getElementById('mod-min-out').textContent=e.target.value;});
 document.getElementById('gen-min').addEventListener('input',e=>{document.getElementById('gen-min-out').textContent=e.target.value;});
@@ -1945,7 +2070,7 @@ function regenerateDayOffline(){
   const mins=parseInt(document.getElementById('mod-min').value)||45;
   const week=realWeekNum();
   const seed=week*7+DAYS.indexOf(DAYS[weekDates(S.currentWeek).map(fmt).indexOf(key)])+Math.floor(Math.random()*7);
-  const sess=buildSessionOffline(eq,objetivo,S.profile.nivel,mins,'X',seed,realWeekNum()%4===0);
+  const sess=buildSessionOffline(eq,objetivo,S.profile.nivel,mins,'X',seed,false,{avoid:recentExerciseNames(key,14)});
   if(!S.schedule[key])S.schedule[key]=[];
   const entry={type:'ai',title:sess.titulo,meta:sess.meta+' · modificada',warmup:sess.calentamiento,cooldown:sess.vuelta_calma,exercises:sess.ejercicios,done:false};
   const ix=S.schedule[key].findIndex(x=>x.type==='ai');
@@ -1955,14 +2080,15 @@ function regenerateDayOffline(){
 }
 
 function modifyWithClaude(){
-  const eqLabels=MOD.equipos.map(e=>({ninguno:'peso corporal',mancuernas:'mancuernas',bandas:'bandas elásticas',barra:'barra y discos',kettlebell:'kettlebell',gimnasio:'gimnasio completo',dominadas:'barra de dominadas'}[e]||e)).join(', ');
+  const eqLabels=equipLabels(MOD.equipos);
+  const eqDetail=equipDetailFor(MOD.equipos);
   const mins=document.getElementById('mod-min').value;
   const objLabels=(S.profile.objetivos||['bienestar']).map(o=>GOAL_LABELS[o]||o).join(' + ');
   const mi=mesoInfo(programWeekFor(MOD.key));
   const mesoTxt=mi?`Fase del mesociclo: bloque ${mi.block}, semana ${mi.wInBlock} de ${mi.len}${mi.focus?' ('+mi.focus+')':''}.`:(S.mesoFocus?`Fase actual del programa: ${S.mesoFocus}.`:'');
   const hist=recentSummaryLines(MOD.key);
   window._modPrompt=`Actúa como mi entrenador personal. Modifica/regenera UNA sola sesión de fuerza para hoy con estas restricciones, manteniéndola coherente con mi plan y mi objetivo global:
-- Material disponible hoy: ${eqLabels}
+- Material disponible hoy: ${eqLabels}${eqDetail}${coachExtrasFor(MOD.equipos,MOD.key)}
 - Tiempo disponible hoy: ${mins} minutos
 - Mis objetivos: ${objLabels} (prioriza hipertrofia: 6-12 reps, 3-4 series, 1-3 RIR, descansos 90-150s, sobrecarga progresiva).${mesoTxt?`\n- ${mesoTxt}`:''}${hist?`\n- Entrenamiento reciente (tenlo en cuenta para complementar y repartir bien los grupos, no repetir en exceso):\n${hist}`:''}
 - Indica el esfuerzo como RIR. En "peso" especifica la carga de forma inequívoca. Incluye 2-3 errores comunes de técnica por ejercicio.
@@ -2020,7 +2146,8 @@ function renderGenObj(){_chipRow('gen-obj',GEN_OBJ.map(k=>[k,GOAL_LABELS[k]||k])
 function renderGenNiv(){_chipRow('gen-niv',GEN_NIV,k=>GEN.nivel===k,k=>{GEN.nivel=k;renderGenNiv();});}
 function renderGenEquip(){_chipRow('gen-equip',MOD_EQUIP,k=>GEN.equipos.includes(k),k=>{
   const i=GEN.equipos.indexOf(k);if(i>=0)GEN.equipos.splice(i,1);else GEN.equipos.push(k);
-  if(!GEN.equipos.length)GEN.equipos=['ninguno'];renderGenEquip();});}
+  if(!GEN.equipos.length)GEN.equipos=['ninguno'];renderGenEquip();});
+  const s=document.getElementById('gen-equip-sum');if(s)s.innerHTML=equipSummaryHTML(GEN.equipos);}
 function renderGenMode(){
   const hasAI=(S.schedule[GEN.key]||[]).some(s=>s.type==='ai'&&!s.skipped&&!s.done);
   const opts=[['add','➕ Añadir como sesión nueva']];
@@ -2047,7 +2174,7 @@ function generateDayOffline(){
   const eq=new Set(GEN.equipos.length?GEN.equipos:['ninguno']);
   const mins=parseInt(document.getElementById('gen-min').value)||45;
   const compl=document.getElementById('gen-hist').checked;
-  const opts={};let tag=' · extra';
+  const opts={avoid:recentExerciseNames(key,14)};let tag=' · extra';
   if(compl){
     const exclude=new Set();
     (S.schedule[key]||[]).forEach(s=>{(s.exercises||[]).forEach(e=>{if(e.nombre)exclude.add(e.nombre);});});
@@ -2065,7 +2192,8 @@ function generateWithClaude(){
   const objetivo=GEN.objetivo||primaryGoal(S.profile.objetivos);
   const nivel=GEN.nivel||S.profile.nivel||'intermedio';
   const mins=document.getElementById('gen-min').value;
-  const eqLabels=GEN.equipos.map(e=>({ninguno:'peso corporal',mancuernas:'mancuernas',bandas:'bandas elásticas',barra:'barra y discos',kettlebell:'kettlebell',gimnasio:'gimnasio completo',dominadas:'barra de dominadas'}[e]||e)).join(', ');
+  const eqLabels=equipLabels(GEN.equipos);
+  const eqDetail=equipDetailFor(GEN.equipos);
   const compl=document.getElementById('gen-hist').checked;
   const mi=mesoInfo(programWeekFor(GEN.key));
   const mesoTxt=mi?`Fase del mesociclo: bloque ${mi.block}, semana ${mi.wInBlock} de ${mi.len}${mi.focus?' ('+mi.focus+')':''}.`:(S.mesoFocus?`Fase actual del programa: ${S.mesoFocus}.`:'');
@@ -2074,7 +2202,7 @@ function generateWithClaude(){
 - Objetivo de esta sesión: ${GOAL_LABELS[objetivo]||objetivo}
 - Nivel: ${nivel}
 - Tiempo disponible: ${mins} min
-- Material disponible: ${eqLabels}${mesoTxt?`\n- ${mesoTxt}`:''}${hist?`\n- Entrenamiento reciente (para COMPLEMENTAR, no repetir en exceso los mismos grupos):\n${hist}`:''}
+- Material disponible: ${eqLabels}${eqDetail}${coachExtrasFor(GEN.equipos,GEN.key)}${mesoTxt?`\n- ${mesoTxt}`:''}${hist?`\n- Entrenamiento reciente (para COMPLEMENTAR, no repetir en exceso los mismos grupos):\n${hist}`:''}
 - Prioriza los grupos musculares menos trabajados últimamente; respeta el reparto (las piernas son grupos grandes, no las relegues).
 - Indica el esfuerzo como RIR. En "peso" especifica la carga de forma inequívoca (p. ej. "16 kg por mancuerna" o "solo peso corporal"). Incluye 2-3 errores comunes por ejercicio.
 - Puedes incluir como mucho UN bloque AMRAP/EMOM/circuito (la app lo guía con cronómetro y conteo de rondas) con la forma {"nombre":"AMRAP 10 min","tipo":"amrap","duracion_min":10,"descanso_seg":90,"movimientos":[{"nombre":"...","reps":"12"}],...} ("tipo": amrap|emom|circuito; amrap/emom→"duracion_min"; circuito→"rondas").
