@@ -719,3 +719,37 @@ semanal con lo entrenado; marcadores solo cada mes.
   orden cronológico de la progresión, sets sin kg numérico no cuentan, render con y sin datos,
   compatibilidad por patrón/equipo, sustitución conserva la prescripción y marca `_orig`, aviso ⚠
   visible con limitación activa) sobre las 43 previas de v54/v55: 60 comprobaciones, 0 fallos.
+
+## v57: corrección real de desbordamiento de marcadores + mejoras de alineación
+- BUG REPORTADO POR EL USUARIO: en iPhone 12 mini, algunos marcadores se salían del recuadro.
+  Confirmado con Playwright (Chromium real, viewport 375×812, DPR3, fuente al "Máximo"): la
+  tarjeta de Marcadores de Salud desbordaba hasta **139px** en VO₂max y "kcal activas/día", los
+  dos que llevan flecha de tendencia (▲/▼). Causa raíz: `.stat` es una celda de grid/flex sin
+  `min-width:0`, así que en vez de encogerse al ancho de columna disponible, empuja la fila entera
+  fuera de la pantalla; lo agrava que la flecha de tendencia fuerza `white-space:nowrap`.
+- FIX: `min-width:0` en `.stat` (deja que la celda se encoja) + `overflow-wrap:break-word` en
+  `.stat-v`/`.stat-l` (el texto que no cabe se rompe en vez de salirse). Afecta a la vez a los
+  marcadores de Salud, Progreso, Nutrición y Logros porque todos comparten la misma clase — un
+  solo arreglo centralizado, no cuatro parches. Añadido además un ajuste de tamaño base para
+  pantallas ≤380px (iPhone SE/12 mini), colocado con cuidado DESPUÉS de la regla `!important` de
+  escalado de fuente existente para que realmente gane la cascada (una primera versión del ajuste
+  se colocó antes por error y quedaba anulada en silencio; se detectó y corrigió antes de
+  entregar).
+- VERIFICADO CON NAVEGADOR REAL, no solo razonamiento: se instaló Playwright+Chromium y se
+  reprodujo el bug exacto (139px de overflow) revirtiendo el fix temporalmente, confirmando que
+  el test lo detecta; luego se restauró el fix y se confirmó 0px de overflow en las 5 pantallas
+  principales más 5 estados adicionales (sesión colapsada/expandida, buscador de sustitución
+  abierto, hoja de registro con los chips de fatiga/dolor de v55, tarjeta de limitaciones), con
+  datos de prueba deliberadamente exigentes (fuente al máximo, marcadores con tendencia, rango de
+  calorías, limitaciones activas).
+- MEJORA ADICIONAL encontrada durante la revisión visual (no era overflow, pero sí un defecto real
+  de diseño): en la vista de sesión, cuando la frase de carga (`peso`) es larga —el motor offline
+  ya proponía frases completas tipo "elige de tus mancuernas (8–24 kg) la que te deje RIR 1-3;
+  cuando completes todas las series..."—, se concatenaba en la misma línea compacta que
+  series×reps·descanso·RIR·tempo, sobrecargándola, y el círculo numerado del ejercicio quedaba
+  centrado verticalmente respecto a un bloque de texto que ahora podía ocupar 5-6 líneas, en vez
+  de alineado arriba junto al título. Se separó la carga a su propia línea destacada (mismo
+  patrón 🏋 que ya usa el reproductor guiado) y se cambió `.ex-h` a `align-items:flex-start`.
+- Validado: sintaxis JS, 0 `api.anthropic.com`, etiquetas balanceadas, y las 60 comprobaciones
+  automáticas previas (persistencia, gestión de datos, v55, v56) siguen en verde tras estos
+  cambios de CSS/maquetación — no se tocó ninguna lógica de datos.
