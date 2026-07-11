@@ -282,9 +282,9 @@ body{font-size:calc(15px*var(--fs))}
           <li><b>Hipertrofia:</b> ~10+ series por grupo muscular/semana, cerca del fallo (1-3 RIR), no al fallo absoluto.</li>
           <li><b>Frecuencia:</b> cada músculo ≥2 veces/semana. Peso corporal y bandas son eficaces.</li>
           <li><b>Proteína:</b> 1,6-2,2 g/kg/día (extremo alto en déficit calórico).</li>
-          <li><b>Progresión:</b> sobrecarga progresiva con doble progresión y descarga cada 4 semanas.</li>
+          <li><b>Progresión:</b> sobrecarga progresiva con doble progresión; el volumen y la intensidad se autorregulan cada semana según tu registro real (sin descargas forzadas).</li>
         </ul>
-        Fuentes: ACSM 2026 Position Stand (Medicine &amp; Science in Sports &amp; Exercise); meta-análisis de Schoenfeld y Grgic sobre volumen y descansos; Morton et al. 2017 (proteína).
+        Fuentes verificables: ACSM 2009 «Progression Models in Resistance Training for Healthy Adults» (Med Sci Sports Exerc); Schoenfeld, Ogborn &amp; Krieger 2016 (frecuencia, Sports Med) y 2017 (volumen semanal, J Sports Sci); Grgic et al. 2022 (entrenar sin llegar al fallo, J Sport Health Sci); Grgic et al. 2018 (descansos, Sports Med); Morton et al. 2018 (proteína, Br J Sports Med).
         <div style="margin-top:8px;color:var(--text3)">Información orientativa, no sustituye consejo médico. Ante dudas de técnica con cargas altas, revisa con un profesional.</div>
       </div>
     </details>
@@ -415,7 +415,7 @@ body{font-size:calc(15px*var(--fs))}
       <p class="note" style="margin-bottom:9px">Pitidos en los últimos 3 segundos de cada cuenta atrás. Si apenas se oyen: sube el volumen del móvil con los botones laterales <b>mientras suena</b>, y comprueba que el interruptor de silencio (lateral del iPhone) no esté activado.</p>
       <button class="btn btn-block" onclick="testBeep()">▶ Probar sonido</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 51</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 52</div>
   </div>
 </div>
 
@@ -501,9 +501,10 @@ body{font-size:calc(15px*var(--fs))}
       <div class="divider"></div>
       <button class="btn btn-primary btn-block" onclick="copyModPrompt()" id="mod-copy">📋 Copiar mensaje para Claude</button>
       <a class="btn btn-block" style="margin-top:8px;text-decoration:none" href="https://claude.ai/new" target="_blank" rel="noopener">↗ Abrir claude.ai</a>
-      <div class="field" style="margin-top:10px"><label>Pega aquí la respuesta JSON de Claude</label>
+      <button class="btn btn-primary btn-block" style="margin-top:10px" onclick="pasteInto('mod-in',applyModify)">📋 Pegar respuesta y aplicar</button>
+      <div class="field" style="margin-top:10px"><label>…o pega aquí la respuesta JSON a mano</label>
         <textarea class="bridge-out" id="mod-in" placeholder='{ "titulo":..., "ejercicios":[...] }'></textarea></div>
-      <button class="btn btn-primary btn-block" onclick="applyModify()">✓ Aplicar a esta sesión</button>
+      <button class="btn btn-block" onclick="applyModify()">✓ Aplicar a esta sesión</button>
     </div>
   </div>
 </div>
@@ -526,9 +527,10 @@ body{font-size:calc(15px*var(--fs))}
       <div class="divider"></div>
       <button class="btn btn-primary btn-block" onclick="copyGenPrompt()" id="gen-copy">📋 Copiar mensaje para Claude</button>
       <a class="btn btn-block" style="margin-top:8px;text-decoration:none" href="https://claude.ai/new" target="_blank" rel="noopener">↗ Abrir claude.ai</a>
-      <div class="field" style="margin-top:10px"><label>Pega aquí la respuesta JSON de Claude</label>
+      <button class="btn btn-primary btn-block" style="margin-top:10px" onclick="pasteInto('gen-in',applyGen)">📋 Pegar respuesta y aplicar</button>
+      <div class="field" style="margin-top:10px"><label>…o pega aquí la respuesta JSON a mano</label>
         <textarea class="bridge-out" id="gen-in" placeholder='{ "titulo":..., "ejercicios":[...] }'></textarea></div>
-      <button class="btn btn-primary btn-block" onclick="applyGen()">✓ Añadir esta sesión</button>
+      <button class="btn btn-block" onclick="applyGen()">✓ Añadir esta sesión</button>
     </div>
   </div>
 </div>
@@ -617,7 +619,7 @@ const EXDB=[
   {n:'Jumping jacks',p:'cardio',eq:['ninguno'],yt:'c4DAnQ6DtF8',m:'Cardio',comp:0,d:'Abre y cierra piernas y brazos con rebote suave; perfecto para calentar o como descanso activo entre ejercicios.'},
 ];
 
-/* --- Parámetros basados en evidencia (ACSM 2026 Position Stand; meta-análisis Schoenfeld/Grgic) ---
+/* --- Parámetros basados en evidencia (ACSM 2009 Progression Models; Schoenfeld/Ogborn/Krieger 2016-17 frecuencia y volumen; Grgic 2018/2022 descansos y proximidad al fallo; Morton 2018 proteína) ---
    Fuerza: cargas altas (≥80% 1RM), 2-3 series/ejercicio, descansos largos.
    Hipertrofia: ~10+ series/grupo muscular/semana, cerca del fallo (1-3 RIR), no al fallo absoluto.
    Frecuencia: cada grupo muscular ≥2x/semana. Peso corporal y bandas son válidos. */
@@ -1599,6 +1601,8 @@ function saveLog(){
   if(!S.schedule[key])S.schedule[key]=[];
   const log={type,duration:dur,distance:dist,kcal,hr,feeling:feel,notes,date:key};
   const aiIdx=mainAIIdx(key);
+  // v52: si el reproductor registró cargas serie a serie, viajan con el registro y el historial
+  if(type.includes('IA')&&aiIdx>=0&&S.schedule[key][aiIdx].sets)log.sets=S.schedule[key][aiIdx].sets;
   if(type.includes('IA')&&aiIdx>=0){S.schedule[key][aiIdx].done=true;S.schedule[key][aiIdx].log=log;}
   else{
     const fIdx=S.schedule[key].findIndex(s=>s.type==='free'&&!s.done);
@@ -1643,7 +1647,8 @@ function renderProg(){
     <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border)">
       <div style="flex:1"><div style="font-size:13px;font-weight:600">${h.title}</div>
         <div style="font-size:11px;color:var(--text2)">${h.key} · ${h.duration}min${h.distance?' · '+h.distance+'km':''}</div>
-        ${h.notes?`<div style="font-size:11px;color:var(--text3);margin-top:2px">${h.notes.slice(0,70)}${h.notes.length>70?'…':''}</div>`:''}</div>
+        ${h.notes?`<div style="font-size:11px;color:var(--text3);margin-top:2px">${h.notes.slice(0,70)}${h.notes.length>70?'…':''}</div>`:''}
+        ${h.sets&&h.sets.length?(()=>{const t=h.sets.map(e=>e.nombre+' '+fmtSets(e.series)).join(' · ');return `<div style="font-size:11px;color:var(--ai);margin-top:2px">🏋 ${t.slice(0,90)}${t.length>90?'…':''}</div>`;})():''}</div>
       <span style="font-size:19px;margin-left:8px">${h.feeling||'💪'}</span></div>`).join('');
   renderBadges();renderMarkerCharts();
 }
@@ -1726,7 +1731,7 @@ function renderNutri(){
       <div class="stat"><div class="stat-v">${n.proteina_g}g</div><div class="stat-l">proteína</div></div>
       <div class="stat"><div class="stat-v">${n.agua_litros}L</div><div class="stat-l">agua</div></div>
     </div></div>
-    ${n.menu_dia.map(m=>`<div class="meal"><div class="meal-t">${m.momento} · ${m.hora}</div>
+    ${(n.menu_dia||[]).map(m=>`<div class="meal"><div class="meal-t">${m.momento} · ${m.hora}</div>
       <div class="meal-n">${m.plato}</div><div class="meal-m">${m.kcal} kcal · ${m.proteina_g}g proteína</div></div>`).join('')}
     <p class="note">Valores orientativos calculados desde tu gasto energético. Ajusta según tu evolución y consulta a un profesional para necesidades específicas.</p>`;
 }
@@ -1815,7 +1820,7 @@ Si se combinan varios objetivos, prioriza un esquema de fuerza/hipertrofia para 
     }
     const h=S.history.slice(0,38); // ~4 semanas completas con margen, a tu ritmo (hasta 9 ses./sem)
     histTxt+='\n\nHISTORIAL DE SESIONES COMPLETADAS (hasta ~4 semanas, más reciente primero; da más peso a la última semana para decidir la carga inmediata, y usa el conjunto para ver la trayectoria del mesociclo: si progreso, me estanco o acumulo fatiga):\n'+
-      (h.length?h.map(x=>`- ${x.key}: ${x.title}, ${x.duration}min${x.distance?' '+x.distance+'km':''}${x.kcal?' · '+x.kcal+' kcal':''}${x.hr?' · FC media '+x.hr:''}, esfuerzo ${x.feeling}. ${x.notes||''}`).join('\n'):'(ninguna registrada)');
+      (h.length?h.map(x=>`- ${x.key}: ${x.title}, ${x.duration}min${x.distance?' '+x.distance+'km':''}${x.kcal?' · '+x.kcal+' kcal':''}${x.hr?' · FC media '+x.hr:''}, esfuerzo ${x.feeling}. ${x.notes||''}${x.sets&&x.sets.length?' CARGAS REALES serie a serie: '+x.sets.map(e=>e.nombre+' '+fmtSets(e.series)).join('; ')+'.':''}`).join('\n'):'(ninguna registrada)');
   }
   let healthTxt='';
   const H=S.health;
@@ -1850,6 +1855,7 @@ Interpretación orientativa: una FC en reposo elevada o una HRV baja respecto a 
 REGLAS DE ADAPTACIÓN (basadas en evidencia):
 - El PUNTO DE PARTIDA es la referencia del nivel inicial. Cuando existan sesiones recientes registradas, PRIORÍZALAS para decidir la progresión y trata el punto de partida solo como contexto de origen, no como el plan a repetir.
 - Sobrecarga progresiva: si el esfuerzo fue 💪/🔥 y completó las sesiones, sube carga ~2-5% o añade 1 serie/repeticiones (doble progresión).
+- Cuando una sesión del historial incluya "CARGAS REALES serie a serie", esos kg×reps son el dato MÁS fiable: úsalos como referencia principal para fijar el peso de la semana siguiente (doble progresión: si alcanzó el tope del rango de reps en todas las series, sube al siguiente escalón de mancuerna disponible; si se quedó lejos, mantén o baja).
 - Si predominó 😓/😴 o faltaron sesiones, reduce volumen y prioriza recuperación.
 - NO programes semanas de descarga. El usuario entrena todas las semanas; si hay fatiga (😓/😴, marcadores peores), reduce volumen o aleja del fallo esa semana, pero sin descarga completa.
 - En "nota_progresion" de cada ejercicio, explica el cambio concreto frente a la semana anterior.
@@ -1857,7 +1863,7 @@ REGLAS DE ADAPTACIÓN (basadas en evidencia):
 - En "analisis_progreso" resume en 3-4 frases qué has ajustado y por qué.`:'';
 
   const evidence=`
-PRINCIPIOS BASADOS EN EVIDENCIA (ACSM 2026 Position Stand; meta-análisis de Schoenfeld y Grgic; Morton et al. 2017 para proteína):
+PRINCIPIOS BASADOS EN EVIDENCIA (fuentes reales y verificables: ACSM 2009 "Progression Models in Resistance Training for Healthy Adults", Med Sci Sports Exerc; Schoenfeld, Ogborn & Krieger 2016 sobre frecuencia y 2017 sobre volumen semanal; Grgic et al. 2022 sobre entrenar sin llegar al fallo; Grgic et al. 2018 sobre descansos; Morton et al. 2018, Br J Sports Med, para proteína. Si citas evidencia en tus explicaciones, usa SOLO referencias reales que existan; NUNCA inventes ni "actualices" citas):
 - Fuerza: cargas altas (≥80% 1RM), 2-3 series por ejercicio, descansos 2-3 min.
 - Hipertrofia: acumular ~10+ series por grupo muscular a la semana; trabajar cerca del fallo (1-3 repeticiones en reserva), NO al fallo absoluto.
 - Entrenar cada grupo muscular principal al menos 2 veces por semana.
@@ -1942,21 +1948,23 @@ function openBridge(mode){
   document.getElementById('bridge-body').innerHTML=`
     ${aviso}
     <div class="bridge-steps">
-      <div class="bridge-step"><div class="num">1</div><div class="tx">Copia el mensaje para tu entrenador (botón abajo).</div></div>
-      <div class="bridge-step"><div class="num">2</div><div class="tx">Ábrelo en la <b>app de Claude</b> (incluida en tu plan Pro, sin coste) y pégalo.</div></div>
-      <div class="bridge-step"><div class="num">3</div><div class="tx">Copia la respuesta JSON de Claude y pégala abajo.</div></div>
-      <div class="bridge-step"><div class="num">4</div><div class="tx">Pulsa "Aplicar plan".</div></div>
+      <div class="bridge-step"><div class="num">1</div><div class="tx">Copia o comparte el mensaje para tu entrenador (botones abajo).</div></div>
+      <div class="bridge-step"><div class="num">2</div><div class="tx">Pégalo en la <b>app de Claude</b> (incluida en tu plan Pro, sin coste) y copia su respuesta.</div></div>
+      <div class="bridge-step"><div class="num">3</div><div class="tx">Vuelve aquí y pulsa <b>"Pegar respuesta y revisar"</b>.</div></div>
+      <div class="bridge-step"><div class="num">4</div><div class="tx">Revisa el resumen del plan y pulsa "Aplicar plan".</div></div>
     </div>
     <button class="btn btn-primary btn-block" onclick="copyPrompt()" id="copy-btn">📋 Copiar mensaje para Claude</button>
     <button class="btn btn-block" style="margin-top:8px" onclick="sharePrompt()" id="share-btn">📤 Compartir con Claude (recomendado en iPhone)</button>
     <a class="btn btn-block" style="margin-top:8px;text-decoration:none" href="https://claude.ai/new" target="_blank" rel="noopener">↗ Abrir claude.ai</a>
     <p class="note" style="margin-top:7px;font-size:calc(11px*var(--fs))">En iPhone, si al pegar se adjunta como archivo .txt, usa "Compartir con Claude": envía el texto directamente. Funciona igual; Claude lo lee y responde el JSON.</p>
     <div class="divider"></div>
-    <div class="field"><label>Pega aquí la respuesta JSON de Claude</label>
+    <button class="btn btn-primary btn-block" onclick="pasteInto('bridge-in',previewBridge)">📋 Pegar respuesta y revisar</button>
+    <div class="field" style="margin-top:10px"><label>…o pégala aquí a mano</label>
       <textarea class="bridge-out" id="bridge-in" placeholder='{ "sesiones_ia": [...], "nutricion": {...} }'></textarea></div>
-    <button class="btn btn-primary btn-block" onclick="applyBridge()">✓ Aplicar plan</button>
-    <p class="note" style="margin-top:9px">El prompt ya incluye tu perfil${mode==='adapt'?' y tu historial de sesiones':''}. Claude no necesita ningún dato extra.</p>`;
+    <button class="btn btn-block" onclick="previewBridge()">✓ Revisar y aplicar</button>
+    <p class="note" style="margin-top:9px">El prompt ya incluye tu perfil${mode==='adapt'?' y tu historial de sesiones':''}. Claude no necesita ningún dato extra. Antes de aplicar verás un resumen del plan y cualquier problema detectado.</p>`;
   window._prompt=prompt;
+  if(window._bridgeRaw){const bi=document.getElementById('bridge-in');if(bi)bi.value=window._bridgeRaw;}
   openSheet('bridge-bg');
 }
 function goNextWeekInBridge(){S.currentWeek++;save();renderCal();openBridge(S.bridgeMode||'adapt');}
@@ -1977,23 +1985,101 @@ function copyPrompt(){
     alert('Copiado. Pégalo en claude.ai');
   });
 }
-function applyBridge(){
-  const raw=document.getElementById('bridge-in').value.trim();
-  if(!raw){alert('Pega la respuesta de Claude primero.');return;}
-  let plan;
+/* ============================================================
+   PUENTE v52: pegar en un toque, validar y revisar antes de aplicar
+   ============================================================ */
+// Lee el portapapeles con gesto del usuario (iOS muestra el permiso nativo "Pegar")
+async function pasteInto(id,after){
+  const el=document.getElementById(id);if(!el)return;
   try{
-    let clean=raw.replace(/```json|```/g,'').trim();
-    // Normaliza comillas tipográficas y otros caracteres de iOS que rompen el JSON
-    clean=clean
-      .replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g,'"') // comillas dobles curvas → "
-      .replace(/[\u2018\u2019\u201A\u201B\u2032\u2035]/g,"'") // comillas simples curvas → '
-      .replace(/\u00A0/g,' ')   // espacio duro → espacio normal
-      .replace(/[\u2013\u2014]/g,'-') // guiones largos → guion
-      .replace(/,\s*([}\]])/g,'$1'); // comas colgantes antes de } o ]
-    const start=clean.indexOf('{');const end=clean.lastIndexOf('}');
-    if(start<0||end<0)throw new Error('sin objeto');
-    plan=JSON.parse(clean.slice(start,end+1));
-  }catch(e){alert('No se pudo leer el JSON. Copia la respuesta COMPLETA de Claude (desde la primera { hasta la última }). Si el problema persiste, pide a Claude que la repita "en texto plano, solo el JSON".');return;}
+    const t=await navigator.clipboard.readText();
+    if(t&&t.trim()){el.value=t;if(after)after();return;}
+    alert('El portapapeles está vacío. Copia primero la respuesta de Claude.');
+  }catch(e){
+    el.focus();
+    alert('Tu navegador no ha permitido leer el portapapeles. Mantén pulsado el cuadro de texto y elige "Pegar".');
+  }
+}
+// Valida un ejercicio del JSON; acumula errores (bloquean) y avisos (no bloquean)
+function validateExercise(e,i,issues){
+  const tag=e&&e.nombre?`"${e.nombre}"`:`ejercicio ${i+1}`;
+  if(!e||!e.nombre){issues.errors.push(`Falta "nombre" en el ejercicio ${i+1}.`);return;}
+  if(isBlock(e))return; // bloques AMRAP/EMOM/circuito: estructura propia ya tolerada
+  if(e.series==null)issues.errors.push(`Falta "series" en ${tag}.`);
+  if(e.reps==null||e.reps==='')issues.errors.push(`Falta "reps" en ${tag}.`);
+  if(!e.peso)issues.warns.push(`${tag} no indica "peso" (carga inequívoca).`);
+  const eq=S.profile.equipos||[];
+  const nm=(e.nombre||'').toLowerCase();
+  if(/dominada/.test(nm)&&!eq.includes('dominadas')&&!eq.includes('gimnasio'))issues.warns.push(`${tag}: no tienes barra de dominadas configurada.`);
+  if(/\bcon barra\b/.test(nm)&&!eq.includes('barra')&&!eq.includes('gimnasio'))issues.warns.push(`${tag}: no tienes barra con discos configurada.`);
+}
+function validatePlan(plan){
+  const issues={errors:[],warns:[]};
+  const ses=plan&&plan.sesiones_ia;
+  if(!Array.isArray(ses)||!ses.length){issues.errors.push('El JSON no contiene "sesiones_ia" (la lista de sesiones de la semana).');return issues;}
+  ses.forEach((s,si)=>{
+    if(!s.dia_codigo||DAYS.indexOf(s.dia_codigo)<0)issues.errors.push(`Sesión ${si+1} ("${s.titulo||'sin título'}"): "dia_codigo" inválido (${s.dia_codigo||'vacío'}); debe ser L, M, X, J, V, S o D.`);
+    if(!Array.isArray(s.ejercicios)||!s.ejercicios.length)issues.errors.push(`La sesión "${s.titulo||si+1}" no tiene "ejercicios".`);
+    else s.ejercicios.forEach((e,i)=>validateExercise(e,i,issues));
+  });
+  if(plan.nutricion&&(!plan.nutricion.calorias_diarias||!Array.isArray(plan.nutricion.menu_dia)))issues.warns.push('La "nutricion" no sigue el esquema completo (calorias_diarias, proteina_g, agua_litros, menu_dia); se aplicará lo que haya.');
+  return issues;
+}
+function validateSession(s){
+  const issues={errors:[],warns:[]};
+  if(!s||!Array.isArray(s.ejercicios)||!s.ejercicios.length){issues.errors.push('El JSON no contiene "ejercicios".');return issues;}
+  s.ejercicios.forEach((e,i)=>validateExercise(e,i,issues));
+  return issues;
+}
+// Mensaje listo para pegar en Claude pidiendo la corrección exacta
+function fixMsgFor(issues){
+  return 'La respuesta JSON que me diste tiene estos problemas:\n- '+issues.errors.concat(issues.warns).join('\n- ')+'\nDevuélvemela corregida y COMPLETA, en texto plano, SOLO el JSON (sin backticks ni explicaciones), con la misma estructura.';
+}
+function copyFixMsg(){
+  navigator.clipboard.writeText(window._fixMsg||'').then(()=>alert('Mensaje de corrección copiado. Pégalo en Claude y trae el JSON corregido.')).catch(()=>{alert(window._fixMsg||'');});
+}
+// Vista previa del plan semanal ANTES de aplicarlo (resumen por día + avisos)
+function previewBridge(){
+  const raw=document.getElementById('bridge-in').value.trim();
+  if(!raw){alert('Pega primero la respuesta de Claude (botón "Pegar respuesta").');return;}
+  let plan;
+  try{plan=looseJSON(raw);}catch(e){alert('No se pudo leer el JSON. Copia la respuesta COMPLETA de Claude (desde la primera { hasta la última }). Si persiste, pídele que la repita "en texto plano, solo el JSON".');return;}
+  const issues=validatePlan(plan);
+  window._pendingPlan=plan;window._bridgeRaw=raw;
+  window._fixMsg=(issues.errors.length||issues.warns.length)?fixMsgFor(issues):'';
+  const dates=weekDates(S.currentWeek);
+  const rows=(plan.sesiones_ia||[]).map(s=>{
+    const idx=DAYS.indexOf(s.dia_codigo);
+    const day=idx>=0?DAY_NAMES[idx]:('¿'+(s.dia_codigo||'?')+'?');
+    const key=idx>=0?fmt(dates[idx]):null;
+    const replaces=key&&(S.schedule[key]||[]).some(x=>x.type==='ai')?' <span style="color:var(--free);font-size:calc(11px*var(--fs))">(sustituye a la sesión IA de ese día)</span>':'';
+    const exs=(s.ejercicios||[]).map(e=>isBlock(e)
+      ?`<li>${e.nombre} · ${_fmtBlock(e,blockType(e))}</li>`
+      :`<li>${e.nombre||'?'} — ${e.series!=null?e.series:'?'}×${e.reps!=null?e.reps:'?'}${e.peso?' · '+e.peso:''}</li>`).join('');
+    return `<div style="margin-bottom:10px"><b>${day}</b> · ${s.titulo||''}${replaces}
+      <ul style="margin:4px 0 0;padding-left:18px;font-size:calc(12px*var(--fs));color:var(--text2)">${exs}</ul></div>`;
+  }).join('');
+  const nutri=plan.nutricion?`<div style="margin-top:6px;font-size:calc(12px*var(--fs));color:var(--text2)">🍎 Nutrición: ${plan.nutricion.calorias_diarias||plan.nutricion.kcal||'?'} kcal · ${plan.nutricion.proteina_g||'?'} g proteína${Array.isArray(plan.nutricion.menu_dia)?' · menú de '+plan.nutricion.menu_dia.length+' comidas':''}</div>`:'';
+  const meso=(plan.mesociclo&&plan.mesociclo.enfoque)?`<div style="margin-top:4px;font-size:calc(12px*var(--fs));color:var(--text2)">🗓️ Fase: ${plan.mesociclo.enfoque}</div>`:'';
+  const errBox=issues.errors.length?`<div style="background:rgba(255,69,58,.12);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:10px;font-size:calc(12px*var(--fs))"><b>✕ Corrige antes de aplicar:</b><ul style="margin:5px 0 0;padding-left:18px">${issues.errors.map(x=>`<li>${x}</li>`).join('')}</ul>
+    <button class="btn btn-xs" style="margin-top:8px" onclick="copyFixMsg()">📋 Copiar petición de corrección para Claude</button></div>`:'';
+  const warnBox=issues.warns.length?`<div style="background:rgba(255,214,10,.12);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:10px;font-size:calc(12px*var(--fs))"><b>⚠ Avisos</b> (puedes aplicar igualmente):<ul style="margin:5px 0 0;padding-left:18px">${issues.warns.map(x=>`<li>${x}</li>`).join('')}</ul>
+    ${issues.errors.length?'':'<button class="btn btn-xs" style="margin-top:8px" onclick="copyFixMsg()">📋 Copiar petición de corrección para Claude</button>'}</div>`:'';
+  document.getElementById('bridge-body').innerHTML=`
+    <div style="font-weight:700;margin-bottom:10px">Revisa el plan antes de aplicarlo</div>
+    ${errBox}${warnBox}
+    <div style="border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px;max-height:320px;overflow-y:auto;-webkit-overflow-scrolling:touch">
+      ${rows||'<i>Sin sesiones</i>'}${nutri}${meso}</div>
+    ${issues.errors.length?'':'<button class="btn btn-primary btn-block" onclick="confirmBridge()">✓ Aplicar plan</button>'}
+    <button class="btn btn-block" style="margin-top:8px" onclick="openBridge(S.bridgeMode||'adapt')">‹ Volver</button>`;
+}
+function confirmBridge(){
+  if(!window._pendingPlan)return;
+  applyBridgePlan(window._pendingPlan);
+  window._pendingPlan=null;window._bridgeRaw='';
+}
+// Aplica un plan ya parseado y validado (antes era el cuerpo de applyBridge)
+function applyBridgePlan(plan){
   const dates=weekDates(S.currentWeek);
   (plan.sesiones_ia||[]).forEach(s=>{
     const idx=DAYS.indexOf(s.dia_codigo);if(idx<0)return;
@@ -2105,7 +2191,13 @@ function copyModPrompt(){
 function applyModify(){
   const raw=document.getElementById('mod-in').value.trim();if(!raw){alert('Pega la respuesta de Claude primero.');return;}
   let s;try{s=looseJSON(raw);}catch(e){alert('No se pudo leer el JSON. Copia la respuesta completa de Claude (desde la primera { hasta la última }).');return;}
-  if(!s.ejercicios){alert('El JSON no contiene "ejercicios".');return;}
+  const issues=validateSession(s);
+  if(issues.errors.length){
+    window._fixMsg=fixMsgFor(issues);
+    if(confirm('Problemas en el JSON:\n- '+issues.errors.join('\n- ')+'\n\n¿Copiar un mensaje de corrección para pegarlo en Claude?'))copyFixMsg();
+    return;
+  }
+  if(issues.warns.length&&!confirm('Avisos:\n- '+issues.warns.join('\n- ')+'\n\n¿Aplicar de todos modos?')){window._fixMsg=fixMsgFor(issues);copyFixMsg();return;}
   const key=MOD.key;s.ejercicios=s.ejercicios.map(matchYT);
   const entry={type:'ai',title:s.titulo||'Sesión modificada',meta:(s.meta||'')+' · modificada',warmup:s.calentamiento,cooldown:s.vuelta_calma,exercises:s.ejercicios,done:false};
   if(!S.schedule[key])S.schedule[key]=[];
@@ -2218,7 +2310,13 @@ function copyGenPrompt(){
 function applyGen(){
   const raw=document.getElementById('gen-in').value.trim();if(!raw){alert('Pega la respuesta de Claude primero.');return;}
   let s;try{s=looseJSON(raw);}catch(e){alert('No se pudo leer el JSON. Copia la respuesta completa de Claude (desde la primera { hasta la última }).');return;}
-  if(!s.ejercicios){alert('El JSON no contiene "ejercicios".');return;}
+  const issues=validateSession(s);
+  if(issues.errors.length){
+    window._fixMsg=fixMsgFor(issues);
+    if(confirm('Problemas en el JSON:\n- '+issues.errors.join('\n- ')+'\n\n¿Copiar un mensaje de corrección para pegarlo en Claude?'))copyFixMsg();
+    return;
+  }
+  if(issues.warns.length&&!confirm('Avisos:\n- '+issues.warns.join('\n- ')+'\n\n¿Aplicar de todos modos?')){window._fixMsg=fixMsgFor(issues);copyFixMsg();return;}
   const key=GEN.key;s.ejercicios=s.ejercicios.map(matchYT);
   if(!S.schedule[key])S.schedule[key]=[];
   const repTag=_genModeTag(key);const tag=repTag!==null?repTag:' · extra';
@@ -2649,6 +2747,30 @@ function countdownCue(sec){
 function testBeep(){initAudio();beep(1000,0.18,0.85);setTimeout(()=>beep(1500,0.4,0.95),350);}
 
 function parseReps(r){const m=String(r).match(/(\d+)\s*s/);return m?+m[1]:null;} // segundos si es "40s"
+/* --- Registro por serie (v52): helpers --- */
+// Primer número del texto de peso propuesto ("16 kg por mancuerna" → 16). null si no hay.
+function parseKg(peso){const m=String(peso||'').match(/(\d+(?:[.,]\d+)?)/);const n=m?toNum(m[1]):NaN;return isNaN(n)?null:n;}
+// Objetivo de reps a prellenar: el tope del rango ("8-12" → "12"; "12" → "12").
+function targetReps(reps){const m=String(reps||'').match(/(\d+)(?:\s*-\s*(\d+))?/);return m?(m[2]||m[1]):'';}
+// Formatea series registradas: [{kg,reps}] → "16 kg × 12, 12, 10" | "12, 10 reps" | "16×12, 18×10"
+function fmtSets(series){
+  if(!series||!series.length)return '';
+  const rep=s=>s.reps==null||s.reps===''?'?':s.reps;
+  const kgs=[...new Set(series.map(s=>(s.kg==null||s.kg==='')?'-':String(s.kg)))];
+  if(kgs.length===1&&kgs[0]!=='-')return kgs[0]+' kg × '+series.map(rep).join(', ');
+  if(kgs.length===1)return series.map(rep).join(', ')+' reps';
+  return series.map(s=>((s.kg!=null&&s.kg!=='')?s.kg+'×':'×')+rep(s)).join(', ');
+}
+// Último rendimiento registrado (serie a serie) para un ejercicio, buscando en el historial.
+function lastPerformance(nombre){
+  const nm=(nombre||'').toLowerCase().trim();if(!nm)return null;
+  for(const h of (S.history||[])){
+    if(!h.sets)continue;
+    const found=h.sets.find(e=>e.nombre&&e.nombre.toLowerCase().trim()===nm);
+    if(found&&found.series&&found.series.length)return {date:h.key,series:found.series};
+  }
+  return null;
+}
 // Convierte a número aceptando coma decimal española (41,4 → 41.4). NaN si no es número.
 function toNum(v){if(v==null)return NaN;return parseFloat(String(v).trim().replace(/\s/g,'').replace(/,/g,'.'));}
 // Parsea el JSON pegado de Claude tolerando comillas tipográficas, guiones largos,
@@ -2684,7 +2806,7 @@ function startPlayer(key){
   const sess=mainAISess(key);
   if(!sess||!sess.exercises)return;
   initAudio();
-  P={active:true,sess,exi:0,set:1,phase:'ready',int:null,sec:0,tot:0,key,startedAt:Date.now(),setsDone:0};
+  P={active:true,sess,exi:0,set:1,phase:'ready',int:null,sec:0,tot:0,key,startedAt:Date.now(),setsDone:0,setLog:[],rec:null};
   document.getElementById('player').classList.add('show');
   document.body.style.overflow='hidden';
   acquireWakeLock();
@@ -2778,12 +2900,25 @@ function renderPlayer(){
       <div class="pl-next">${ex.nombre} · serie ${P.set}/${ex.series}${side}</div>`;
   } else {
     const errs=ex.errores&&ex.errores.length?ex.errores:(ERRORS[figKey(ex.nombre)]||[]);
+    const canRec=!repSecs; // solo ejercicios por repeticiones (los de tiempo se registran solos)
+    const last=canRec?lastPerformance(ex.nombre):null;
+    const prefKg=(P.rec&&P.rec.exi===P.exi&&P.rec.kg!=null)?P.rec.kg:(parseKg(ex.peso)!=null?parseKg(ex.peso):'');
+    const prefReps=(P.rec&&P.rec.exi===P.exi&&P.rec.reps!=null)?P.rec.reps:targetReps(ex.reps);
+    const inpSt='text-align:center;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:10px;color:#fff;padding:8px 6px;font-size:16px';
+    const recHTML=canRec?`
+      <div style="display:flex;gap:6px;justify-content:center;align-items:center;margin-top:12px">
+        <input type="text" inputmode="decimal" id="pl-kg" value="${prefKg}" placeholder="kg" style="width:72px;${inpSt}"><span class="pl-cue">kg ×</span>
+        <input type="text" inputmode="numeric" id="pl-reps" value="${prefReps}" placeholder="reps" style="width:62px;${inpSt}"><span class="pl-cue">reps</span>
+      </div>
+      <div class="pl-cue" style="margin-top:4px;font-size:calc(11px*var(--fs))">Carga real de esta serie · corrige solo si difiere</div>
+      ${last?`<div class="pl-cue" style="margin-top:4px;color:var(--ring-stand)">Última vez (${last.date}): ${fmtSets(last.series)}</div>`:''}`:'';
     mid=`<div style="width:170px;height:135px;margin:0 auto 14px">${exSVG(ex.nombre,ex.p)}</div>
       <div class="pl-reps">${ex.series>1?`Serie ${P.set} de ${ex.series}`:'1 serie'} · ${ex.reps}${/^\d+$/.test(String(ex.reps))?' reps':''}</div>
       ${ex.peso?`<div class="pl-cue" style="margin-top:4px;color:var(--ring-ex);font-weight:600">🏋 ${ex.peso}</div>`:''}
       ${(ex.rir||ex.rpe)?`<div class="pl-cue">Deja ${ex.rir||ex.rpe} reps en reserva (RIR)${ex.tempo?' · tempo '+ex.tempo:''}</div>`:''}
       <div class="pl-cue" style="margin-top:8px">${ex.descripcion||''}</div>
       ${errs.length?`<div class="pl-cue" style="margin-top:8px;color:var(--danger)">⚠ Evita: ${errs[0].toLowerCase()}</div>`:''}
+      ${recHTML}
       <button class="btn btn-primary btn-block" style="margin-top:16px" onclick="finishSet()">${repSecs?'Iniciar ('+repSecs+'s)':'✓ Serie completada'}</button>`;
   }
   document.getElementById('player-body').innerHTML=`
@@ -2803,7 +2938,27 @@ function finishSet(){
     startWorkCountdown(ex,repSecs);
     return;
   }
+  recordSet(ex);
   beginRest();
+}
+/* Guarda la serie recién hecha (kg×reps de los campos del reproductor) en P.setLog */
+function recordSet(ex){
+  const kEl=document.getElementById('pl-kg'),rEl=document.getElementById('pl-reps');
+  if(!kEl&&!rEl)return;
+  const kgRaw=kEl?kEl.value.trim():'';const rpRaw=rEl?rEl.value.trim():'';
+  const kg=kgRaw!==''?toNum(kgRaw):null;
+  const reps=rpRaw!==''?rpRaw:null;
+  if((kg==null||isNaN(kg))&&reps==null)return;
+  let e=(P.setLog=P.setLog||[]).find(x=>x.nombre===ex.nombre);
+  if(!e){e={nombre:ex.nombre,series:[]};P.setLog.push(e);}
+  e.series.push({kg:(kg!=null&&!isNaN(kg))?kg:null,reps});
+  P.rec={exi:P.exi,kg:kgRaw,reps:rpRaw}; // prellenar la siguiente serie del MISMO ejercicio
+}
+/* Ejercicios por tiempo: se registran solos ("40s" por serie) */
+function recordTimedSet(ex){
+  let e=(P.setLog=P.setLog||[]).find(x=>x.nombre===ex.nombre);
+  if(!e){e={nombre:ex.nombre,series:[]};P.setLog.push(e);}
+  e.series.push({kg:parseKg(ex.peso),reps:String(ex.reps)});
 }
 function startWorkCountdown(ex,repSecs){
   P.phase='work';P.sec=repSecs;P.tot=repSecs;renderPlayer();
@@ -2816,7 +2971,7 @@ function startWorkCountdown(ex,repSecs){
         startWorkCountdown(ex,repSecs);
         return;
       }
-      P.side=0;beginRest();}},1000);
+      P.side=0;recordTimedSet(ex);beginRest();}},1000);
 }
 function beginRest(){
   const ex=P.sess.exercises[P.exi];
@@ -2988,6 +3143,11 @@ const BADGES=[
 function earnedBadges(){const st=computeStats();return BADGES.filter(b=>b.test(st));}
 function finishSession(){
   clearInterval(P.int);
+  // Persistir el registro por serie en la sesión del calendario (aunque no se registre después)
+  if(P.setLog&&P.setLog.length){
+    const si=mainAIIdx(P.key);
+    if(si>=0){S.schedule[P.key][si].sets=P.setLog;save();}
+  }
   // celebrar: estadísticas reales de la sesión y logros
   const mins=P.startedAt?Math.max(1,Math.round((Date.now()-P.startedAt)/60000)):null;
   const totalSets=(P.sess.exercises||[]).reduce((a,e)=>a+(+e.series||0),0);
@@ -3007,6 +3167,9 @@ function finishSession(){
       <div><div style="font-size:calc(20px*var(--fs));font-weight:700">${totalSets}</div><div style="font-size:calc(10px*var(--fs));color:rgba(255,255,255,.6);text-transform:uppercase">series</div></div>
       <div><div style="font-size:calc(20px*var(--fs));font-weight:700">🔥 ${st.streak}</div><div style="font-size:calc(10px*var(--fs));color:rgba(255,255,255,.6);text-transform:uppercase">racha sem.</div></div>
     </div>
+    ${(P.setLog&&P.setLog.length)?`<div style="background:rgba(255,255,255,.1);border-radius:14px;padding:12px;margin-bottom:16px;text-align:left">
+      <div style="font-size:calc(11px*var(--fs));text-transform:uppercase;letter-spacing:.6px;color:var(--ring-ex);margin-bottom:6px">Cargas registradas</div>
+      ${P.setLog.map(e=>`<div style="font-size:calc(13px*var(--fs))">🏋 ${e.nombre}: ${fmtSets(e.series)}</div>`).join('')}</div>`:''}
     ${blockRes.length?`<div style="background:rgba(255,255,255,.1);border-radius:14px;padding:12px;margin-bottom:16px">
       <div style="font-size:calc(11px*var(--fs));text-transform:uppercase;letter-spacing:.6px;color:var(--free);margin-bottom:6px">Resultado de bloques</div>
       ${blockRes.map(r=>`<div style="font-size:calc(14px*var(--fs))">⚡ ${r}</div>`).join('')}</div>`:''}

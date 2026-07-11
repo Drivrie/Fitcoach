@@ -537,3 +537,37 @@ semanal con lo entrenado; marcadores solo cada mes.
     de rotar accesorios (manteniendo 2-3 básicos estables para progresar).
 - Corregido de paso: "Regenerar (offline)" en Modificar aún aplicaba la descarga %4 obsoleta.
 - Sin cambios en initState ni en el almacenamiento; los nombres antiguos del catálogo se conservan.
+
+## v52: registro por serie, citas verificables y puente con revisión previa
+- REGISTRO POR SERIE (reproductor): en cada serie por repeticiones aparecen dos campos kg × reps
+  PRELLENADOS con lo propuesto (y con lo que escribiste en la serie anterior del mismo ejercicio):
+  si hiciste lo previsto no tocas nada; si difiere, lo corriges en 2 toques. Los ejercicios por
+  tiempo ("40s") se registran solos. Al terminar, la pantalla de fin muestra "Cargas registradas",
+  se guardan en la sesión del calendario (campo aditivo `sets`) y viajan al historial al registrar.
+  El reproductor muestra además "Última vez (fecha): 16 kg × 12, 12, 10" para cada ejercicio con
+  marca previa, y el historial de Progreso enseña las cargas de cada sesión.
+- El prompt semanal incluye ahora las "CARGAS REALES serie a serie" de cada sesión registrada, con
+  instrucción explícita de usarlas como dato principal para la doble progresión (subir de escalón
+  de mancuerna al alcanzar el tope de reps en todas las series).
+- CITAS VERIFICABLES: se elimina la referencia "ACSM 2026 Position Stand" (no verificable) de la
+  tarjeta Fundamentos, del comentario del motor y de los prompts. Se sustituye por fuentes reales:
+  ACSM 2009 "Progression Models in Resistance Training" (Med Sci Sports Exerc); Schoenfeld, Ogborn
+  & Krieger 2016 (frecuencia, Sports Med) y 2017 (volumen, J Sports Sci); Grgic et al. 2022
+  (proximidad al fallo, J Sport Health Sci); Grgic et al. 2018 (descansos, Sports Med); Morton et
+  al. 2018 (proteína, Br J Sports Med). El prompt además prohíbe a Claude inventar referencias.
+  De paso, la tarjeta Fundamentos ya no menciona "descarga cada 4 semanas" (contradecía el modelo
+  de progresión continua de v41).
+- PUENTE CON REVISIÓN PREVIA (semanal): "Aplicar plan" pasa a "Revisar y aplicar". Antes de tocar
+  el calendario se muestra un resumen por día (título, ejercicios con series×reps y peso, si
+  sustituye a una sesión existente), la nutrición y la fase del mesociclo, junto con problemas
+  detectados: errores que bloquean (falta sesiones_ia, dia_codigo inválido, ejercicios sin
+  nombre/series/reps) y avisos (ejercicio sin "peso", dominadas o barra sin ese material
+  configurado). Con problemas, un botón copia una petición de corrección lista para pegar en Claude.
+- PEGADO EN UN TOQUE: botón "📋 Pegar respuesta" (navigator.clipboard.readText con gesto del
+  usuario, permiso nativo de iOS) en el puente semanal ("Pegar respuesta y revisar") y en los
+  paneles Modificar y Generar IA ("Pegar respuesta y aplicar"). El pegado manual sigue disponible.
+- Modificar/Generar validan ahora la sesión pegada con el mismo validador (errores y avisos con
+  opción de copiar la corrección) en lugar del chequeo mínimo de "ejercicios".
+- applyBridge se refactoriza: parseo unificado con looseJSON (se elimina el duplicado) y la
+  aplicación real vive en applyBridgePlan(plan), llamada tras confirmar la revisión.
+- initState sin cambios; los campos nuevos (sets en schedule/history) son aditivos y opcionales.
