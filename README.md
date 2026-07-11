@@ -681,3 +681,41 @@ semanal con lo entrenado; marcadores solo cada mes.
   entrenamiento simplificado, búsqueda/sustitución de ejercicios con filtro de impacto/dolor
   explícito en la sesión (hoy la exclusión es automática, sin una vista de "cámbiame esto"), Web
   Worker para XML grandes de Salud, y mover los estilos inline a clases CSS reutilizables.
+
+## v56: progresión de carga, sustitución libre de ejercicios y primeras clases CSS
+- PROGRESIÓN DE CARGA (nueva tarjeta en Progreso): usa los `sets` (kg×reps serie a serie) que ya
+  se guardan desde el reproductor guiado, sin ningún registro nuevo que rellenar. Un selector lista
+  los ejercicios con carga numérica registrada en ≥2 sesiones distintas y dibuja la carga máxima
+  por sesión a lo largo del tiempo (reutiliza `sparkline()`, la misma que ya se usaba para los
+  marcadores de salud). Si no hay datos suficientes, la tarjeta se mantiene oculta en vez de
+  mostrar un hueco vacío.
+- BÚSQUEDA Y SUSTITUCIÓN LIBRE DE EJERCICIOS: hasta ahora "Alternativas" solo mostraba 1-2 opciones
+  curadas para ~11 familias de ejercicios (`ALT`). Se añade "🔍 Buscar otro ejercicio" en cada
+  ejercicio de la sesión, con un desplegable de TODOS los ejercicios compatibles (mismo patrón de
+  movimiento y equipo disponible) de la base de 64. Los que caen en una zona marcada como
+  limitación o con dolor reciente (v55) se marcan con ⚠, pero siguen siendo elegibles — es aviso,
+  no bloqueo; la decisión es del usuario. La sustitución conserva series/reps/descanso originales
+  y guarda el ejercicio propuesto en `_orig` la primera vez, igual que ya hacía "Alternativas".
+- MODO ENTRENAMIENTO SIMPLIFICADO: revisado el reproductor guiado existente (`renderPlayer`) y ya
+  cubre exactamente lo pedido — un ejercicio a la vez, ilustración, serie, carga, descanso y botón
+  grande de acción. No se ha duplicado como función nueva porque ya existe; construir una segunda
+  versión habría sido redundante.
+- ESTILOS INLINE → CLASES CSS: medido antes de tocar nada. De 284 atributos `style=""` en el
+  archivo, 91 comparten etiqueta con un `class=""` ya existente — sustituir esos a ciegas con
+  buscar/reemplazar duplicaría el atributo `class` (HTML inválido; el navegador se queda con uno
+  de los dos y la clase original —`card`, `chip`, `note`...— desaparece en silencio, rompiendo el
+  layout sin que ningún test lo detecte, porque son pruebas de lógica/datos, no visuales). Se
+  añaden las clases de utilidad (`.mt-6`, `.mt-8`, `.mt-9`, `.mt-10`, `.mt-12`, `.mt-16`, `.w100`,
+  `.flex1`, `.hide`) y se aplican solo a las 9 ocurrencias verificadas como seguras (sin `class`
+  previo en la misma etiqueta, confirmado por script antes y después con diff línea a línea). El
+  resto de la limpieza de estilos inline queda pendiente y requiere revisión caso a caso con
+  verificación visual real (abrir la app y comprobar cada pantalla), no un barrido automático.
+- WEB WORKER PARA XML DE SALUD: se mantiene fuera, igual que en v54/v55. Sigue sin haber
+  confirmación de que el `export.xml` de Apple Health llegue a congelar Safari en uso real; añadir
+  un Worker sin ese problema confirmado es complejidad especulativa.
+- Validado: sintaxis JS, 0 `api.anthropic.com`, etiquetas balanceadas (div/script/svg/select/
+  details), diff exacto del refactor de CSS confirmando que solo cambiaron las 9 líneas esperadas,
+  y 17 pruebas nuevas (ejercicios con carga suficiente/insuficiente aparecen o no en la lista,
+  orden cronológico de la progresión, sets sin kg numérico no cuentan, render con y sin datos,
+  compatibilidad por patrón/equipo, sustitución conserva la prescripción y marca `_orig`, aviso ⚠
+  visible con limitación activa) sobre las 43 previas de v54/v55: 60 comprobaciones, 0 fallos.

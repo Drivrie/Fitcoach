@@ -128,6 +128,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
 .feel-b{flex:1;padding:11px 4px;border-radius:11px;border:1px solid var(--border);background:var(--surface2);font-size:22px;text-align:center;cursor:pointer;transition:all .12s}
 .feel-b.sel{border-color:var(--accent);background:var(--bg);transform:scale(1.05)}
 .fatiga-b,.pain-b{flex:1;min-width:64px;padding:9px 6px;border-radius:11px;border:1px solid var(--border);background:var(--surface2);font-size:12px;text-align:center;cursor:pointer;transition:all .12s}
+/* Utilidades v56: para ir sustituyendo estilos inline repetidos sin arriesgar los que ya
+   combinan class+style en la misma etiqueta (fusionarlos requiere revisión caso a caso). */
+.mt-6{margin-top:6px}.mt-8{margin-top:8px}.mt-9{margin-top:9px}.mt-10{margin-top:10px}
+.mt-12{margin-top:12px}.mt-16{margin-top:16px}.w100{width:100%}.flex1{flex:1}.hide{display:none}
 .fatiga-b.sel,.pain-b.sel{border-color:var(--accent);background:var(--bg);color:var(--text)}
 .timer{position:fixed;bottom:calc(64px + var(--safe-bot));left:12px;right:12px;max-width:456px;margin:0 auto;
   background:var(--accent);border-radius:14px;padding:12px 16px;display:none;z-index:40;box-shadow:0 8px 24px rgba(124,108,245,.4)}
@@ -259,6 +263,12 @@ body{font-size:calc(15px*var(--fs))}
       <div class="card-t">📈 Evolución de marcadores (mes a mes)</div>
       <div id="marker-charts"></div>
     </div>
+    <div class="card" id="prog-ex-card" style="display:none">
+      <div class="card-t">📊 Progresión de carga</div>
+      <select id="prog-ex-select" onchange="renderLoadProgression()" style="width:100%;padding:9px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;margin-bottom:8px"></select>
+      <div id="prog-ex-chart"></div>
+      <p class="note" style="margin-top:8px">Carga máxima registrada por sesión (kg), de las series que anotas en el reproductor guiado. Aparece un ejercicio aquí en cuanto tiene carga registrada en 2 sesiones distintas.</p>
+    </div>
     <div class="card">
       <div class="card-t">📋 Historial</div>
       <div id="history" style="max-height:360px;overflow-y:auto;-webkit-overflow-scrolling:touch"></div>
@@ -301,7 +311,7 @@ body{font-size:calc(15px*var(--fs))}
       <input type="file" id="hf" accept=".xml,.zip,.json,application/json" style="display:none" onchange="parseHealth(event)">
       <div id="h-status" style="margin-top:7px;font-size:12px;color:var(--text2)"></div>
       <div id="h-lastimport" style="margin-top:5px;font-size:12px"></div>
-      <details style="margin-top:10px">
+      <details class="mt-10">
         <summary style="cursor:pointer;font-size:13px;color:var(--accent)">Formatos admitidos (XML o JSON)</summary>
         <p class="note" style="margin:8px 0">El export.xml nativo de Salud contiene años de datos y puede ser enorme o fallar. Como alternativa más ligera puedes subir un <b>JSON de los últimos 30 días</b>:<br>
         • Apps como <b>Health Auto Export</b> o <b>Health Export Kit</b> generan ese JSON automáticamente.<br>
@@ -319,7 +329,7 @@ body{font-size:calc(15px*var(--fs))}
 }</pre>
         <p class="note" style="margin:8px 0">Todos los campos son opcionales: incluye solo los que tengas.</p>
       </details>
-      <details style="margin-top:10px">
+      <details class="mt-10">
         <summary style="cursor:pointer;font-size:13px;color:var(--accent)">✏️ Introducir / actualizar marcadores a mano (medias del mes)</summary>
         <p class="note" style="margin:8px 0">La forma recomendada. En la app Salud abre cada dato, filtra por mes (pestaña <b>M</b>) y apunta el <b>PROMEDIO</b>; para VO₂max y % grasa usa el valor más reciente. Rutas: FC reposo, HRV y VO₂max → Examinar → Corazón. Pasos y energía activa → Examinar → Actividad. % grasa → Examinar → Medidas corporales. Déjalo en blanco si no lo tienes; se prellenan tus valores anteriores para que solo cambies lo necesario.</p>
         <div class="row2">
@@ -390,7 +400,7 @@ body{font-size:calc(15px*var(--fs))}
       <div class="field">
         <label>Minutos por sesión: <span id="min-out" style="font-weight:600;color:var(--text)">45</span> min</label>
         <input type="range" id="minutos" min="15" max="120" step="5" value="45" style="width:100%">
-        <div style="margin-top:6px">
+        <div class="mt-6">
           <span class="chip" onclick="setMin(30)">30</span><span class="chip" onclick="setMin(40)">40</span>
           <span class="chip" onclick="setMin(45)">45</span><span class="chip" onclick="setMin(60)">60</span>
           <span class="chip" onclick="setMin(90)">90</span>
@@ -433,7 +443,7 @@ body{font-size:calc(15px*var(--fs))}
       <button class="btn btn-block" style="margin-top:8px;border-color:var(--danger);color:var(--danger)" onclick="confirmDeleteAll()">🗑️ Eliminar todos mis datos</button>
       <div id="data-status" style="margin-top:7px;font-size:12px"></div>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 55</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 56</div>
     <div id="sw-status" style="text-align:center;font-size:11px;color:var(--warn);margin-top:4px;display:none"></div>
   </div>
 </div>
@@ -1564,6 +1574,27 @@ function swapExercise(key,i,optIdx){
   ex.yt=sel.yt||(matchYT({nombre:sel.nombre}).yt);
   save();showSess(key);
 }
+/* --- Búsqueda/sustitución libre (v56): cualquier ejercicio compatible por patrón y equipo,
+   no solo la lista curada ALT. Marca con ⚠ los que caen en una zona de riesgo activa
+   (limitación fija o dolor reciente), sin bloquearlos: es información, no una prohibición. */
+function compatibleExercises(ex){
+  const pat=ex.p||patFromName(ex.nombre);
+  const eq=equipSet();
+  return EXDB.filter(e=>e.p===pat&&e.n!==ex.nombre&&(e.eq.includes('ninguno')||e.eq.some(t=>eq.has(t))))
+    .sort((a,b)=>a.n.localeCompare(b.n,'es'));
+}
+function swapToName(key,i,name){
+  if(!name)return;
+  const sess=mainAISess(key);if(!sess)return;
+  const ex=sess.exercises[i];if(!ex)return;
+  const found=EXDB.find(e=>e.n===name);if(!found)return;
+  if(!ex._orig)ex._orig={nombre:ex.nombre,descripcion:ex.descripcion,musculos:ex.musculos,errores:ex.errores,yt:ex.yt};
+  ex.nombre=found.n;ex.p=found.p;ex.descripcion=found.d||descFor(found);ex.musculos=found.m;
+  ex.errores=ERRORS[figKey(found.n)]||[];
+  ex.yt=found.yt||matchYT({nombre:found.n}).yt;
+  save();showSess(key);
+}
+function toggleSearch(i){const el=document.getElementById('srch-'+i);if(el)el.style.display=el.style.display==='none'?'block':'none';}
 
 /* sesión IA principal del día (ignora las saltadas/hechas si hay alternativa) */
 function mainAIIdx(key){
@@ -1582,11 +1613,11 @@ function blockCard(ex,i){
   const movs=(ex.movimientos||[]).map(m=>`
     <div style="display:flex;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
       <div style="width:60px;height:48px;flex-shrink:0">${exSVG(m.nombre,m.p)}</div>
-      <div style="flex:1"><div style="font-size:14px;font-weight:600">${esc(m.nombre)}</div>
+      <div class="flex1"><div style="font-size:14px;font-weight:600">${esc(m.nombre)}</div>
         <div style="font-size:12px;color:var(--text2)">${esc(m.reps)||''}</div></div></div>`).join('');
   return `<div class="ex"><div class="ex-h" onclick="toggleEx(${i})">
       <div class="ex-n" style="background:var(--free)">⚡</div>
-      <div style="flex:1"><div class="ex-nm">${esc(ex.nombre)}</div>
+      <div class="flex1"><div class="ex-nm">${esc(ex.nombre)}</div>
         <div class="ex-mt">${label}${ex.descanso_seg?` · descanso ${esc(ex.descanso_seg)}s tras el bloque`:''}</div></div>
     </div><div class="ex-b" id="exb-${i}">
       <div style="padding:11px 13px">
@@ -1598,6 +1629,7 @@ function showSess(key){
   const sess=mainAISess(key);
   if(!sess||!sess.exercises){document.getElementById('sess-content').innerHTML='<div class="empty"><span class="ic">🏋</span><p>Esta sesión aún no tiene ejercicios. Genera la semana primero.</p></div>';tab('sess');return;}
   S.viewKey=key;
+  const riskNames=riskExcludeNames(activeRiskAreas()); // v56: para marcar ⚠ en el buscador de sustitución
   let h=`<div class="card"><div style="font-size:16px;font-weight:600">${esc(sess.title)}</div>
     <div style="font-size:12px;color:var(--text2);margin-top:3px">${esc(sess.meta)||''}</div>
     <button class="btn btn-primary btn-block" style="margin-top:12px" onclick="startPlayer('${key}')">▶ Empezar sesión guiada</button></div>`;
@@ -1616,9 +1648,19 @@ function showSess(key){
         ${opts.map((o,oi)=>`<span class="chip${o.nombre===curName?' sel':''}" onclick="event.stopPropagation();swapExercise('${key}',${i},${oi})">${oi===0?'★ ':''}${esc(o.nombre)}</span>`).join('')}
         </div></div>`;
     }
+    const compat=compatibleExercises(ex);
+    const searchHtml=compat.length?`<div style="padding:0 13px 12px">
+        <button class="btn btn-xs" onclick="event.stopPropagation();toggleSearch(${i})">🔍 Buscar otro ejercicio (${compat.length})</button>
+        <div id="srch-${i}" style="display:none;margin-top:8px">
+          <select onchange="event.stopPropagation();swapToName('${key}',${i},this.value)" onclick="event.stopPropagation()" style="width:100%;padding:9px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px">
+            <option value="">Elige un ejercicio del mismo patrón (${ex.p||'?'})…</option>
+            ${compat.map(e=>`<option value="${esc(e.n)}">${riskNames.has(e.n)?'⚠ ':''}${esc(e.n)}</option>`).join('')}
+          </select>
+          ${riskNames.size?'<p class="note" style="margin-top:6px">⚠ = ejercicio de mayor carga/impacto para una zona que tienes marcada como limitación o con dolor reciente. Puedes elegirlo igualmente; es solo un aviso.</p>':''}
+        </div></div>`:'';
     h+=`<div class="ex"><div class="ex-h" onclick="toggleEx(${i})">
       <div class="ex-n">${i+1}</div>
-      <div style="flex:1"><div class="ex-nm">${esc(ex.nombre)}</div>
+      <div class="flex1"><div class="ex-nm">${esc(ex.nombre)}</div>
         <div class="ex-mt">${esc(ex.series)}×${esc(ex.reps)} · ${esc(ex.descanso_seg)}s${(ex.rir||ex.rpe)?' · RIR '+esc(ex.rir||ex.rpe):''}${ex.tempo?' · tempo '+esc(ex.tempo):''}${ex.peso?' · '+esc(ex.peso):''}</div></div>
       <button class="btn btn-xs" onclick="event.stopPropagation();startTimer(${ex.descanso_seg},${JSON.stringify(ex.nombre)})">⏱</button>
     </div><div class="ex-b" id="exb-${i}">
@@ -1628,6 +1670,7 @@ function showSess(key){
         ${ex.nota_progresion?`<div class="ex-tag">📈 ${esc(ex.nota_progresion)}</div>`:''}</div>
       </div>
       ${altHtml}
+      ${searchHtml}
       ${errs.length?`<div style="padding:0 13px 12px"><div style="font-size:11px;font-weight:600;color:var(--danger);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">⚠ Errores a evitar</div><ul style="margin:0;padding-left:16px;font-size:12px;color:var(--text2);line-height:1.6">${errs.map(e=>`<li>${esc(e)}</li>`).join('')}</ul></div>`:''}
       </div></div>`;
   });
@@ -1775,12 +1818,12 @@ function renderProg(){
   if(!S.history.length){hl.innerHTML='<p style="font-size:13px;color:var(--text2)">Sin sesiones registradas.</p>';}
   else hl.innerHTML=S.history.map(h=>`
     <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border)">
-      <div style="flex:1"><div style="font-size:13px;font-weight:600">${esc(h.title)}</div>
+      <div class="flex1"><div style="font-size:13px;font-weight:600">${esc(h.title)}</div>
         <div style="font-size:11px;color:var(--text2)">${esc(h.key)} · ${esc(h.duration)}min${h.distance?' · '+esc(h.distance)+'km':''}</div>
         ${h.notes?`<div style="font-size:11px;color:var(--text3);margin-top:2px">${esc(h.notes.slice(0,70))}${h.notes.length>70?'…':''}</div>`:''}
         ${h.sets&&h.sets.length?(()=>{const t=h.sets.map(e=>e.nombre+' '+fmtSets(e.series)).join(' · ');return `<div style="font-size:11px;color:var(--ai);margin-top:2px">🏋 ${esc(t.slice(0,90))}${t.length>90?'…':''}</div>`;})():''}</div>
       <span style="font-size:19px;margin-left:8px">${esc(h.feeling)||'💪'}</span></div>`).join('');
-  renderBadges();renderMarkerCharts();
+  renderBadges();renderMarkerCharts();renderLoadProgression();
 }
 
 /* --- Trofeos / Logros --- */
@@ -2938,6 +2981,51 @@ function lastPerformance(nombre){
   }
   return null;
 }
+/* --- Progresión de carga por ejercicio (v56): reutiliza S.history[].sets, que ya guarda
+   kg×reps serie a serie desde el reproductor. No añade ninguna tabla ni registro nuevo. --- */
+function exercisesWithLoggedSets(){
+  const names=new Map(); // nombre → nº de sesiones con carga numérica registrada
+  (S.history||[]).forEach(h=>{
+    if(!h.sets)return;
+    h.sets.forEach(e=>{
+      if(!e.nombre||!e.series||!e.series.some(s=>s.kg!=null&&s.kg!=='' &&!isNaN(toNum(s.kg))))return;
+      names.set(e.nombre,(names.get(e.nombre)||0)+1);
+    });
+  });
+  return [...names.entries()].filter(([,n])=>n>=2).sort((a,b)=>b[1]-a[1]).map(([n])=>n);
+}
+// serie temporal (más antiguo→más reciente) de la carga máxima registrada por sesión para ese ejercicio
+function loadProgressionFor(nombre){
+  const nm=(nombre||'').toLowerCase().trim();if(!nm)return {dates:[],values:[]};
+  const points=[];
+  (S.history||[]).forEach(h=>{
+    if(!h.sets)return;
+    const found=h.sets.find(e=>e.nombre&&e.nombre.toLowerCase().trim()===nm);
+    if(!found||!found.series||!found.series.length)return;
+    const kgs=found.series.map(s=>toNum(s.kg)).filter(v=>!isNaN(v));
+    if(!kgs.length)return;
+    points.push({date:h.key,kg:Math.max(...kgs)});
+  });
+  points.sort((a,b)=>a.date<b.date?-1:1);
+  return {dates:points.map(p=>p.date),values:points.map(p=>p.kg)};
+}
+function renderLoadProgression(){
+  const sel=document.getElementById('prog-ex-select');const chart=document.getElementById('prog-ex-chart');
+  if(!sel||!chart)return;
+  const names=exercisesWithLoggedSets();
+  const card=document.getElementById('prog-ex-card');
+  if(!names.length){if(card)card.style.display='none';return;}
+  if(card)card.style.display='';
+  const prevVal=sel.value;
+  sel.innerHTML=names.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  if(names.includes(prevVal))sel.value=prevVal;
+  const {dates,values}=loadProgressionFor(sel.value);
+  if(values.length<2){chart.innerHTML='<p class="note" style="padding:6px 0">Necesita al menos 2 sesiones con carga registrada de este ejercicio.</p>';return;}
+  const labels=dates.map(d=>{const dt=new Date(d+'T00:00:00');return isNaN(dt)?d:dt.toLocaleDateString('es-ES',{day:'numeric',month:'short'});});
+  chart.innerHTML=sparkline(values,labels,false)+
+    `<div style="display:flex;justify-content:space-between;margin-top:4px;font-size:calc(12px*var(--fs));color:var(--text2)">
+      <span>Primera: ${values[0]} kg</span><span>Última: ${values[values.length-1]} kg</span></div>`;
+}
 // Convierte a número aceptando coma decimal española (41,4 → 41.4). NaN si no es número.
 function toNum(v){if(v==null)return NaN;return parseFloat(String(v).trim().replace(/\s/g,'').replace(/,/g,'.'));}
 // Parsea el JSON pegado de Claude tolerando comillas tipográficas, guiones largos,
@@ -3183,7 +3271,7 @@ function renderBlock(){
       :'Completa todas las rondas a buen ritmo. Pulsa “Ronda completada” al cerrar cada vuelta.';
     mid=`<div class="pl-phase" style="color:var(--free)">${fmtLabel}</div>
       <div class="pl-cue" style="margin:8px 0 4px">${ex.descripcion||defDesc}</div>
-      <div style="margin-top:10px">${_movList(ex)}</div>
+      <div class="mt-10">${_movList(ex)}</div>
       <button class="btn btn-primary btn-block" style="margin-top:16px" onclick="startBlock()">▶ Iniciar bloque</button>`;
   } else {
     const b=P.blk;
@@ -3196,7 +3284,7 @@ function renderBlock(){
     mid=`<div class="pl-phase" style="color:var(--free)">${fmtLabel}${b.paused?' · PAUSA':''}</div>
       ${timer}
       ${counter}
-      <div style="margin-top:10px">${_movList(ex)}</div>
+      <div class="mt-10">${_movList(ex)}</div>
       ${t!=='emom'?`<button class="btn btn-primary btn-block" style="margin-top:12px" onclick="blockRound()">✓ Ronda completada (+1)</button>`:''}
       <div style="display:flex;gap:8px;margin-top:8px">
         ${(t==='amrap'||t==='emom')?`<button class="btn btn-block" style="background:rgba(255,255,255,.15);border-color:transparent;color:#fff" onclick="pauseBlock()">${b.paused?'▶ Reanudar':'⏸ Pausa'}</button>`:''}
