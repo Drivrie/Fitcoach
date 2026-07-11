@@ -571,3 +571,27 @@ semanal con lo entrenado; marcadores solo cada mes.
 - applyBridge se refactoriza: parseo unificado con looseJSON (se elimina el duplicado) y la
   aplicación real vive en applyBridgePlan(plan), llamada tras confirmar la revisión.
 - initState sin cambios; los campos nuevos (sets en schedule/history) son aditivos y opcionales.
+
+## v53: citas actualizadas al ACSM 2026 Position Stand (evidencia verificada)
+- CONTEXTO: en v52 se sustituyó "ACSM 2026 Position Stand" (que entonces no se pudo verificar y
+  se creyó inexistente) por el de 2009. Verificación posterior en fuente primaria (acsm.org y la
+  ficha del artículo en Medicine & Science in Sports & Exercise) confirma que el ACSM SÍ publicó
+  en abril de 2026 un nuevo Position Stand —el primero desde 2009—, "Resistance Training
+  Prescription for Muscle Function, Hypertrophy, and Physical Performance in Healthy Adults",
+  síntesis de 137 revisiones sistemáticas (>30.000 participantes). v53 lo incorpora como
+  referencia principal en las tres ubicaciones (tarjeta Fundamentos, comentario del motor y los
+  prompts), con su título real y publicación.
+- Fuentes de respaldo actualizadas y verificadas (2024-2026), todas alineadas con el diseño de la
+  app: Robinson et al. 2024 (Sports Med; meta-regresión de proximidad al fallo: la hipertrofia
+  mejora entrenando más cerca del fallo, la fuerza es similar lejos o cerca → respalda RIR 1-3 en
+  hipertrofia); Pelland et al. 2025 (Sports Med; dosis-respuesta de volumen y frecuencia); Morton
+  et al. 2018 (proteína, sin cambios: 1,6-2,2 g/kg/día sigue siendo el consenso). Se retiran de la
+  redacción las citas de 2009 y las de Schoenfeld/Grgic que quedaban subsumidas por las anteriores.
+- Se incorpora a Fundamentos y a los prompts el mensaje central del ACSM 2026: la constancia y el
+  esfuerzo pesan más que un plan "perfecto"; bandas, peso corporal y rutinas en casa son plenamente
+  eficaces; y llegar al fallo, el tipo de material y la periodización compleja no son
+  imprescindibles en el adulto sano. Refuerza el enfoque ya vigente (RIR en vez de fallo, sin
+  descargas forzadas, material sin barra).
+- Se mantiene la instrucción a Claude de no inventar ni "actualizar" referencias.
+- Cambio SOLO de contenido de referencias/explicaciones: no toca el motor, el reproductor, el
+  puente ni initState. La persistencia de datos del usuario y el resto de validaciones siguen igual.
