@@ -637,3 +637,47 @@ semanal con lo entrenado; marcadores solo cada mes.
 - Pendiente para próximas versiones (no incluido en v54): rangos de calorías con revisión semanal,
   registro de dolor/fatiga por sesión, onboarding de lesiones/limitaciones, Web Worker para XML
   grandes de Salud, y mover los estilos inline a clases CSS reutilizables.
+
+## v55: limitaciones/lesiones, fatiga acumulada y calorías como rango
+- LIMITACIONES Y LESIONES (nueva tarjeta en Ajustes): chips de zona (rodilla, hombro, lumbar,
+  muñeca/codo, otra) + nota libre opcional. Se guardan en `S.profile.limitaciones` (aditivo).
+  El motor offline (`pickExercises`) excluye automáticamente los ejercicios de mayor carga/impacto
+  para esa zona (lista curada por zona, `RISK_EXCLUDE`) en los tres flujos que generan sesión
+  offline (semana completa, regenerar día, generar sesión puntual) sin haber tenido que tocar los
+  tres sitios por separado: la exclusión vive centralizada dentro de `pickExercises`. Lo mismo se
+  comunica a Claude en el prompt semanal como instrucción explícita ("evita o adapta con cuidado
+  los ejercicios de... propón alternativas de menor riesgo, no las omitas sin más").
+- DOLOR POR SESIÓN: el formulario de registro añade chips de zona con dolor/molestias durante esa
+  sesión (independiente de las limitaciones fijas). Los últimos 14 días de dolor reportado se
+  suman a las limitaciones fijas del perfil para la misma exclusión de riesgo (`activeRiskAreas`),
+  así que una molestia puntual también protege las próximas sesiones sin tener que ir a Ajustes.
+  También viaja al prompt de Claude junto al esfuerzo (RPE) que ya se enviaba.
+- FATIGA ACUMULADA: el formulario de registro añade "¿Cómo llegabas antes de empezar?"
+  (fresco/normal/cansado/agotado). Si 2 de las últimas 3 sesiones registradas fueron
+  cansado/agotado, el motor offline aplica una descarga suave automática (1 serie menos por
+  ejercicio, RIR más alejado del fallo) y lo indica en el resumen de la sesión — sin renombrarla
+  "descarga" (eso sigue reservado a la periodización real del mesociclo) y sin bloquear nada: es
+  una sugerencia del motor, no una restricción.
+- CALORÍAS COMO RANGO: `nutriPlan`/`buildNutriOffline` devuelven `calorias_min`/`calorias_max`
+  (±7% del centro) en vez de una única cifra. El esquema JSON que se le pide a Claude incluye los
+  mismos campos opcionales, con instrucción explícita de presentarlo como estimación con margen,
+  no como objetivo exacto. `renderNutri` muestra el rango cuando existe y sigue mostrando el valor
+  único si el plan (propio o de una copia antigua) no lo trae, para no romper datos existentes.
+- REVISIÓN SEMANAL: nueva tarjeta en Nutrición con la adherencia de la semana (reutiliza el mismo
+  cálculo que Progreso, ahora en `weekAdherencePct()`) y la tendencia de peso de las últimas ~2
+  semanas (`weightTrend()`, comparando la media de los últimos 7 registros con los 7 anteriores).
+  El peso se registra automáticamente en `S.weightLog` cada vez que se guarda el perfil (máx. 1
+  entrada/día); no es una tabla nueva que rellenar aparte. La nota de tendencia es siempre
+  informativa y de baja presión ("si quieres, prueba...", nunca una cifra exacta a cumplir), y con
+  menos de 4 registros no se muestra ninguna conclusión en vez de forzar una con pocos datos.
+- Validado: 0 `api.anthropic.com`, etiquetas balanceadas, sintaxis JS verificada, y una batería de
+  18 pruebas nuevas (exclusión de riesgo con limitación fija y con dolor reciente, ausencia de
+  exclusión sin ninguna de las dos, fatiga acumulada activando/no activando el ajuste, rango de
+  calorías coherente, tendencia de peso al alza y sin datos suficientes, presencia de las
+  limitaciones en el prompt, registro de peso una vez al día) más las 19 del test de persistencia
+  (incluye ahora limitaciones, nota, weightLog y dolor/fatiga del historial) y las 5 de gestión de
+  datos de v54: 43 comprobaciones, 0 fallos.
+- Pendiente para próximas versiones: gráfica de progresión de carga por ejercicio, modo
+  entrenamiento simplificado, búsqueda/sustitución de ejercicios con filtro de impacto/dolor
+  explícito en la sesión (hoy la exclusión es automática, sin una vista de "cámbiame esto"), Web
+  Worker para XML grandes de Salud, y mover los estilos inline a clases CSS reutilizables.

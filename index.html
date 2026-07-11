@@ -124,9 +124,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
 @keyframes slideup{from{transform:translateY(100%)}to{transform:none}}
 .sheet-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px}
 .sheet-h h3{font-size:17px;font-weight:600}
-.feel{display:flex;gap:8px}
+.feel{display:flex;gap:8px;flex-wrap:wrap}
 .feel-b{flex:1;padding:11px 4px;border-radius:11px;border:1px solid var(--border);background:var(--surface2);font-size:22px;text-align:center;cursor:pointer;transition:all .12s}
 .feel-b.sel{border-color:var(--accent);background:var(--bg);transform:scale(1.05)}
+.fatiga-b,.pain-b{flex:1;min-width:64px;padding:9px 6px;border-radius:11px;border:1px solid var(--border);background:var(--surface2);font-size:12px;text-align:center;cursor:pointer;transition:all .12s}
+.fatiga-b.sel,.pain-b.sel{border-color:var(--accent);background:var(--bg);color:var(--text)}
 .timer{position:fixed;bottom:calc(64px + var(--safe-bot));left:12px;right:12px;max-width:456px;margin:0 auto;
   background:var(--accent);border-radius:14px;padding:12px 16px;display:none;z-index:40;box-shadow:0 8px 24px rgba(124,108,245,.4)}
 .timer.show{display:block}
@@ -375,6 +377,12 @@ body{font-size:calc(15px*var(--fs))}
       <div id="obj-note" style="font-size:12px;color:var(--text2);margin-top:6px"></div>
     </div>
     <div class="card">
+      <div class="card-t">🩹 Limitaciones y lesiones</div>
+      <p class="note" style="margin-bottom:9px">Si marcas una zona, el generador offline evita los ejercicios de mayor carga o impacto para esa zona, y se lo indicamos también a Claude en el mensaje semanal. Orientativo, no sustituye la valoración de un profesional; si hay dolor persistente o agudo, consúltalo antes de seguir entrenando esa zona.</p>
+      <div id="limit-chips" style="margin-bottom:8px"></div>
+      <div class="field"><label>Nota (opcional)</label><textarea id="limit-nota" placeholder="Ej: molestia en el hombro derecho al elevar por encima de la cabeza" style="min-height:60px"></textarea></div>
+    </div>
+    <div class="card">
       <div class="card-t">Configuración</div>
       <div class="field"><label>Nivel</label><select id="nivel">
         <option value="principiante">Principiante</option><option value="intermedio" selected>Intermedio</option><option value="avanzado">Avanzado</option>
@@ -425,7 +433,7 @@ body{font-size:calc(15px*var(--fs))}
       <button class="btn btn-block" style="margin-top:8px;border-color:var(--danger);color:var(--danger)" onclick="confirmDeleteAll()">🗑️ Eliminar todos mis datos</button>
       <div id="data-status" style="margin-top:7px;font-size:12px"></div>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 54</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 55</div>
     <div id="sw-status" style="text-align:center;font-size:11px;color:var(--warn);margin-top:4px;display:none"></div>
   </div>
 </div>
@@ -630,6 +638,44 @@ const EXDB=[
   {n:'Jumping jacks',p:'cardio',eq:['ninguno'],yt:'c4DAnQ6DtF8',m:'Cardio',comp:0,d:'Abre y cierra piernas y brazos con rebote suave; perfecto para calentar o como descanso activo entre ejercicios.'},
 ];
 
+/* --- Limitaciones / dolor (v55): zonas y ejercicios a evitar por zona ---
+   Lista curada, no exhaustiva: prioriza los movimientos de mayor carga/impacto para cada zona.
+   No sustituye criterio médico; es una exclusión blanda del motor offline y una instrucción
+   explícita para Claude, no un diagnóstico. */
+const PAIN_AREAS=[['rodilla','Rodilla'],['hombro','Hombro'],['lumbar','Lumbar'],['muneca','Muñeca/codo'],['otra','Otra']];
+const RISK_EXCLUDE={
+  rodilla:['Sentadilla con barra','Sentadilla goblet','Sentadilla libre','Sentadilla búlgara','Zancadas','Zancada inversa','Sentadilla sumo con mancuerna','Prensa de piernas','Subida al cajón','Saltos al cajón','Sentadilla con salto','Saltos de patinador','Burpees'],
+  hombro:['Press de banca','Press con mancuernas','Press militar','Press Arnold','Press banda por encima','Fondos en banco','Dominadas'],
+  lumbar:['Peso muerto rumano','Hip thrust','Remo con barra','Remo con mancuerna','Remo renegado','Sentadilla con barra','Giro ruso'],
+  muneca:['Flexiones','Flexiones diamante','Flexiones declinadas','Fondos en banco','Plancha','Mountain climbers','Burpees','Curl de bíceps','Curl martillo','Extensión de tríceps con banda'],
+};
+function riskExcludeNames(areasSet){
+  const out=new Set();
+  (areasSet||[]).forEach(a=>{(RISK_EXCLUDE[a]||[]).forEach(n=>out.add(n));});
+  return out;
+}
+// zonas con dolor reportado en el historial reciente (además de las limitaciones fijas del perfil)
+function recentPainAreas(beforeKey,days){
+  const areas=new Set();
+  let cutoff;try{cutoff=new Date(beforeKey+'T00:00:00');}catch(e){return areas;}
+  if(isNaN(cutoff))return areas;
+  const start=new Date(cutoff);start.setDate(start.getDate()-(days||14));
+  (S.history||[]).forEach(h=>{
+    if(!h.pain||!h.pain.length)return;
+    let d;try{d=new Date(h.key+'T00:00:00');}catch(e){return;}
+    if(isNaN(d)||d<start||d>cutoff)return;
+    h.pain.forEach(a=>{if(a!=='otra'&&a!=='ninguna')areas.add(a);});
+  });
+  return areas;
+}
+// unión de limitaciones persistentes del perfil + dolor reciente (14 días)
+function activeRiskAreas(){
+  const areas=new Set((S.profile.limitaciones||[]).filter(a=>a!=='ninguna'&&a!=='otra'));
+  recentPainAreas(fmt(new Date()),14).forEach(a=>areas.add(a));
+  return areas;
+}
+function areaLabel(code){const f=PAIN_AREAS.find(a=>a[0]===code);return f?f[1]:code;}
+
 /* --- Parámetros basados en evidencia (ACSM 2026 Position Stand, MSSE abr-2026, síntesis de 137 revisiones; Robinson 2024 proximidad al fallo/RIR; Pelland 2025 dosis-respuesta de volumen y frecuencia; Morton 2018 proteína) ---
    Fuerza: cargas altas (≥80% 1RM), 2-3 series/ejercicio, descansos largos.
    Hipertrofia: ~10+ series/grupo muscular/semana, cerca del fallo (1-3 RIR), no al fallo absoluto.
@@ -657,7 +703,11 @@ function nutriPlan(objs,tdee,kg){
   else if(fat){kcal=tdee*0.8;prot=2.0;mode='déficit para perder grasa';}
   else if(mus){kcal=tdee*1.1;prot=2.0;mode='superávit ligero para ganar músculo';}
   else{kcal=tdee;prot=1.6;mode='mantenimiento';}
-  return {kcal:Math.round(kcal/10)*10,prot:Math.round(kg*prot),mode};
+  const center=Math.round(kcal/10)*10;
+  // v55: rango en vez de cifra fija (±7%, redondeado a 10): un objetivo cerrado a un único número
+  // invita a tratarlo como aprobado/suspenso; un rango dice mejor lo que es, una estimación.
+  const span=Math.round(center*0.07/10)*10;
+  return {kcal:center,kcalMin:center-span,kcalMax:center+span,prot:Math.round(kg*prot),mode};
 }
 function equipSet(){const a=(S.profile.equipos&&S.profile.equipos.length)?S.profile.equipos:['ninguno'];return new Set(a);}
 
@@ -716,6 +766,11 @@ function initState(){
   if(!S.programStart)S.programStart=inferProgramStart();
   if(!S.mesoLen)S.mesoLen=4;        // semanas por bloque (orientativo, editable)
   if(!S.mesoFocus)S.mesoFocus='';   // lo propone Claude en la primera adaptación
+  // v55: limitaciones/lesiones persistentes (además del dolor puntual que se registra por sesión)
+  if(!S.profile.limitaciones)S.profile.limitaciones=[];
+  if(S.profile.limitacionesNota==null)S.profile.limitacionesNota='';
+  // v55: histórico de peso para calcular tendencia semanal (independiente de S.profile.peso, que es solo el valor actual)
+  if(!S.weightLog)S.weightLog=[];
 }
 // deduce la fecha de inicio: lunes de la semana del registro/plan más antiguo
 function inferProgramStart(){
@@ -786,7 +841,9 @@ function calcBio(){
 /* --- MOTOR OFFLINE: genera la semana sin IA --- */
 function pickExercises(equipSet,objetivo,minutos,seed,opts){
   opts=opts||{};
-  const exclude=opts.exclude||new Set();
+  const riskAreas=activeRiskAreas();
+  const exclude=new Set(opts.exclude||[]);
+  if(riskAreas.size)riskExcludeNames(riskAreas).forEach(n=>exclude.add(n));
   // disponible: peso corporal SIEMPRE + lo que coincida con el equipo seleccionado
   const avail=EXDB.filter(e=>(e.eq.includes('ninguno')||e.eq.some(t=>equipSet.has(t)))&&!exclude.has(e.n));
   const g=GOALS[objetivo];
@@ -835,6 +892,13 @@ function pesoHintFor(ex,eqSet,g){
   if(eq.includes('barra')&&(eqSet.has('barra')||eqSet.has('gimnasio')))return `carga en barra que te deje RIR ${g.rir}`;
   return 'solo peso corporal (ajusta con tempo más lento o pausas si se hace fácil)';
 }
+// Fatiga acumulada: true si ≥2 de las últimas 3 sesiones registradas se marcaron "cansado"/"agotado".
+function recentFatigueTrend(){
+  const recent=(S.history||[]).slice(0,3);
+  if(recent.length<2)return false;
+  const tired=recent.filter(h=>h.fatiga==='cansado'||h.fatiga==='agotado').length;
+  return tired>=2;
+}
 // Ejercicios usados en los últimos N días (para rotar y evitar monotonía).
 function recentExerciseNames(beforeKey,days){
   const names=new Set();
@@ -856,9 +920,10 @@ function recentExerciseNames(beforeKey,days){
 function buildSessionOffline(equip,objetivo,nivel,minutos,dayCode,seed,isDeload,opts){
   const g=GOALS[objetivo];
   const mult=LEVEL_MULT[nivel];
+  const fatigued=!isDeload&&recentFatigueTrend(); // fatiga acumulada reciente → descarga suave automática (no forzada por calendario)
   const exs=pickExercises(equip,objetivo,+minutos,seed,opts);
   const setBase=Math.round((g.sets[0]+g.sets[1])/2*mult);
-  const sets=isDeload?Math.max(2,setBase-1):setBase;
+  const sets=(isDeload||fatigued)?Math.max(2,setBase-1):setBase;
   const rest=Math.round((g.rest[0]+g.rest[1])/2);
   const ejercicios=exs.map(ex=>{
     const esBanda=(ex.eq||[]).includes('bandas')&&equip.has('bandas')&&!(ex.eq||[]).includes('mancuernas');
@@ -867,7 +932,7 @@ function buildSessionOffline(equip,objetivo,nivel,minutos,dayCode,seed,isDeload,
       series:ex.comp?sets:Math.max(2,sets-1),
       reps: ex.p==='cardio'? (objetivo==='fuerza'?'30s':'40s') : (esBanda?'12-20':g.reps),
       descanso_seg: ex.p==='cardio'?Math.round(rest*0.6):rest,
-      rir: isDeload?'4-5 (descarga)':g.rir,
+      rir: isDeload?'4-5 (descarga)':(fatigued?'3-4 (fatiga acumulada: prioriza técnica)':g.rir),
       tempo: esBanda?'2-1-3 (vuelta lenta)':g.tempo,
       peso: pesoHintFor(ex,equip,g),
       descripcion: ex.d||descFor(ex),
@@ -878,10 +943,11 @@ function buildSessionOffline(equip,objetivo,nivel,minutos,dayCode,seed,isDeload,
   const tipoLabel={'pierna':'tren inferior','empuje':'empuje','tiron':'tirón','core':'core','cardio':'metabólico'};
   const focus=[...new Set(exs.map(e=>tipoLabel[e.p]))].slice(0,2).join(' + ');
   const objLbl=GOAL_LABELS[objetivo]||objetivo;
+  const riskNote=activeRiskAreas().size?` · adaptada evitando ejercicios de riesgo para: ${[...activeRiskAreas()].map(areaLabel).join(', ')}`:'';
   return {
     dia_codigo:dayCode,
     titulo:isDeload?'Sesión de descarga':(`Full body · ${focus}`),
-    meta:`${exs.length} ejercicios · ${minutos}min · RIR ${g.rir} · orientada a ${objLbl}; básicos primero y accesorios después`,
+    meta:`${exs.length} ejercicios · ${minutos}min · RIR ${g.rir} · orientada a ${objLbl}; básicos primero y accesorios después${fatigued?' · fatiga acumulada detectada: 1 serie menos por ejercicio':''}${riskNote}`,
     calentamiento:'5-8 min: movilidad de tobillo, cadera y hombro + 1 serie ligera del primer ejercicio (al 50%) para engrasar el gesto.',
     vuelta_calma:'5 min: estira los grupos trabajados (30s por grupo) y termina con 1 min de respiración nasal lenta para bajar pulsaciones.',
     ejercicios
@@ -947,7 +1013,7 @@ function buildNutriOffline(){
     default:[['Desayuno','08:00','Avena con leche, plátano y nueces',400,18],['Media mañana','11:00','Yogur natural y fruta',180,12],['Comida','14:00','Legumbres con arroz y verduras',560,26],['Merienda','17:00','Hummus con crudités',200,9],['Cena','20:30','Pescado blanco con verduras al vapor',420,35]],
   };
   const menu=menus[menuKey].map(m=>({momento:m[0],hora:m[1],plato:m[2],kcal:m[3],proteina_g:m[4]}));
-  return {calorias_diarias:np.kcal,proteina_g:np.prot,agua_litros:agua,menu_dia:menu,modo:np.mode};
+  return {calorias_diarias:np.kcal,calorias_min:np.kcalMin,calorias_max:np.kcalMax,proteina_g:np.prot,agua_litros:agua,menu_dia:menu,modo:np.mode};
 }
 
 function buildWeekOffline(){
@@ -1602,11 +1668,23 @@ function openLog(key,mode){
         <div class="feel-b sel" onclick="selFeel(this)" data-f="💪" title="bien">💪</div>
         <div class="feel-b" onclick="selFeel(this)" data-f="🔥" title="excelente">🔥</div>
       </div></div>
+    <div class="field"><label>¿Cómo llegabas antes de empezar?</label>
+      <div class="feel">
+        <div class="fatiga-b" onclick="selFatiga(this)" data-v="fresco">😊 Fresco</div>
+        <div class="fatiga-b sel" onclick="selFatiga(this)" data-v="normal">🙂 Normal</div>
+        <div class="fatiga-b" onclick="selFatiga(this)" data-v="cansado">😐 Cansado</div>
+        <div class="fatiga-b" onclick="selFatiga(this)" data-v="agotado">🥱 Agotado</div>
+      </div></div>
+    <div class="field"><label>Dolor o molestias durante la sesión (opcional)</label>
+      <div class="feel">${PAIN_AREAS.filter(a=>a[0]!=='otra').map(([k,lab])=>`<div class="pain-b" onclick="togglePain(this)" data-a="${k}">${lab}</div>`).join('')}</div>
+      <p class="note" style="margin-top:6px">Si marcas una zona aquí, el generador offline evitará ejercicios de riesgo para esa zona durante los próximos 14 días, además de lo que hayas fijado como limitación fija en Ajustes.</p></div>
     <div class="field"><label style="display:flex;justify-content:space-between;align-items:center">Notas (pesos, series reales, sensaciones)${isAdd?'':`<button class="btn btn-xs" onclick="insertLoadTemplate('${key}')">＋ Plantilla cargas</button>`}</label>
       <textarea id="l-notes" placeholder="${isAdd?'Ej: 7,1 km, 5:30/km, 412 kcal, FC media 152...':'Ej: goblet 16kg llegué a 12, press 16kg 3×10 justo...'}"></textarea></div>`;
   openSheet('log-bg');
   if(window._blkNote){const ta=document.getElementById('l-notes');if(ta)ta.value=window._blkNote;window._blkNote=null;}
 }
+function selFatiga(el){document.querySelectorAll('.fatiga-b').forEach(b=>b.classList.remove('sel'));el.classList.add('sel');}
+function togglePain(el){el.classList.toggle('sel');}
 /* Inserta en notas el esqueleto de cargas con los ejercicios de la sesión IA del día */
 function insertLoadTemplate(key){
   const ta=document.getElementById('l-notes');if(!ta)return;
@@ -1642,9 +1720,12 @@ function saveLog(){
   const kcal=document.getElementById('l-kcal')?document.getElementById('l-kcal').value:'';
   const hr=document.getElementById('l-hr')?document.getElementById('l-hr').value:'';
   const feel=document.querySelector('.feel-b.sel').dataset.f;
+  const fatigaEl=document.querySelector('.fatiga-b.sel');
+  const fatiga=fatigaEl?fatigaEl.dataset.v:'normal';
+  const pain=Array.from(document.querySelectorAll('.pain-b.sel')).map(el=>el.dataset.a);
   const notes=document.getElementById('l-notes').value;
   if(!S.schedule[key])S.schedule[key]=[];
-  const log={type,duration:dur,distance:dist,kcal,hr,feeling:feel,notes,date:key};
+  const log={type,duration:dur,distance:dist,kcal,hr,feeling:feel,fatiga,pain,notes,date:key};
   const aiIdx=mainAIIdx(key);
   // v52: si el reproductor registró cargas serie a serie, viajan con el registro y el historial
   if(type.includes('IA')&&aiIdx>=0&&S.schedule[key][aiIdx].sets)log.sets=S.schedule[key][aiIdx].sets;
@@ -1670,13 +1751,17 @@ function openAdd(){
 }
 
 /* --- PROGRESO --- */
-function renderProg(){
+function weekAdherencePct(){
   const dates=weekDates(S.currentWeek);
   let planned=0,done=0;
   dates.forEach((d,i)=>{const key=fmt(d),code=DAYS[i];
     if(S.aiDays.includes(code)||S.freeDays.includes(code)||(S.schedule[key]&&S.schedule[key].length))planned++;
     if(S.schedule[key]&&S.schedule[key].some(s=>s.done))done++;});
-  const pct=planned?Math.round(done/planned*100):0;
+  return {planned,done,pct:planned?Math.round(done/planned*100):0};
+}
+function renderProg(){
+  const dates=weekDates(S.currentWeek);
+  const {planned,done,pct}=weekAdherencePct();
   document.getElementById('wk-prog').innerHTML=`
     <div class="prog-r"><span style="color:var(--text2)">Completadas</span><span style="font-weight:600">${done}/${planned}</span></div>
     <div class="prog-r"><div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div><span style="font-weight:600">${pct}%</span></div>`;
@@ -1769,16 +1854,39 @@ function renderMarkerCharts(){
 function renderNutri(){
   const n=S.nutri;const c=document.getElementById('nutri-content');
   if(!n){c.innerHTML='<div class="empty"><span class="ic">🥗</span><p>Genera tu semana para ver las recomendaciones nutricionales.</p></div>';return;}
+  const hasRange=n.calorias_min!=null&&n.calorias_max!=null;
+  const kcalDisplay=hasRange?`${esc(n.calorias_min)}–${esc(n.calorias_max)}`:esc(n.calorias_diarias);
+  const trend=weightTrend();
+  const {pct}=weekAdherencePct();
+  const fat=(S.profile.objetivos||[]).includes('grasa'),mus=(S.profile.objetivos||[]).includes('musculo')||(S.profile.objetivos||[]).includes('fuerza');
+  let trendNote='';
+  if(trend&&trend.dir!=='estable'){
+    const wantsDown=fat&&!mus, wantsUp=mus&&!fat;
+    const aligned=(wantsDown&&trend.dir==='bajando')||(wantsUp&&trend.dir==='subiendo');
+    const off=(wantsDown&&trend.dir==='subiendo')||(wantsUp&&trend.dir==='bajando');
+    const dirTxt=trend.dir==='subiendo'?'subiendo':'bajando';
+    let hint='';
+    if(off)hint=' — si quieres, prueba unos días hacia el extremo '+(wantsDown?'bajo':'alto')+' del rango y revisa en 1-2 semanas más, sin prisa.';
+    else if(aligned)hint=' — va en línea con tu objetivo actual; no hace falta tocar nada.';
+    trendNote=`<div class="note" style="margin-top:8px">📉 Tu peso lleva una tendencia ${dirTxt} esta semana (${Math.abs(trend.diff)} kg de media vs. la semana anterior).${hint}</div>`;
+  } else if(!trend){
+    trendNote=`<div class="note" style="margin-top:8px">Registra tu peso unas cuantas veces (se guarda solo al tocar "Guardar" en Datos personales) para ver aquí la tendencia y poder afinar el rango.</div>`;
+  }
   c.innerHTML=`<div class="card"><div class="card-t">🍽 Objetivos diarios</div>
     ${n.modo?`<div style="font-size:12px;color:var(--text2);margin:-4px 0 10px">Enfoque: ${esc(n.modo)}</div>`:''}
     <div class="stat-grid">
-      <div class="stat"><div class="stat-v">${esc(n.calorias_diarias)}</div><div class="stat-l">kcal/día</div></div>
+      <div class="stat"><div class="stat-v" style="${hasRange?'font-size:calc(15px*var(--fs))':''}">${kcalDisplay}</div><div class="stat-l">kcal/día${hasRange?' (rango)':''}</div></div>
       <div class="stat"><div class="stat-v">${esc(n.proteina_g)}g</div><div class="stat-l">proteína</div></div>
       <div class="stat"><div class="stat-v">${esc(n.agua_litros)}L</div><div class="stat-l">agua</div></div>
     </div></div>
     ${(n.menu_dia||[]).map(m=>`<div class="meal"><div class="meal-t">${esc(m.momento)} · ${esc(m.hora)}</div>
       <div class="meal-n">${esc(m.plato)}</div><div class="meal-m">${esc(m.kcal)} kcal · ${esc(m.proteina_g)}g proteína</div></div>`).join('')}
-    <p class="note">Valores orientativos calculados desde tu gasto energético. Ajusta según tu evolución y consulta a un profesional para necesidades específicas.</p>`;
+    <p class="note">Valores orientativos calculados desde tu gasto energético${hasRange?' (el rango es a propósito: no lo tomes como un objetivo exacto a cumplir)':''}. Ajusta según tu evolución y consulta a un profesional para necesidades específicas.</p>
+    <div class="card" style="margin-top:12px">
+      <div class="card-t">📅 Revisión semanal</div>
+      <div class="note">Adherencia de esta semana: <b style="color:var(--text)">${pct}%</b>.</div>
+      ${trendNote}
+    </div>`;
 }
 
 /* ============================================================
@@ -1833,11 +1941,16 @@ function buildPrompt(mode){
   const eqLabels=equipLabels(p.equipos||['ninguno']);
   // detalle de cargas disponibles (para que la progresión no se limite a los pesos iniciales)
   const eqDetail=equipDetailFor(p.equipos||['ninguno']);
+  // v55: limitaciones/lesiones fijas del perfil + dolor reportado en sesiones recientes (14 días)
+  const areas=activeRiskAreas();
+  const limitTxt=areas.size||((p.limitacionesNota||'').trim())
+    ? `\n- LIMITACIONES/LESIONES (respeta esto, es importante): ${areas.size?'evita o adapta con cuidado los ejercicios de mayor carga/impacto para: '+[...areas].map(areaLabel).join(', ')+'. ':''}${(p.limitacionesNota||'').trim()?'Nota del usuario: "'+p.limitacionesNota.trim()+'". ':''}Propón alternativas de menor riesgo para esas zonas (isométricos, rango parcial, menor carga) en vez de omitir directamente el patrón de movimiento, salvo que el dolor sea agudo. Esto es orientativo, no un diagnóstico médico.`
+    : '';
   const ordDays=arr=>DAYS.filter(d=>arr.includes(d));
   const fullDays=ordDays(S.aiDays.filter(d=>!S.briefDays.includes(d)));
   const briefDays=ordDays(S.aiDays.filter(d=>S.briefDays.includes(d)));
   const freeOrd=ordDays(S.freeDays);
-  const cfg=`Objetivos (combinar de forma coherente): ${objLabels}. Nivel: ${p.nivel}. Equipo disponible: ${eqLabels}.${eqDetail}${coachExtrasFor(p.equipos,fmt(weekDates(S.currentWeek)[0]))}
+  const cfg=`Objetivos (combinar de forma coherente): ${objLabels}. Nivel: ${p.nivel}. Equipo disponible: ${eqLabels}.${eqDetail}${coachExtrasFor(p.equipos,fmt(weekDates(S.currentWeek)[0]))}${limitTxt}
 Días de fuerza COMPLETA (~${p.minutos} min, cuerpo entero): ${fullDays.join(', ')||'ninguno'}.
 Días de fuerza BREVE (15-20 min, complementaria porque ese día también hago carrera): ${briefDays.join(', ')||'ninguno'}.
 Días de entrenamiento libre (cardio/paseo): ${freeOrd.join(', ')||'ninguno'}.
@@ -1865,7 +1978,7 @@ Si se combinan varios objetivos, prioriza un esquema de fuerza/hipertrofia para 
     }
     const h=S.history.slice(0,38); // ~4 semanas completas con margen, a tu ritmo (hasta 9 ses./sem)
     histTxt+='\n\nHISTORIAL DE SESIONES COMPLETADAS (hasta ~4 semanas, más reciente primero; da más peso a la última semana para decidir la carga inmediata, y usa el conjunto para ver la trayectoria del mesociclo: si progreso, me estanco o acumulo fatiga):\n'+
-      (h.length?h.map(x=>`- ${x.key}: ${x.title}, ${x.duration}min${x.distance?' '+x.distance+'km':''}${x.kcal?' · '+x.kcal+' kcal':''}${x.hr?' · FC media '+x.hr:''}, esfuerzo ${x.feeling}. ${x.notes||''}${x.sets&&x.sets.length?' CARGAS REALES serie a serie: '+x.sets.map(e=>e.nombre+' '+fmtSets(e.series)).join('; ')+'.':''}`).join('\n'):'(ninguna registrada)');
+      (h.length?h.map(x=>`- ${x.key}: ${x.title}, ${x.duration}min${x.distance?' '+x.distance+'km':''}${x.kcal?' · '+x.kcal+' kcal':''}${x.hr?' · FC media '+x.hr:''}, esfuerzo ${x.feeling}${x.fatiga&&x.fatiga!=='normal'?' · llegaba '+x.fatiga:''}${x.pain&&x.pain.length?' · dolor/molestias en '+x.pain.map(areaLabel).join('/'):''}. ${x.notes||''}${x.sets&&x.sets.length?' CARGAS REALES serie a serie: '+x.sets.map(e=>e.nombre+' '+fmtSets(e.series)).join('; ')+'.':''}`).join('\n'):'(ninguna registrada)');
   }
   let healthTxt='';
   const H=S.health;
@@ -1925,6 +2038,7 @@ PRINCIPIOS BASADOS EN EVIDENCIA (fuentes reales y verificables: ACSM 2026 Positi
   Estos formatos son variación y estímulo metabólico; para hipertrofia la base sigue siendo series×reps cerca del fallo. Como máximo 1 bloque de este tipo por sesión.
 - CARDIO PRESCRITO: en "recomendacion_cardio" da instrucciones concretas y accionables para los días libres y el fin de semana (tipo de actividad, duración, e intensidad orientada por FC o sensación: p. ej. "carrera Z2 cómoda 35-40 min, FC ~125-140" o "paseo ligero 60 min"), coherentes con el objetivo y la fatiga semanal, en lugar de una frase genérica.
 - Proteína 1.6-2.2 g/kg/día (hacia el extremo alto si hay déficit calórico para preservar músculo).
+- CALORÍAS COMO RANGO, no como cifra cerrada: rellena "calorias_diarias" con el centro orientativo y además "calorias_min"/"calorias_max" (aprox. ±7%). Preséntalo como una estimación con margen, nunca como un objetivo exacto a cumplir al gramo.
 - Incluye SIEMPRE 2-3 "errores" comunes de técnica a evitar por cada ejercicio.`;
 
   return `Actúa como mi entrenador personal profesional y nutricionista, siguiendo evidencia científica actual. ${mode==='adapt'?'Genera la SIGUIENTE semana de entrenamiento adaptada a mi progreso real.':'Genera mi plan de entrenamiento semanal.'}
@@ -1944,7 +2058,7 @@ Responde ÚNICAMENTE con un objeto JSON válido, sin texto antes ni después, si
      ]}
   ],
   "recomendacion_cardio":"string para días libres",
-  "nutricion":{"calorias_diarias":2000,"proteina_g":130,"agua_litros":2.5,
+  "nutricion":{"calorias_diarias":2000,"calorias_min":1900,"calorias_max":2100,"proteina_g":130,"agua_litros":2.5,
     "menu_dia":[
       {"momento":"Desayuno","hora":"08:00","plato":"string","kcal":400,"proteina_g":25},
       {"momento":"Media mañana","hora":"11:00","plato":"string","kcal":180,"proteina_g":10},
@@ -3287,6 +3401,18 @@ function toggleArr(arr,v){const i=arr.indexOf(v);if(i>=0)arr.splice(i,1);else ar
 
 const OBJ_LIST=[['fuerza','Fuerza'],['musculo','Ganar músculo'],['grasa','Perder grasa'],['resistencia','Resistencia'],['tonificar','Tonificar'],['bienestar','Bienestar']];
 const EQUIP_LIST=[['ninguno','Sin equipo'],['mancuernas','Mancuernas'],['bandas','Bandas elásticas'],['dominadas','Barra de dominadas'],['barra','Barra + discos'],['kettlebell','Kettlebell'],['gimnasio','Gimnasio completo']];
+function renderLimitChips(){
+  const c=document.getElementById('limit-chips');if(!c)return;
+  c.innerHTML='';
+  PAIN_AREAS.forEach(([k,lab])=>{
+    const sel=(S.profile.limitaciones||[]).includes(k);
+    const el=document.createElement('span');el.className='chip'+(sel?' sel':'');el.textContent=lab;
+    el.onclick=()=>{toggleArr(S.profile.limitaciones,k);save();renderLimitChips();renderProg();};
+    c.appendChild(el);
+  });
+  const nota=document.getElementById('limit-nota');
+  if(nota&&document.activeElement!==nota)nota.value=S.profile.limitacionesNota||'';
+}
 function renderObjChips(){
   const c=document.getElementById('obj-chips');c.innerHTML='';
   OBJ_LIST.forEach(([k,lab])=>{
@@ -3416,15 +3542,39 @@ function saveProfile(){
   const norm=v=>String(v==null?'':v).trim().replace(/,/g,'.');
   S.profile.peso=norm(peso.value);S.profile.altura=norm(altura.value);S.profile.edad=norm(edad.value);S.profile.sexo=sexo.value;
   S.profile.nivel=nivel.value;S.profile.minutos=parseInt(document.getElementById('minutos').value)||45;
+  logWeightSnapshot(S.profile.peso);
   save();
+}
+// v55: guarda el peso actual con fecha (máx. 1 entrada/día) para poder calcular tendencia semanal.
+// No sustituye a S.profile.peso (valor actual usado para TMB/TDEE); es solo el histórico.
+function logWeightSnapshot(pesoStr){
+  const v=parseFloat(pesoStr);
+  if(!v||isNaN(v)||v<=0)return;
+  const today=fmt(new Date());
+  const i=S.weightLog.findIndex(w=>w.date===today);
+  if(i>=0)S.weightLog[i].kg=v;else S.weightLog.push({date:today,kg:v});
+  if(S.weightLog.length>120)S.weightLog=S.weightLog.slice(-120); // ~4 meses a diario, límite razonable
+}
+// tendencia: compara la media de los últimos 7 registros con la media de los 7 anteriores
+function weightTrend(){
+  const log=(S.weightLog||[]).slice().sort((a,b)=>a.date<b.date?-1:1);
+  if(log.length<4)return null;
+  const last7=log.slice(-7),prev7=log.slice(-14,-7);
+  if(!prev7.length)return null;
+  const avg=arr=>arr.reduce((s,x)=>s+x.kg,0)/arr.length;
+  const a=avg(last7),b=avg(prev7);
+  const diff=+(a-b).toFixed(1);
+  if(Math.abs(diff)<0.2)return{dir:'estable',diff};
+  return{dir:diff>0?'subiendo':'bajando',diff};
 }
 function loadProfile(){
   const p=S.profile;
   peso.value=p.peso;altura.value=p.altura;edad.value=p.edad;sexo.value=p.sexo;nivel.value=p.nivel;
   document.getElementById('minutos').value=p.minutos;document.getElementById('min-out').textContent=p.minutos;
-  renderObjChips();renderEquipChips();prefillManualHealth();
+  renderObjChips();renderEquipChips();renderLimitChips();prefillManualHealth();
   if(p.peso&&p.altura&&p.edad)calcBio();
 }
+document.getElementById('limit-nota').addEventListener('change',e=>{S.profile.limitacionesNota=e.target.value.trim();save();});
 ['peso','altura','edad','sexo','nivel'].forEach(id=>{
   document.getElementById(id).addEventListener('change',()=>{calcBio();saveProfile();});
   document.getElementById(id).addEventListener('input',()=>{if(['peso','altura','edad'].includes(id))calcBio();});
