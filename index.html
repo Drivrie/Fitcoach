@@ -416,7 +416,17 @@ body{font-size:calc(15px*var(--fs))}
       <p class="note" style="margin-bottom:9px">Pitidos en los últimos 3 segundos de cada cuenta atrás. Si apenas se oyen: sube el volumen del móvil con los botones laterales <b>mientras suena</b>, y comprueba que el interruptor de silencio (lateral del iPhone) no esté activado.</p>
       <button class="btn btn-block" onclick="testBeep()">▶ Probar sonido</button>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 53</div>
+    <div class="card">
+      <div class="card-t">💾 Mis datos</div>
+      <p class="note" style="margin-bottom:9px">Todo vive solo en este iPhone (no hay servidor). Si cambias de móvil, reinstalas la app borrando el icono, o el navegador pierde el almacenamiento, <b>sin una copia exportada no hay forma de recuperar tus datos</b>. Exporta una copia de vez en cuando.</p>
+      <button class="btn btn-block" onclick="exportData()">⬇️ Exportar mis datos</button>
+      <input type="file" id="restore-file" accept="application/json,.json" style="display:none" onchange="restoreData(event)">
+      <button class="btn btn-block" style="margin-top:8px" onclick="document.getElementById('restore-file').click()">⬆️ Restaurar copia de seguridad</button>
+      <button class="btn btn-block" style="margin-top:8px;border-color:var(--danger);color:var(--danger)" onclick="confirmDeleteAll()">🗑️ Eliminar todos mis datos</button>
+      <div id="data-status" style="margin-top:7px;font-size:12px"></div>
+    </div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 54</div>
+    <div id="sw-status" style="text-align:center;font-size:11px;color:var(--warn);margin-top:4px;display:none"></div>
   </div>
 </div>
 
@@ -651,10 +661,31 @@ function nutriPlan(objs,tdee,kg){
 }
 function equipSet(){const a=(S.profile.equipos&&S.profile.equipos.length)?S.profile.equipos:['ninguno'];return new Set(a);}
 
+/* --- Seguridad: escapado de texto que puede venir de fuera (JSON pegado de Claude,
+   imports de Salud, notas). Usar SIEMPRE al interpolar ese contenido en innerHTML. --- */
+function esc(v){
+  if(v==null)return '';
+  return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
 /* --- Estado persistente --- */
+let _loadFailed=false;
 let S=load();
-function load(){try{return JSON.parse(localStorage.getItem('fitcoach')||'{}')}catch(e){return {}}}
-function save(){localStorage.setItem('fitcoach',JSON.stringify(S))}
+function load(){
+  try{
+    const raw=localStorage.getItem('fitcoach');
+    if(raw==null)return {};
+    return JSON.parse(raw);
+  }catch(e){_loadFailed=true;return {};}
+}
+function save(){
+  try{localStorage.setItem('fitcoach',JSON.stringify(S));return true;}
+  catch(e){
+    console.warn('No se pudo guardar en localStorage',e);
+    alert('⚠️ No se ha podido guardar. El almacenamiento del navegador puede estar lleno o bloqueado (modo privado). Tus últimos cambios podrían no conservarse: exporta una copia desde Ajustes → Mis datos en cuanto puedas.');
+    return false;
+  }
+}
 function initState(){
   if(!S.profile)S.profile={peso:'',altura:'',edad:'',sexo:'hombre',nivel:'intermedio',minutos:45};
   // migración: objetivo único → array; equipo único → array
@@ -689,11 +720,13 @@ function initState(){
 // deduce la fecha de inicio: lunes de la semana del registro/plan más antiguo
 function inferProgramStart(){
   const keys=[];
-  if(S&&S.history)S.history.forEach(h=>keys.push(h.key));
+  if(S&&S.history)S.history.forEach(h=>{if(h&&h.key)keys.push(h.key);});
   if(S&&S.schedule)Object.keys(S.schedule).forEach(k=>keys.push(k));
-  if(!keys.length)return null;
-  keys.sort();
-  const first=new Date(keys[0]+'T00:00:00');
+  const validKeys=keys.filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k));
+  if(!validKeys.length)return null;
+  validKeys.sort();
+  const first=new Date(validKeys[0]+'T00:00:00');
+  if(isNaN(first.getTime()))return null; // dato corrupto: no bloquear el arranque por esto
   const day=first.getDay()||7;first.setDate(first.getDate()-day+1);
   return first.toISOString().split('T')[0];
 }
@@ -711,6 +744,17 @@ function mesoInfo(weekNum){
   return {weekNum,block,wInBlock,len,focus:S.mesoFocus};
 }
 initState();
+if(_loadFailed){
+  alert('⚠️ No se pudieron leer tus datos guardados (almacenamiento dañado o vacío). La app ha arrancado con un perfil nuevo para no bloquearse. Si tienes una copia de seguridad exportada, restáurala desde Ajustes → Mis datos.');
+}
+// Añade una entrada al análisis del entrenador sin dejar que crezca sin límite (localStorage tiene cuota).
+function appendInsight(text){
+  if(!text)return;
+  const blocks=(S.insight?S.insight.split('\n\n'):[]).filter(Boolean);
+  blocks.push(text);
+  while(blocks.join('\n\n').length>4000&&blocks.length>1)blocks.shift();
+  S.insight=blocks.join('\n\n');
+}
 function applyFontScale(){document.documentElement.style.setProperty('--fs',S.fontScale||1);}
 applyFontScale();
 
@@ -1466,21 +1510,21 @@ function mainAIIdx(key){
 function mainAISess(key){const i=mainAIIdx(key);return i>=0?(S.schedule[key]||[])[i]:null;}
 function blockCard(ex,i){
   const t=blockType(ex);
-  const label=t==='amrap'?`AMRAP · ${ex.duracion_min||'?'} min`
-    :t==='emom'?`EMOM · ${ex.duracion_min||'?'} min`
-    :`Circuito · ${ex.rondas||'?'} rondas`;
+  const label=t==='amrap'?`AMRAP · ${esc(ex.duracion_min)||'?'} min`
+    :t==='emom'?`EMOM · ${esc(ex.duracion_min)||'?'} min`
+    :`Circuito · ${esc(ex.rondas)||'?'} rondas`;
   const movs=(ex.movimientos||[]).map(m=>`
     <div style="display:flex;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
       <div style="width:60px;height:48px;flex-shrink:0">${exSVG(m.nombre,m.p)}</div>
-      <div style="flex:1"><div style="font-size:14px;font-weight:600">${m.nombre}</div>
-        <div style="font-size:12px;color:var(--text2)">${m.reps||''}</div></div></div>`).join('');
+      <div style="flex:1"><div style="font-size:14px;font-weight:600">${esc(m.nombre)}</div>
+        <div style="font-size:12px;color:var(--text2)">${esc(m.reps)||''}</div></div></div>`).join('');
   return `<div class="ex"><div class="ex-h" onclick="toggleEx(${i})">
       <div class="ex-n" style="background:var(--free)">⚡</div>
-      <div style="flex:1"><div class="ex-nm">${ex.nombre}</div>
-        <div class="ex-mt">${label}${ex.descanso_seg?` · descanso ${ex.descanso_seg}s tras el bloque`:''}</div></div>
+      <div style="flex:1"><div class="ex-nm">${esc(ex.nombre)}</div>
+        <div class="ex-mt">${label}${ex.descanso_seg?` · descanso ${esc(ex.descanso_seg)}s tras el bloque`:''}</div></div>
     </div><div class="ex-b" id="exb-${i}">
       <div style="padding:11px 13px">
-        ${ex.descripcion?`<div style="font-size:13px;color:var(--text2);margin-bottom:8px">${ex.descripcion}</div>`:''}
+        ${ex.descripcion?`<div style="font-size:13px;color:var(--text2);margin-bottom:8px">${esc(ex.descripcion)}</div>`:''}
         ${movs}
       </div></div></div>`;
 }
@@ -1488,10 +1532,10 @@ function showSess(key){
   const sess=mainAISess(key);
   if(!sess||!sess.exercises){document.getElementById('sess-content').innerHTML='<div class="empty"><span class="ic">🏋</span><p>Esta sesión aún no tiene ejercicios. Genera la semana primero.</p></div>';tab('sess');return;}
   S.viewKey=key;
-  let h=`<div class="card"><div style="font-size:16px;font-weight:600">${sess.title}</div>
-    <div style="font-size:12px;color:var(--text2);margin-top:3px">${sess.meta||''}</div>
+  let h=`<div class="card"><div style="font-size:16px;font-weight:600">${esc(sess.title)}</div>
+    <div style="font-size:12px;color:var(--text2);margin-top:3px">${esc(sess.meta)||''}</div>
     <button class="btn btn-primary btn-block" style="margin-top:12px" onclick="startPlayer('${key}')">▶ Empezar sesión guiada</button></div>`;
-  if(sess.warmup)h+=`<div class="note" style="margin-bottom:11px">🔥 <b>Calentamiento:</b> ${sess.warmup}</div>`;
+  if(sess.warmup)h+=`<div class="note" style="margin-bottom:11px">🔥 <b>Calentamiento:</b> ${esc(sess.warmup)}</div>`;
   sess.exercises.forEach((ex,i)=>{
     if(isBlock(ex)){h+=blockCard(ex,i);return;}
     const errs=(ex.errores&&ex.errores.length?ex.errores:(ERRORS[figKey(ex.nombre)]||[]));
@@ -1503,26 +1547,26 @@ function showSess(key){
       altHtml=`<div style="padding:0 13px 12px">
         <div style="font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">⇄ Alternativas (elige una; por defecto la propuesta)</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">
-        ${opts.map((o,oi)=>`<span class="chip${o.nombre===curName?' sel':''}" onclick="event.stopPropagation();swapExercise('${key}',${i},${oi})">${oi===0?'★ ':''}${o.nombre}</span>`).join('')}
+        ${opts.map((o,oi)=>`<span class="chip${o.nombre===curName?' sel':''}" onclick="event.stopPropagation();swapExercise('${key}',${i},${oi})">${oi===0?'★ ':''}${esc(o.nombre)}</span>`).join('')}
         </div></div>`;
     }
     h+=`<div class="ex"><div class="ex-h" onclick="toggleEx(${i})">
       <div class="ex-n">${i+1}</div>
-      <div style="flex:1"><div class="ex-nm">${ex.nombre}</div>
-        <div class="ex-mt">${ex.series}×${ex.reps} · ${ex.descanso_seg}s${(ex.rir||ex.rpe)?' · RIR '+(ex.rir||ex.rpe):''}${ex.tempo?' · tempo '+ex.tempo:''}${ex.peso?' · '+ex.peso:''}</div></div>
+      <div style="flex:1"><div class="ex-nm">${esc(ex.nombre)}</div>
+        <div class="ex-mt">${esc(ex.series)}×${esc(ex.reps)} · ${esc(ex.descanso_seg)}s${(ex.rir||ex.rpe)?' · RIR '+esc(ex.rir||ex.rpe):''}${ex.tempo?' · tempo '+esc(ex.tempo):''}${ex.peso?' · '+esc(ex.peso):''}</div></div>
       <button class="btn btn-xs" onclick="event.stopPropagation();startTimer(${ex.descanso_seg},${JSON.stringify(ex.nombre)})">⏱</button>
     </div><div class="ex-b" id="exb-${i}">
       <div style="display:flex;gap:11px;padding:11px 13px">
         <div style="width:96px;height:76px;flex-shrink:0">${exSVG(ex.nombre,ex.p)}</div>
-        <div style="flex:1;font-size:12.5px">${ex.descripcion||''}<div style="color:var(--text2);margin-top:5px">💪 ${ex.musculos||''}</div>
-        ${ex.nota_progresion?`<div class="ex-tag">📈 ${ex.nota_progresion}</div>`:''}</div>
+        <div style="flex:1;font-size:12.5px">${esc(ex.descripcion)||''}<div style="color:var(--text2);margin-top:5px">💪 ${esc(ex.musculos)||''}</div>
+        ${ex.nota_progresion?`<div class="ex-tag">📈 ${esc(ex.nota_progresion)}</div>`:''}</div>
       </div>
       ${altHtml}
-      ${errs.length?`<div style="padding:0 13px 12px"><div style="font-size:11px;font-weight:600;color:var(--danger);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">⚠ Errores a evitar</div><ul style="margin:0;padding-left:16px;font-size:12px;color:var(--text2);line-height:1.6">${errs.map(e=>`<li>${e}</li>`).join('')}</ul></div>`:''}
+      ${errs.length?`<div style="padding:0 13px 12px"><div style="font-size:11px;font-weight:600;color:var(--danger);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">⚠ Errores a evitar</div><ul style="margin:0;padding-left:16px;font-size:12px;color:var(--text2);line-height:1.6">${errs.map(e=>`<li>${esc(e)}</li>`).join('')}</ul></div>`:''}
       </div></div>`;
   });
-  if(sess.cooldown)h+=`<div class="note" style="margin:11px 0">🧘 <b>Vuelta a la calma:</b> ${sess.cooldown}</div>`;
-  h+=`<div class="note" style="margin-bottom:11px">🎬 ¿Prefieres una sesión completa en vídeo? <a href="https://www.youtube.com/@TIFFxDAN/search?query=${encodeURIComponent(sess.title)}" target="_blank" rel="noopener" style="color:var(--accent)">Buscar en TIFFxDAN ↗</a></div>`;
+  if(sess.cooldown)h+=`<div class="note" style="margin:11px 0">🧘 <b>Vuelta a la calma:</b> ${esc(sess.cooldown)}</div>`;
+  h+=`<div class="note" style="margin-bottom:11px">🎬 ¿Prefieres una sesión completa en vídeo? <a href="https://www.youtube.com/@TIFFxDAN/search?query=${encodeURIComponent(sess.title||'')}" target="_blank" rel="noopener" style="color:var(--accent)">Buscar en TIFFxDAN ↗</a></div>`;
   h+=`<button class="btn btn-primary btn-block" onclick="openLog('${key}')">✓ Completar y registrar</button>`;
   document.getElementById('sess-content').innerHTML=h;
   tab('sess');
@@ -1646,11 +1690,11 @@ function renderProg(){
   if(!S.history.length){hl.innerHTML='<p style="font-size:13px;color:var(--text2)">Sin sesiones registradas.</p>';}
   else hl.innerHTML=S.history.map(h=>`
     <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border)">
-      <div style="flex:1"><div style="font-size:13px;font-weight:600">${h.title}</div>
-        <div style="font-size:11px;color:var(--text2)">${h.key} · ${h.duration}min${h.distance?' · '+h.distance+'km':''}</div>
-        ${h.notes?`<div style="font-size:11px;color:var(--text3);margin-top:2px">${h.notes.slice(0,70)}${h.notes.length>70?'…':''}</div>`:''}
-        ${h.sets&&h.sets.length?(()=>{const t=h.sets.map(e=>e.nombre+' '+fmtSets(e.series)).join(' · ');return `<div style="font-size:11px;color:var(--ai);margin-top:2px">🏋 ${t.slice(0,90)}${t.length>90?'…':''}</div>`;})():''}</div>
-      <span style="font-size:19px;margin-left:8px">${h.feeling||'💪'}</span></div>`).join('');
+      <div style="flex:1"><div style="font-size:13px;font-weight:600">${esc(h.title)}</div>
+        <div style="font-size:11px;color:var(--text2)">${esc(h.key)} · ${esc(h.duration)}min${h.distance?' · '+esc(h.distance)+'km':''}</div>
+        ${h.notes?`<div style="font-size:11px;color:var(--text3);margin-top:2px">${esc(h.notes.slice(0,70))}${h.notes.length>70?'…':''}</div>`:''}
+        ${h.sets&&h.sets.length?(()=>{const t=h.sets.map(e=>e.nombre+' '+fmtSets(e.series)).join(' · ');return `<div style="font-size:11px;color:var(--ai);margin-top:2px">🏋 ${esc(t.slice(0,90))}${t.length>90?'…':''}</div>`;})():''}</div>
+      <span style="font-size:19px;margin-left:8px">${esc(h.feeling)||'💪'}</span></div>`).join('');
   renderBadges();renderMarkerCharts();
 }
 
@@ -1726,14 +1770,14 @@ function renderNutri(){
   const n=S.nutri;const c=document.getElementById('nutri-content');
   if(!n){c.innerHTML='<div class="empty"><span class="ic">🥗</span><p>Genera tu semana para ver las recomendaciones nutricionales.</p></div>';return;}
   c.innerHTML=`<div class="card"><div class="card-t">🍽 Objetivos diarios</div>
-    ${n.modo?`<div style="font-size:12px;color:var(--text2);margin:-4px 0 10px">Enfoque: ${n.modo}</div>`:''}
+    ${n.modo?`<div style="font-size:12px;color:var(--text2);margin:-4px 0 10px">Enfoque: ${esc(n.modo)}</div>`:''}
     <div class="stat-grid">
-      <div class="stat"><div class="stat-v">${n.calorias_diarias}</div><div class="stat-l">kcal/día</div></div>
-      <div class="stat"><div class="stat-v">${n.proteina_g}g</div><div class="stat-l">proteína</div></div>
-      <div class="stat"><div class="stat-v">${n.agua_litros}L</div><div class="stat-l">agua</div></div>
+      <div class="stat"><div class="stat-v">${esc(n.calorias_diarias)}</div><div class="stat-l">kcal/día</div></div>
+      <div class="stat"><div class="stat-v">${esc(n.proteina_g)}g</div><div class="stat-l">proteína</div></div>
+      <div class="stat"><div class="stat-v">${esc(n.agua_litros)}L</div><div class="stat-l">agua</div></div>
     </div></div>
-    ${(n.menu_dia||[]).map(m=>`<div class="meal"><div class="meal-t">${m.momento} · ${m.hora}</div>
-      <div class="meal-n">${m.plato}</div><div class="meal-m">${m.kcal} kcal · ${m.proteina_g}g proteína</div></div>`).join('')}
+    ${(n.menu_dia||[]).map(m=>`<div class="meal"><div class="meal-t">${esc(m.momento)} · ${esc(m.hora)}</div>
+      <div class="meal-n">${esc(m.plato)}</div><div class="meal-m">${esc(m.kcal)} kcal · ${esc(m.proteina_g)}g proteína</div></div>`).join('')}
     <p class="note">Valores orientativos calculados desde tu gasto energético. Ajusta según tu evolución y consulta a un profesional para necesidades específicas.</p>`;
 }
 
@@ -2051,20 +2095,20 @@ function previewBridge(){
   const dates=weekDates(S.currentWeek);
   const rows=(plan.sesiones_ia||[]).map(s=>{
     const idx=DAYS.indexOf(s.dia_codigo);
-    const day=idx>=0?DAY_NAMES[idx]:('¿'+(s.dia_codigo||'?')+'?');
+    const day=idx>=0?DAY_NAMES[idx]:('¿'+esc(s.dia_codigo||'?')+'?');
     const key=idx>=0?fmt(dates[idx]):null;
     const replaces=key&&(S.schedule[key]||[]).some(x=>x.type==='ai')?' <span style="color:var(--free);font-size:calc(11px*var(--fs))">(sustituye a la sesión IA de ese día)</span>':'';
     const exs=(s.ejercicios||[]).map(e=>isBlock(e)
-      ?`<li>${e.nombre} · ${_fmtBlock(e,blockType(e))}</li>`
-      :`<li>${e.nombre||'?'} — ${e.series!=null?e.series:'?'}×${e.reps!=null?e.reps:'?'}${e.peso?' · '+e.peso:''}</li>`).join('');
-    return `<div style="margin-bottom:10px"><b>${day}</b> · ${s.titulo||''}${replaces}
+      ?`<li>${esc(e.nombre)} · ${esc(_fmtBlock(e,blockType(e)))}</li>`
+      :`<li>${esc(e.nombre)||'?'} — ${e.series!=null?esc(e.series):'?'}×${e.reps!=null?esc(e.reps):'?'}${e.peso?' · '+esc(e.peso):''}</li>`).join('');
+    return `<div style="margin-bottom:10px"><b>${day}</b> · ${esc(s.titulo)||''}${replaces}
       <ul style="margin:4px 0 0;padding-left:18px;font-size:calc(12px*var(--fs));color:var(--text2)">${exs}</ul></div>`;
   }).join('');
-  const nutri=plan.nutricion?`<div style="margin-top:6px;font-size:calc(12px*var(--fs));color:var(--text2)">🍎 Nutrición: ${plan.nutricion.calorias_diarias||plan.nutricion.kcal||'?'} kcal · ${plan.nutricion.proteina_g||'?'} g proteína${Array.isArray(plan.nutricion.menu_dia)?' · menú de '+plan.nutricion.menu_dia.length+' comidas':''}</div>`:'';
-  const meso=(plan.mesociclo&&plan.mesociclo.enfoque)?`<div style="margin-top:4px;font-size:calc(12px*var(--fs));color:var(--text2)">🗓️ Fase: ${plan.mesociclo.enfoque}</div>`:'';
-  const errBox=issues.errors.length?`<div style="background:rgba(255,69,58,.12);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:10px;font-size:calc(12px*var(--fs))"><b>✕ Corrige antes de aplicar:</b><ul style="margin:5px 0 0;padding-left:18px">${issues.errors.map(x=>`<li>${x}</li>`).join('')}</ul>
+  const nutri=plan.nutricion?`<div style="margin-top:6px;font-size:calc(12px*var(--fs));color:var(--text2)">🍎 Nutrición: ${esc(plan.nutricion.calorias_diarias||plan.nutricion.kcal||'?')} kcal · ${esc(plan.nutricion.proteina_g||'?')} g proteína${Array.isArray(plan.nutricion.menu_dia)?' · menú de '+plan.nutricion.menu_dia.length+' comidas':''}</div>`:'';
+  const meso=(plan.mesociclo&&plan.mesociclo.enfoque)?`<div style="margin-top:4px;font-size:calc(12px*var(--fs));color:var(--text2)">🗓️ Fase: ${esc(plan.mesociclo.enfoque)}</div>`:'';
+  const errBox=issues.errors.length?`<div style="background:rgba(255,69,58,.12);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:10px;font-size:calc(12px*var(--fs))"><b>✕ Corrige antes de aplicar:</b><ul style="margin:5px 0 0;padding-left:18px">${issues.errors.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
     <button class="btn btn-xs" style="margin-top:8px" onclick="copyFixMsg()">📋 Copiar petición de corrección para Claude</button></div>`:'';
-  const warnBox=issues.warns.length?`<div style="background:rgba(255,214,10,.12);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:10px;font-size:calc(12px*var(--fs))"><b>⚠ Avisos</b> (puedes aplicar igualmente):<ul style="margin:5px 0 0;padding-left:18px">${issues.warns.map(x=>`<li>${x}</li>`).join('')}</ul>
+  const warnBox=issues.warns.length?`<div style="background:rgba(255,214,10,.12);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:10px;font-size:calc(12px*var(--fs))"><b>⚠ Avisos</b> (puedes aplicar igualmente):<ul style="margin:5px 0 0;padding-left:18px">${issues.warns.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
     ${issues.errors.length?'':'<button class="btn btn-xs" style="margin-top:8px" onclick="copyFixMsg()">📋 Copiar petición de corrección para Claude</button>'}</div>`:'';
   document.getElementById('bridge-body').innerHTML=`
     <div style="font-weight:700;margin-bottom:10px">Revisa el plan antes de aplicarlo</div>
@@ -2082,6 +2126,15 @@ function confirmBridge(){
 // Aplica un plan ya parseado y validado (antes era el cuerpo de applyBridge)
 function applyBridgePlan(plan){
   const dates=weekDates(S.currentWeek);
+  // Aviso si el plan va a sustituir una sesión que el usuario ya marcó como completada
+  const overwrites=[];
+  (plan.sesiones_ia||[]).forEach(s=>{
+    const idx=DAYS.indexOf(s.dia_codigo);if(idx<0)return;
+    const key=fmt(dates[idx]);
+    const existing=(S.schedule[key]||[]).find(x=>x.type==='ai');
+    if(existing&&existing.done)overwrites.push(DAY_NAMES[idx]);
+  });
+  if(overwrites.length&&!confirm('Ya registraste como completada la sesión de: '+overwrites.join(', ')+'. Aplicar este plan la sustituirá y perderás esa sesión del historial de "hoy". ¿Continuar?'))return;
   (plan.sesiones_ia||[]).forEach(s=>{
     const idx=DAYS.indexOf(s.dia_codigo);if(idx<0)return;
     const key=fmt(dates[idx]);if(!S.schedule[key])S.schedule[key]=[];
@@ -2097,15 +2150,14 @@ function applyBridgePlan(plan){
   if(plan.mesociclo){
     if(plan.mesociclo.enfoque)S.mesoFocus=plan.mesociclo.enfoque;
     if(plan.mesociclo.semanas_bloque)S.mesoLen=parseInt(plan.mesociclo.semanas_bloque)||S.mesoLen;
-    const j=plan.mesociclo.justificacion?' — '+plan.mesociclo.justificacion:'';
-    S.insight=(S.insight?S.insight+'\n\n':'')+'🗓️ Fase del mesociclo: '+(plan.mesociclo.enfoque||S.mesoFocus)+j;
   }
-  if(plan.analisis_progreso)S.insight=plan.analisis_progreso;
+  // análisis del entrenador: se acumulan como entradas independientes (appendInsight limita el tamaño total)
+  if(plan.analisis_progreso)appendInsight(plan.analisis_progreso);
   if(plan.mesociclo&&(plan.mesociclo.enfoque||plan.mesociclo.justificacion)){
     const j=plan.mesociclo.justificacion?' — '+plan.mesociclo.justificacion:'';
-    S.insight=(S.insight?S.insight+'\n\n':'')+'🗓️ Fase del mesociclo: '+(plan.mesociclo.enfoque||S.mesoFocus)+j;
+    appendInsight('🗓️ Fase del mesociclo: '+(plan.mesociclo.enfoque||S.mesoFocus)+j);
   }
-  if(plan.recomendacion_cardio)S.insight=(S.insight?S.insight+'\n\n':'')+'🏃 Cardio recomendado: '+plan.recomendacion_cardio;
+  if(plan.recomendacion_cardio)appendInsight('🏃 Cardio recomendado: '+plan.recomendacion_cardio);
   save();closeSheet('bridge-bg');renderCal();renderNutri();renderProg();tab('cal');
 }
 function matchYT(ex){
@@ -3110,11 +3162,11 @@ function advanceAfter(ex){
 }
 
 /* --- Logros y racha --- */
-function weekKeyOf(dateStr){const d=new Date(dateStr+'T00:00:00');const day=d.getDay()||7;d.setDate(d.getDate()-day+1);return d.toISOString().split('T')[0];}
+function weekKeyOf(dateStr){const d=new Date(dateStr+'T00:00:00');if(isNaN(d.getTime()))return null;const day=d.getDay()||7;d.setDate(d.getDate()-day+1);return d.toISOString().split('T')[0];}
 function computeStats(){
   const hist=S.history||[];
   const byWeek={};
-  hist.forEach(h=>{const wk=weekKeyOf(h.key);byWeek[wk]=(byWeek[wk]||0)+1;});
+  hist.forEach(h=>{const wk=weekKeyOf(h.key);if(wk)byWeek[wk]=(byWeek[wk]||0)+1;});
   // racha: semanas consecutivas (hacia atrás desde la actual o anterior) con ≥3 sesiones
   let streak=0;const now=new Date();
   for(let i=0;i<104;i++){
@@ -3385,12 +3437,63 @@ if(window.navigator.standalone||window.matchMedia('(display-mode: standalone)').
   const t=document.getElementById('install-tip');if(t)t.style.display='none';
 }
 
+/* --- Mis datos: exportar / restaurar / eliminar (v54) --- */
+function exportData(){
+  const st=document.getElementById('data-status');
+  try{
+    const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    const stamp=new Date().toISOString().split('T')[0];
+    a.href=url;a.download=`fitcoach-backup-${stamp}.json`;
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),2000);
+    if(st){st.style.color='var(--free)';st.textContent='✓ Copia descargada. Guárdala en Archivos, iCloud o envíatela por email/mensaje.';}
+  }catch(e){
+    if(st){st.style.color='var(--danger)';st.textContent='No se pudo generar la copia. Inténtalo de nuevo.';}
+  }
+}
+function restoreData(e){
+  const file=e.target.files[0];if(!file)return;
+  const st=document.getElementById('data-status');
+  const r=new FileReader();
+  r.onload=ev=>{
+    let data;
+    try{data=JSON.parse(ev.target.result);}
+    catch(err){if(st){st.style.color='var(--danger)';st.textContent='El archivo no es un JSON válido. Usa una copia exportada desde esta misma app.';}e.target.value='';return;}
+    if(!data||typeof data!=='object'||!data.profile){
+      if(st){st.style.color='var(--danger)';st.textContent='Este archivo no parece una copia de FitCoach IA (falta el campo "profile").';}
+      e.target.value='';return;
+    }
+    if(!confirm('Esto SUSTITUIRÁ todos los datos actuales de la app (perfil, historial, agenda, salud...) por los de esta copia. No se puede deshacer. ¿Continuar?')){e.target.value='';return;}
+    S=data;initState();save();
+    loadProfile();renderDayChips();renderCal();renderProg();renderNutri();renderHealth();updateImportInfo();renderFsChips();renderMeso();setWeekHeader();
+    if(st){st.style.color='var(--free)';st.textContent='✓ Copia restaurada.';}
+    e.target.value='';
+  };
+  r.onerror=()=>{if(st){st.style.color='var(--danger)';st.textContent='No se pudo leer el archivo.';}};
+  r.readAsText(file);
+}
+function confirmDeleteAll(){
+  if(!confirm('Esto BORRARÁ TODOS tus datos de esta app en este dispositivo (perfil, historial, agenda, marcadores de salud, nutrición...). No se puede deshacer.\n\n¿Seguro que quieres continuar?'))return;
+  if(!confirm('Última confirmación: se eliminarán todos los datos permanentemente ahora mismo. ¿Continuar?'))return;
+  localStorage.removeItem('fitcoach');
+  location.reload();
+}
+
 /* Service worker */
-if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(err=>{
+    console.warn('No se pudo registrar el service worker (el modo offline no estará disponible):',err);
+    const el=document.getElementById('sw-status');
+    if(el){el.style.display='block';el.textContent='⚠️ El modo sin conexión no se ha podido activar en este arranque. Cierra y reabre la app; si persiste, revisa que no estés en pestaña de navegación privada.';}
+  });
+}
 
 /* Arranque */
 loadProfile();renderDayChips();renderCal();renderProg();renderNutri();renderHealth();updateImportInfo();renderFsChips();renderMeso();
 setWeekHeader();
 </script>
+
 </body>
 </html>

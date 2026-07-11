@@ -595,3 +595,45 @@ semanal con lo entrenado; marcadores solo cada mes.
 - Se mantiene la instrucción a Claude de no inventar ni "actualizar" referencias.
 - Cambio SOLO de contenido de referencias/explicaciones: no toca el motor, el reproductor, el
   puente ni initState. La persistencia de datos del usuario y el resto de validaciones siguen igual.
+
+## v54: seguridad, robustez de arranque y copias de seguridad de datos
+- SEGURIDAD (XSS): se añade `esc()`, función centralizada de escapado de HTML, y se aplica en
+  todos los puntos donde se interpola vía `innerHTML` contenido que puede venir de fuera de la
+  app: el JSON pegado desde Claude (nombres/títulos/notas de ejercicio, nutrición, mesociclo,
+  mensajes de validación en la vista previa del puente) y el historial de sesiones. Antes, un
+  campo `nombre` malicioso en el JSON pegado podía ejecutarse como HTML/JS en la vista de sesión
+  o en la vista previa del puente; ahora se muestra siempre como texto. Probado con un plan de
+  prueba que incluye `<img onerror=...>` y `<script>` en `titulo`/`nombre`.
+- MIS DATOS (Ajustes): nueva tarjeta con "Exportar mis datos" (descarga un JSON con todo `S`),
+  "Restaurar copia de seguridad" (sube ese JSON, valida que tenga forma de copia de FitCoach IA
+  antes de aplicar, pide confirmación porque sustituye todo) y "Eliminar todos mis datos" (doble
+  confirmación, borra `localStorage['fitcoach']`). Hasta ahora no había ninguna vía de salida de
+  los datos: si se perdía el icono o se corrompía el almacenamiento, no había forma de recuperar
+  nada, lo cual contradecía la convención de no perder datos del usuario.
+- ARRANQUE MÁS ROBUSTO ante datos corruptos (antes fallaban en silencio o bloqueaban la app):
+  - `load()` distingue ahora "no hay datos" de "los datos no se pudieron leer" (JSON corrupto) y
+    en el segundo caso avisa con un aviso visible en vez de arrancar en silencio como si fuera un
+    usuario nuevo.
+  - `save()` avisa si `localStorage.setItem` falla (cuota llena, modo privado) en vez de perder el
+    cambio sin más.
+  - `inferProgramStart()` y `weekKeyOf()`/`computeStats()` ignoran ahora claves de fecha con
+    formato inválido en vez de lanzar una excepción no capturada que bloqueaba el resto del
+    arranque (`renderNutri`, `renderHealth`, etc. dejaban de ejecutarse). Encontrado con un test
+    de arranque con historial corrupto; no se había observado en uso real pero es exactamente el
+    escenario que "Mis datos → Restaurar" puede introducir si se sube un archivo editado a mano.
+  - El registro del service worker ya no falla en silencio: si falla, se avisa en Ajustes ("el
+    modo sin conexión no se ha podido activar") en vez de un `catch(()=>{})` mudo.
+- PUENTE CON CLAUDE: `applyBridgePlan` pide confirmación explícita antes de sustituir una sesión
+  del día que el usuario ya había marcado como completada (antes se sobrescribía sin avisar).
+  De paso se corrige un bug real: el bloque que guarda la fase del mesociclo en `S.insight` estaba
+  duplicado, y en medio `analisis_progreso` sobrescribía `S.insight` entero en lugar de añadirse,
+  así que un plan con mesociclo + análisis podía perder contenido o dejarlo duplicado. Se sustituye
+  por `appendInsight()`, que además limita el tamaño total (~4000 caracteres) para que no crezca
+  sin límite en localStorage con meses de uso.
+- Validado: 0 `api.anthropic.com`, etiquetas balanceadas (div/script/svg), test de arranque con
+  DOM stub en Node con un usuario veterano completo (perfil, agenda, historial, baseline, healthLog,
+  nutrición, mesociclo, config de material) confirma que se conserva todo tras el version bump, y
+  tests específicos de exportar/restaurar/borrar datos y de los dos escenarios de arranque corrupto.
+- Pendiente para próximas versiones (no incluido en v54): rangos de calorías con revisión semanal,
+  registro de dolor/fatiga por sesión, onboarding de lesiones/limitaciones, Web Worker para XML
+  grandes de Salud, y mover los estilos inline a clases CSS reutilizables.
