@@ -753,3 +753,39 @@ semanal con lo entrenado; marcadores solo cada mes.
 - Validado: sintaxis JS, 0 `api.anthropic.com`, etiquetas balanceadas, y las 60 comprobaciones
   automáticas previas (persistencia, gestión de datos, v55, v56) siguen en verde tras estos
   cambios de CSS/maquetación — no se tocó ninguna lógica de datos.
+
+## v58: adaptación por cambio de material que conserva la sesión (no la rehace)
+- CAMBIO DE COMPORTAMIENTO SOLICITADO: hasta ahora, "Modificar sesión" por cambio de material
+  —tanto offline como con Claude— construía una sesión NUEVA desde cero, descartando los
+  ejercicios que ya había. Si tenías press y sentadilla y solo cambiabas de gimnasio a mancuernas,
+  podías perder ejercicios que tenían variante perfecta con el nuevo material, rompiendo la
+  coherencia de la semana propuesta. Ahora se ADAPTA la sesión conservando su estructura.
+- MOTOR OFFLINE (`adaptExerciseToEquip`/`adaptSessionToEquip`, reescritura de
+  `regenerateDayOffline`): para cada ejercicio de la sesión prevista decide entre tres casos:
+  (a) sigue siendo viable con el material de hoy → se MANTIENE igual (solo se actualiza la pista de
+  carga al nuevo material); (b) no es viable pero existe una variante EQUIVALENTE de la misma
+  familia (mismo patrón de movimiento + mismo grupo muscular principal) que sí usa el material
+  disponible → se sustituye por esa variante conservando series/reps/descanso/RIR/tempo y su
+  explicación (p. ej. Press de banca→Press con mancuernas, Sentadilla con barra→Sentadilla goblet,
+  Remo con barra→Remo con mancuerna); (c) no hay equivalente → solo entonces se rellena ese hueco
+  con un ejercicio fresco del generador, evitando duplicar lo que ya se conserva. Al terminar
+  muestra un resumen de qué se mantuvo, qué se adaptó y qué se sustituyó.
+- VÍA CON CLAUDE (`modifyWithClaude`): el mensaje ahora incluye la lista de ejercicios que YA
+  estaban previstos para hoy y una instrucción explícita de "adapta, no rehagas": conservar cada
+  ejercicio viable, sustituir solo los inviables por su variante equivalente más parecida con el
+  material disponible manteniendo la prescripción, y NO cambiar los que ya son viables solo por
+  variar. Se le pide además explicar en la descripción de cada ejercicio adaptado que es la
+  variante del original para ese material. Así ambas vías (offline e IA) dan el mismo tipo de
+  resultado coherente.
+- Los bloques AMRAP/EMOM/circuito se conservan tal cual (no se intenta trocearlos por material).
+- VERIFICADO: 25 pruebas unitarias y e2e nuevas (mantener viable, convertir barra→mancuerna en
+  empuje/pierna/tirón conservando prescripción, caída a variante corporal o replace cuando solo
+  hay peso corporal, no duplicar cuando dos ejercicios colapsarían al mismo, resumen al usuario, y
+  presencia de la sesión actual + instrucción de adaptar en el prompt de Claude). Verificación
+  visual real con Playwright/Chromium en iPhone 12 mini: se cargó una sesión de 3 ejercicios de
+  barra, se pidió adaptar a solo mancuernas, y se confirmó que los tres se convirtieron a su
+  equivalente con mancuerna (0px de overflow, estructura y descripciones correctas). Durante esa
+  verificación se detectó y corrigió un fallo del propio script de prueba (asignar `window.MOD` en
+  vez de la variable `MOD` del módulo) — no era un bug de la app, pero confirma el valor de probar
+  el flujo real y no solo las funciones aisladas.
+- Las 60 comprobaciones automáticas previas (v54-v57) siguen en verde: 85 en total, 0 fallos.

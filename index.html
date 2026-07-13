@@ -452,7 +452,7 @@ body{font-size:calc(15px*var(--fs))}
       <button class="btn btn-block" style="margin-top:8px;border-color:var(--danger);color:var(--danger)" onclick="confirmDeleteAll()">🗑️ Eliminar todos mis datos</button>
       <div id="data-status" style="margin-top:7px;font-size:12px"></div>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 57</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 58</div>
     <div id="sw-status" style="text-align:center;font-size:11px;color:var(--warn);margin-top:4px;display:none"></div>
   </div>
 </div>
@@ -528,12 +528,12 @@ body{font-size:calc(15px*var(--fs))}
 <div class="sheet-bg" id="mod-bg">
   <div class="sheet">
     <div class="sheet-h"><h3>⚙ Modificar sesión</h3><button class="btn btn-sm" onclick="closeSheet('mod-bg')">✕</button></div>
-    <p class="note" style="margin-bottom:11px">Ajusta el material o el tiempo disponible solo para esta sesión y regenérala, sin cambiar tu perfil.</p>
+    <p class="note" style="margin-bottom:11px">Ajusta el material o el tiempo disponible solo para esta sesión, sin cambiar tu perfil. Se mantienen los mismos ejercicios adaptando la variante al nuevo material siempre que sea posible; solo se sustituyen los que no se puedan hacer con lo que tengas hoy.</p>
     <div class="field"><label>Material disponible para hoy</label><div id="mod-equip"></div></div>
     <div id="mod-equip-sum"></div>
     <div class="field"><label>Tiempo disponible: <span id="mod-min-out" style="font-weight:600;color:var(--text)">45</span> min</label>
       <input type="range" id="mod-min" min="15" max="120" step="5" value="45" style="width:100%"></div>
-    <button class="btn btn-primary btn-block" onclick="regenerateDayOffline()">⚡ Regenerar (offline)</button>
+    <button class="btn btn-primary btn-block" onclick="regenerateDayOffline()">⚡ Adaptar a mi material (offline)</button>
     <button class="btn btn-block" style="margin-top:8px" onclick="modifyWithClaude()">✨ Pedir a Claude (más detallado)</button>
     <div id="mod-claude" style="display:none;margin-top:12px">
       <div class="divider"></div>
@@ -910,6 +910,79 @@ function pesoHintFor(ex,eqSet,g){
   }
   if(eq.includes('barra')&&(eqSet.has('barra')||eqSet.has('gimnasio')))return `carga en barra que te deje RIR ${g.rir}`;
   return 'solo peso corporal (ajusta con tempo más lento o pausas si se hace fácil)';
+}
+/* --- Adaptación por cambio de material (v58): para modificar una sesión SIN romper su estructura.
+   Para cada ejercicio decide si (a) sigue siendo viable con el nuevo material y se mantiene,
+   (b) tiene una variante equivalente de la MISMA familia (mismo patrón + mismo grupo muscular
+   principal) que sí usa el nuevo material -> se sustituye por esa variante conservando series/reps/
+   descanso/RIR/tempo y explicando el cambio, o (c) no hay equivalente y se marca para sustituir.
+   Devuelve {ex, status:'keep'|'variant'|'replace', from, note}. --- */
+function exEqOk(exEntry,eqSet){
+  // ¿el ejercicio se puede hacer con el material disponible? (peso corporal siempre vale)
+  const dbEx=EXDB.find(e=>e.n===exEntry.nombre);
+  const eq=(dbEx&&dbEx.eq)||exEntry.eq||['ninguno'];
+  return eq.includes('ninguno')||eq.some(t=>eqSet.has(t));
+}
+function primaryMuscle(m){return (m||'').toLowerCase().split(/[,/]/)[0].trim();}
+// Busca en EXDB un ejercicio de la misma familia (patrón + músculo principal) viable con eqSet.
+function equivalentForEquip(exEntry,eqSet,avoidNames){
+  const dbEx=EXDB.find(e=>e.n===exEntry.nombre);
+  const pat=(dbEx&&dbEx.p)||exEntry.p||patFromName(exEntry.nombre);
+  const mus=primaryMuscle((dbEx&&dbEx.m)||exEntry.musculos);
+  const avoid=avoidNames||new Set();
+  const cands=EXDB.filter(e=>
+    e.n!==exEntry.nombre &&
+    e.p===pat &&
+    (e.eq.includes('ninguno')||e.eq.some(t=>eqSet.has(t))) &&
+    !avoid.has(e.n)
+  );
+  // preferimos misma musculatura principal y misma naturaleza (compuesto/aislado) si la hay
+  const comp=dbEx?dbEx.comp:1;
+  const sameMuscle=cands.filter(e=>primaryMuscle(e.m)===mus);
+  const pool=sameMuscle.length?sameMuscle:cands;
+  const sameKind=pool.filter(e=>e.comp===comp);
+  const finalPool=sameKind.length?sameKind:pool;
+  // dentro del pool, prioriza el que use material "real" (no solo peso corporal) si lo hay
+  const withEquip=finalPool.filter(e=>e.eq.some(t=>t!=='ninguno'&&eqSet.has(t)));
+  const chosen=(withEquip.length?withEquip:finalPool)[0];
+  return chosen||null;
+}
+function adaptExerciseToEquip(exEntry,eqSet,g,avoidNames){
+  if(isBlock(exEntry))return {ex:exEntry,status:'keep'}; // los bloques AMRAP/EMOM se conservan tal cual
+  if(exEqOk(exEntry,eqSet)){
+    // sigue siendo viable: solo actualizamos la pista de carga al nuevo material
+    const dbEx=EXDB.find(e=>e.n===exEntry.nombre)||{eq:exEntry.eq||['ninguno']};
+    const nuevoPeso=pesoHintFor(dbEx,eqSet,g);
+    return {ex:{...exEntry,peso:nuevoPeso},status:'keep'};
+  }
+  const equiv=equivalentForEquip(exEntry,eqSet,avoidNames);
+  if(equiv){
+    const nuevoPeso=pesoHintFor(equiv,eqSet,g);
+    return {
+      ex:{
+        ...exEntry,
+        nombre:equiv.n, p:equiv.p, yt:equiv.yt,
+        descripcion:equiv.d||descFor(equiv),
+        musculos:equiv.m, peso:nuevoPeso,
+        errores:ERRORS[figKey(equiv.n)]||exEntry.errores||[],
+        _origMat:exEntry._origMat||exEntry.nombre
+      },
+      status:'variant', from:exEntry.nombre,
+      note:`${exEntry.nombre} → ${equiv.n} (misma función, adaptado a tu material de hoy)`
+    };
+  }
+  return {ex:exEntry,status:'replace',from:exEntry.nombre};
+}
+// Adapta una sesión completa preservando lo que se pueda; solo rellena los huecos "replace".
+function adaptSessionToEquip(sess,eqSet,g){
+  if(!sess||!sess.exercises)return null;
+  const kept=[];const used=new Set();const changes=[];let replacedCount=0;
+  sess.exercises.forEach(ex=>{
+    const r=adaptExerciseToEquip(ex,eqSet,g,used);
+    if(r.status==='replace'){replacedCount++;changes.push({type:'replace',from:r.from});kept.push({__replace:true,orig:ex});}
+    else{used.add(r.ex.nombre);kept.push(r.ex);if(r.status==='variant')changes.push({type:'variant',from:r.from,to:r.ex.nombre});}
+  });
+  return {exercises:kept,changes,replacedCount};
 }
 // Fatiga acumulada: true si ≥2 de las últimas 3 sesiones registradas se marcaron "cansado"/"agotado".
 function recentFatigueTrend(){
@@ -2374,15 +2447,47 @@ function regenerateDayOffline(){
   const objetivo=primaryGoal(S.profile.objetivos);
   const eq=new Set(MOD.equipos);
   const mins=parseInt(document.getElementById('mod-min').value)||45;
+  const g=GOALS[objetivo];
   const week=realWeekNum();
   const seed=week*7+DAYS.indexOf(DAYS[weekDates(S.currentWeek).map(fmt).indexOf(key)])+Math.floor(Math.random()*7);
-  const sess=buildSessionOffline(eq,objetivo,S.profile.nivel,mins,'X',seed,false,{avoid:recentExerciseNames(key,14)});
+  const current=mainAISess(key);
+  let entry, summaryLines=[];
+  // Si ya hay una sesión IA, la ADAPTAMOS al nuevo material conservando lo que se pueda,
+  // en vez de generar una totalmente nueva (coherencia con la semana propuesta).
+  if(current&&current.exercises&&current.exercises.length){
+    const adapted=adaptSessionToEquip(current,eq,g);
+    // reemplazos frescos SOLO para los huecos no viables, evitando duplicar lo que ya se conserva
+    const keepNames=new Set(adapted.exercises.filter(e=>!e.__replace).map(e=>e.nombre));
+    const needed=adapted.exercises.filter(e=>e.__replace).length;
+    let fresh=[];
+    if(needed){
+      const avoid=new Set([...recentExerciseNames(key,14),...keepNames]);
+      const gen=buildSessionOffline(eq,objetivo,S.profile.nivel,mins,'X',seed,false,{avoid});
+      fresh=(gen.ejercicios||[]).filter(e=>!keepNames.has(e.nombre));
+    }
+    let fi=0;
+    const finalEx=adapted.exercises.map(e=>{
+      if(e.__replace){const rep=fresh[fi++];return rep||e.orig;} // si no hay reemplazo, deja el original
+      return e;
+    });
+    const kept=finalEx.length-adapted.replacedCount-adapted.changes.filter(c=>c.type==='variant').length;
+    const variants=adapted.changes.filter(c=>c.type==='variant');
+    if(variants.length)summaryLines.push('🔄 Adaptados a tu material: '+variants.map(c=>c.from+' → '+c.to).join('; '));
+    if(kept>0)summaryLines.push('✅ Mantenidos igual: '+kept);
+    if(adapted.replacedCount>0)summaryLines.push('♻️ Sustituidos (sin equivalente con tu material): '+adapted.replacedCount);
+    const metaBase=current.meta?current.meta.replace(/ · modificada.*/,''):(current.title||'Sesión');
+    entry={type:'ai',title:current.title,meta:metaBase+' · adaptada a tu material',warmup:current.warmup,cooldown:current.cooldown,exercises:finalEx,done:false};
+  } else {
+    // No había sesión IA previa: generamos una nueva (comportamiento anterior)
+    const sess=buildSessionOffline(eq,objetivo,S.profile.nivel,mins,'X',seed,false,{avoid:recentExerciseNames(key,14)});
+    entry={type:'ai',title:sess.titulo,meta:sess.meta+' · modificada',warmup:sess.calentamiento,cooldown:sess.vuelta_calma,exercises:sess.ejercicios,done:false};
+  }
   if(!S.schedule[key])S.schedule[key]=[];
-  const entry={type:'ai',title:sess.titulo,meta:sess.meta+' · modificada',warmup:sess.calentamiento,cooldown:sess.vuelta_calma,exercises:sess.ejercicios,done:false};
   const ix=S.schedule[key].findIndex(x=>x.type==='ai');
   if(ix>=0)S.schedule[key][ix]=entry;else S.schedule[key].push(entry);
   save();closeSheet('mod-bg');renderCal();
   selDay(key,weekDates(S.currentWeek).map(fmt).indexOf(key),true);
+  if(summaryLines.length)setTimeout(()=>alert('Sesión adaptada a tu material manteniendo su estructura:\n\n'+summaryLines.join('\n')),150);
 }
 
 function modifyWithClaude(){
@@ -2393,10 +2498,21 @@ function modifyWithClaude(){
   const mi=mesoInfo(programWeekFor(MOD.key));
   const mesoTxt=mi?`Fase del mesociclo: bloque ${mi.block}, semana ${mi.wInBlock} de ${mi.len}${mi.focus?' ('+mi.focus+')':''}.`:(S.mesoFocus?`Fase actual del programa: ${S.mesoFocus}.`:'');
   const hist=recentSummaryLines(MOD.key);
-  window._modPrompt=`Actúa como mi entrenador personal. Modifica/regenera UNA sola sesión de fuerza para hoy con estas restricciones, manteniéndola coherente con mi plan y mi objetivo global:
+  // Sesión que ya estaba prevista para hoy: se la damos a Claude para que la ADAPTE, no la rehaga.
+  const current=mainAISess(MOD.key);
+  let currentTxt='',keepInstruction='';
+  if(current&&current.exercises&&current.exercises.length){
+    const list=current.exercises.map(e=>isBlock(e)
+      ?`  - [bloque ${blockType(e)}] ${e.nombre}`
+      :`  - ${e.nombre} (${e.series||'?'}×${e.reps||'?'}, ${e.musculos||'?'})`).join('\n');
+    currentTxt=`\n- SESIÓN QUE YA ESTABA PREVISTA PARA HOY (mantén su estructura):\n${list}`;
+    keepInstruction=`
+- IMPORTANTE — adapta, no rehagas: conserva CADA ejercicio de la sesión prevista si se puede hacer con el material de hoy. Para los que no (p. ej. requerían barra/máquina y hoy solo hay mancuernas), sustitúyelos por la variante EQUIVALENTE más parecida con el material disponible (mismo patrón de movimiento y mismo grupo muscular: press de banca→press con mancuernas, sentadilla con barra→sentadilla goblet, remo con barra→remo con mancuerna, etc.), manteniendo series/reps/descanso/RIR. NO cambies los ejercicios que ya son viables solo por variar. En la "descripcion" de cada ejercicio que hayas cambiado, explica brevemente que es la adaptación del ejercicio original a este material y cualquier ajuste técnico (agarre, rango, tempo).`;
+  }
+  window._modPrompt=`Actúa como mi entrenador personal. Adapta UNA sola sesión de fuerza ya prevista para hoy a un cambio de material, manteniéndola coherente con mi plan y mi objetivo global:
 - Material disponible hoy: ${eqLabels}${eqDetail}${coachExtrasFor(MOD.equipos,MOD.key)}
 - Tiempo disponible hoy: ${mins} minutos
-- Mis objetivos: ${objLabels} (prioriza hipertrofia: 6-12 reps, 3-4 series, 1-3 RIR, descansos 90-150s, sobrecarga progresiva).${mesoTxt?`\n- ${mesoTxt}`:''}${hist?`\n- Entrenamiento reciente (tenlo en cuenta para complementar y repartir bien los grupos, no repetir en exceso):\n${hist}`:''}
+- Mis objetivos: ${objLabels} (prioriza hipertrofia: 6-12 reps, 3-4 series, 1-3 RIR, descansos 90-150s, sobrecarga progresiva).${mesoTxt?`\n- ${mesoTxt}`:''}${currentTxt}${keepInstruction}${hist?`\n- Entrenamiento reciente (tenlo en cuenta para complementar y repartir bien los grupos, no repetir en exceso):\n${hist}`:''}
 - Indica el esfuerzo como RIR. En "peso" especifica la carga de forma inequívoca. Incluye 2-3 errores comunes de técnica por ejercicio.
 - Puedes incluir como mucho UN bloque AMRAP/EMOM/circuito (la app lo guía con cronómetro y conteo de rondas) usando un ejercicio con esta forma: {"nombre":"AMRAP 10 min","tipo":"amrap","duracion_min":10,"descanso_seg":90,"movimientos":[{"nombre":"Sentadilla goblet","reps":"12"},{"nombre":"Flexiones","reps":"10"}],"descripcion":"...","musculos":"..."} ("tipo": amrap|emom|circuito; amrap/emom→"duracion_min"; circuito→"rondas").
 
