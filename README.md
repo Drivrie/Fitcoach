@@ -789,3 +789,31 @@ semanal con lo entrenado; marcadores solo cada mes.
   vez de la variable `MOD` del módulo) — no era un bug de la app, pero confirma el valor de probar
   el flujo real y no solo las funciones aisladas.
 - Las 60 comprobaciones automáticas previas (v54-v57) siguen en verde: 85 en total, 0 fallos.
+
+## v59: la plantilla de registro vuelca las cargas REALES, no lo previsto
+- BUG REPORTADO: al finalizar la sesión guiada, el reproductor muestra y guarda las cargas reales
+  (peso×reps por serie). Pero al abrir el registro y pulsar "Plantilla cargas", se volcaba lo
+  PREVISTO (series×reps·peso de la sesión), ignorando lo que se acababa de registrar. Resultado:
+  las notas contradecían lo que la app decía haber guardado, generando dudas sobre qué quedaba
+  realmente registrado.
+- CAUSA: `insertLoadTemplate` leía `ex.series`/`ex.reps`/`ex.peso` (lo propuesto) y no tocaba
+  `sess.sets`, que es donde el reproductor ya guardaba las cargas reales (desde v52) con la
+  estructura `[{nombre, series:[{kg,reps}...]}]`.
+- FIX: `insertLoadTemplate` ahora, para cada ejercicio, vuelca las cargas REALES si el reproductor
+  las registró (usando el mismo `fmtSets()` que la pantalla de fin de sesión, así el texto coincide
+  exactamente con lo que se vio al terminar), y solo cae a lo previsto —marcándolo como "(previsto
+  — sin registrar)"— para los ejercicios sin registro real. La cabecera de la plantilla indica de
+  qué se trata ("Cargas reales registradas en la sesión guiada" vs. el "✓ según lo previsto" de
+  antes). Si no hay ningún registro real (p. ej. sesión no hecha con el reproductor), el
+  comportamiento anterior con ✓ se mantiene intacto.
+- MEJORA AÑADIDA: al abrir el registro justo tras finalizar la sesión guiada, si hay cargas reales
+  y las notas están vacías, la plantilla real se AUTOCARGA (no hay que pulsar el botón). Así, en el
+  momento exacto de la confusión reportada —acabas de ver tus cargas y abres el registro— ves ya
+  reflejado lo que hiciste. El botón, además, se llama "＋ Cargas reales" cuando hay registro real
+  y "＋ Plantilla cargas" cuando no.
+- VERIFICADO: 10 pruebas nuevas (vuelca real y no previsto; cae a previsto sin registro; registro
+  parcial mezcla real + "sin registrar"; autocarga en openLog; autocarga solo con notas vacías) +
+  verificación visual real con Playwright/Chromium en iPhone 12 mini confirmando que tras finalizar
+  se ve "Press con mancuernas: 18×10, 18×9, 18×8, 16×8 / Sentadilla goblet: 24 kg × 10, 10, 9, 8"
+  (lo real) y no lo previsto (16/20 kg), sin overflow. Las 85 comprobaciones previas (v54-v58)
+  siguen en verde: 95 en total, 0 fallos.

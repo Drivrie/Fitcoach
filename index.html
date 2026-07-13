@@ -452,7 +452,7 @@ body{font-size:calc(15px*var(--fs))}
       <button class="btn btn-block" style="margin-top:8px;border-color:var(--danger);color:var(--danger)" onclick="confirmDeleteAll()">🗑️ Eliminar todos mis datos</button>
       <div id="data-status" style="margin-top:7px;font-size:12px"></div>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 58</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 59</div>
     <div id="sw-status" style="text-align:center;font-size:11px;color:var(--warn);margin-top:4px;display:none"></div>
   </div>
 </div>
@@ -1804,10 +1804,17 @@ function openLog(key,mode){
     <div class="field"><label>Dolor o molestias durante la sesión (opcional)</label>
       <div class="feel">${PAIN_AREAS.filter(a=>a[0]!=='otra').map(([k,lab])=>`<div class="pain-b" onclick="togglePain(this)" data-a="${k}">${lab}</div>`).join('')}</div>
       <p class="note" style="margin-top:6px">Si marcas una zona aquí, el generador offline evitará ejercicios de riesgo para esa zona durante los próximos 14 días, además de lo que hayas fijado como limitación fija en Ajustes.</p></div>
-    <div class="field"><label style="display:flex;justify-content:space-between;align-items:center">Notas (pesos, series reales, sensaciones)${isAdd?'':`<button class="btn btn-xs" onclick="insertLoadTemplate('${key}')">＋ Plantilla cargas</button>`}</label>
+    <div class="field"><label style="display:flex;justify-content:space-between;align-items:center">Notas (pesos, series reales, sensaciones)${isAdd?'':`<button class="btn btn-xs" onclick="insertLoadTemplate('${key}')">${(()=>{const s=mainAISess(key);return (s&&s.sets&&s.sets.length)?'＋ Cargas reales':'＋ Plantilla cargas';})()}</button>`}</label>
       <textarea id="l-notes" placeholder="${isAdd?'Ej: 7,1 km, 5:30/km, 412 kcal, FC media 152...':'Ej: goblet 16kg llegué a 12, press 16kg 3×10 justo...'}"></textarea></div>`;
   openSheet('log-bg');
   if(window._blkNote){const ta=document.getElementById('l-notes');if(ta)ta.value=window._blkNote;window._blkNote=null;}
+  // v59: al llegar aquí justo tras finalizar la sesión guiada, si hay cargas reales registradas,
+  // precargamos la plantilla con ELLAS automáticamente, para que lo que se ve al registrar coincida
+  // con lo que se acaba de guardar (evita la duda de "¿qué he guardado?").
+  if(!isAdd){
+    const sess=mainAISess(key);
+    if(sess&&sess.sets&&sess.sets.length){const ta=document.getElementById('l-notes');if(ta&&!ta.value.trim())insertLoadTemplate(key);}
+  }
 }
 function selFatiga(el){document.querySelectorAll('.fatiga-b').forEach(b=>b.classList.remove('sel'));el.classList.add('sel');}
 function togglePain(el){el.classList.toggle('sel');}
@@ -1817,9 +1824,26 @@ function insertLoadTemplate(key){
   const sess=mainAISess(key);
   let tpl;
   if(sess&&sess.exercises&&sess.exercises.length){
-    // prellenado con lo propuesto: solo corriges lo que difiera y añades comentario
-    tpl=sess.exercises.map(e=>isBlock(e)?`${e.nombre} (${blockType(e)}): ___ rondas`:`${e.nombre} ${e.series}×${e.reps}${e.peso?' · '+e.peso:''}: ✓`).join('\n');
-    tpl='(✓ = según lo previsto; corrige solo lo que cambió y añade comentario)\n'+tpl;
+    // v59: si el reproductor guardó cargas REALES serie a serie, se vuelcan esas (lo que de verdad
+    // hiciste), no lo previsto. Solo se cae a lo previsto para los ejercicios sin registro real.
+    const realByName={};
+    if(sess.sets&&sess.sets.length)sess.sets.forEach(e=>{if(e&&e.nombre)realByName[e.nombre.toLowerCase().trim()]=e;});
+    const hasAnyReal=Object.keys(realByName).length>0;
+    const lines=sess.exercises.map(e=>{
+      if(isBlock(e))return `${e.nombre} (${blockType(e)}): ___ rondas`;
+      const real=realByName[(e.nombre||'').toLowerCase().trim()];
+      if(real&&real.series&&real.series.length){
+        return `${e.nombre}: ${fmtSets(real.series)}`;           // lo REALMENTE registrado
+      }
+      return `${e.nombre} ${e.series}×${e.reps}${e.peso?' · '+e.peso:''}: (previsto — sin registrar)`;
+    });
+    const header=hasAnyReal
+      ? '(Cargas reales registradas en la sesión guiada; corrige si hiciste algo distinto)'
+      : '(✓ = según lo previsto; corrige solo lo que cambió y añade comentario)';
+    // si NO hay ningún registro real, mantenemos el formato anterior con ✓ para no confundir
+    tpl=hasAnyReal
+      ? header+'\n'+lines.join('\n')
+      : header+'\n'+sess.exercises.map(e=>isBlock(e)?`${e.nombre} (${blockType(e)}): ___ rondas`:`${e.nombre} ${e.series}×${e.reps}${e.peso?' · '+e.peso:''}: ✓`).join('\n');
   } else {
     tpl='Ejercicio 1 (kg × reps logradas): \nEjercicio 2: ';
   }
