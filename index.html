@@ -276,7 +276,7 @@ body{font-size:calc(15px*var(--fs))}
       <div class="card-t">📊 Progresión de carga</div>
       <select id="prog-ex-select" onchange="renderLoadProgression()" style="width:100%;padding:9px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;margin-bottom:8px"></select>
       <div id="prog-ex-chart"></div>
-      <p class="note" style="margin-top:8px">Carga máxima registrada por sesión (kg), de las series que anotas en el reproductor guiado. Aparece un ejercicio aquí en cuanto tiene carga registrada en 2 sesiones distintas.</p>
+      <p class="note" style="margin-top:8px">Carga máxima registrada por sesión (kg), de las series que anotas en el reproductor guiado. Cada ejercicio aparece en la lista en cuanto registras carga una vez; la gráfica de evolución se dibuja a partir de la segunda sesión.</p>
     </div>
     <div class="card">
       <div class="card-t">📋 Historial</div>
@@ -452,7 +452,7 @@ body{font-size:calc(15px*var(--fs))}
       <button class="btn btn-block" style="margin-top:8px;border-color:var(--danger);color:var(--danger)" onclick="confirmDeleteAll()">🗑️ Eliminar todos mis datos</button>
       <div id="data-status" style="margin-top:7px;font-size:12px"></div>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 60</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 61</div>
     <div id="sw-status" style="text-align:center;font-size:11px;color:var(--warn);margin-top:4px;display:none"></div>
   </div>
 </div>
@@ -3147,7 +3147,22 @@ function exercisesWithLoggedSets(){
       names.set(e.nombre,(names.get(e.nombre)||0)+1);
     });
   });
-  return [...names.entries()].filter(([,n])=>n>=2).sort((a,b)=>b[1]-a[1]).map(([n])=>n);
+  // v61: se listan TODOS los ejercicios con al menos una sesión con carga registrada (antes n>=2,
+  // lo que ocultaba en el selector los registrados una sola vez y hacía dudar si faltaban datos o
+  // fallaba la app). Los que aún no tienen 2 sesiones muestran su punto + un aviso, en vez de
+  // desaparecer. Se ordena por nº de sesiones (los más registrados primero) y luego por nombre.
+  return [...names.entries()].filter(([,n])=>n>=1)
+    .sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'es')).map(([n])=>n);
+}
+// Nº de sesiones con carga registrada por ejercicio (para etiquetar el selector de progresión).
+function loggedSessionCount(nombre){
+  const nm=(nombre||'').toLowerCase().trim();let c=0;
+  (S.history||[]).forEach(h=>{
+    if(!h.sets)return;
+    const found=h.sets.find(e=>e.nombre&&e.nombre.toLowerCase().trim()===nm);
+    if(found&&found.series&&found.series.some(s=>s.kg!=null&&s.kg!==''&&!isNaN(toNum(s.kg))))c++;
+  });
+  return c;
 }
 // serie temporal (más antiguo→más reciente) de la carga máxima registrada por sesión para ese ejercicio
 function loadProgressionFor(nombre){
@@ -3172,10 +3187,14 @@ function renderLoadProgression(){
   if(!names.length){if(card)card.style.display='none';return;}
   if(card)card.style.display='';
   const prevVal=sel.value;
-  sel.innerHTML=names.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  sel.innerHTML=names.map(n=>{const c=loggedSessionCount(n);return `<option value="${esc(n)}">${esc(n)} (${c} ${c===1?'sesión':'sesiones'})</option>`;}).join('');
   if(names.includes(prevVal))sel.value=prevVal;
   const {dates,values}=loadProgressionFor(sel.value);
-  if(values.length<2){chart.innerHTML='<p class="note" style="padding:6px 0">Necesita al menos 2 sesiones con carga registrada de este ejercicio.</p>';return;}
+  if(values.length<2){
+    const one=values.length===1?`<div style="font-size:calc(13px*var(--fs));margin-bottom:4px">Carga registrada hasta ahora: <b>${values[0]} kg</b></div>`:'';
+    chart.innerHTML=one+'<p class="note" style="padding:2px 0">📈 La gráfica de progresión aparece cuando tengas este ejercicio registrado con carga en 2 sesiones o más. Sigue registrando tus series en el reproductor guiado.</p>';
+    return;
+  }
   const labels=dates.map(d=>{const dt=new Date(d+'T00:00:00');return isNaN(dt)?d:dt.toLocaleDateString('es-ES',{day:'numeric',month:'short'});});
   chart.innerHTML=sparkline(values,labels,false)+
     `<div style="display:flex;justify-content:space-between;margin-top:4px;font-size:calc(12px*var(--fs));color:var(--text2)">

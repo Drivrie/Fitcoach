@@ -840,3 +840,28 @@ semanal con lo entrenado; marcadores solo cada mes.
   visual real con Playwright/Chromium en iPhone 12 mini partiendo de un estado con análisis previo,
   confirmando que tras adaptar solo se ve el análisis nuevo (con su fase y cardio) y no el anterior,
   sin overflow. Las 95 comprobaciones previas (v54-v59) siguen en verde: 107 en total, 0 fallos.
+
+## v61: la progresión de carga lista TODOS los ejercicios registrados (no solo los de 2+ sesiones)
+- SÍNTOMA REPORTADO: en "Progresión de carga" (pestaña Progreso) solo se veían dos ejercicios en
+  el selector, sin poder elegir otros; no quedaba claro si faltaban datos o si fallaba la app.
+- CAUSA (no era de visualización): `exercisesWithLoggedSets()` filtraba con `n>=2`, así que un
+  ejercicio solo aparecía en el selector si tenía carga registrada en 2 o más sesiones distintas.
+  Los registrados una sola vez quedaban invisibles. Reproducido: con 6 ejercicios registrados (2
+  con 2 sesiones, 4 con 1), el selector mostraba solo los 2 — exactamente el síntoma descrito.
+- FIX: el selector ahora lista TODOS los ejercicios con al menos una sesión con carga registrada
+  (umbral `n>=1`), ordenados por nº de sesiones (los que ya tienen gráfica primero) y luego
+  alfabéticamente. Cada opción muestra su nº de sesiones, p. ej. "Press con mancuernas (2
+  sesiones)", "Curl de bíceps (1 sesión)".
+- Al elegir un ejercicio con una sola sesión, en vez de esconderlo o dar un mensaje seco, se
+  muestra su carga registrada ("Carga registrada hasta ahora: 10 kg") y un aviso claro de que la
+  gráfica de evolución aparece a partir de la 2ª sesión. Con 2+ sesiones se dibuja la gráfica como
+  antes. La nota de la tarjeta se actualizó en consecuencia.
+- Se añade `loggedSessionCount()` (nº de sesiones con carga por ejercicio) para etiquetar el
+  selector.
+- VERIFICADO: 19 pruebas nuevas (los 6 ejercicios aparecen y no solo 2; orden por nº de sesiones;
+  conteo correcto; selector poblado y etiquetado; ejercicio de 1 sesión muestra carga + aviso sin
+  ocultarse; ejercicio de 2 dibuja gráfica; historial vacío mantiene la tarjeta oculta) +
+  verificación visual real con Playwright/Chromium en iPhone 12 mini confirmando los 6 ejercicios
+  en el selector, el mensaje del de 1 sesión y la gráfica del de 2, sin overflow. Se actualizó la
+  prueba de v56 que codificaba el umbral antiguo (n>=2) al nuevo comportamiento. Las 107
+  comprobaciones previas siguen en verde: 126 en total, 0 fallos.
