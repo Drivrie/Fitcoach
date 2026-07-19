@@ -817,3 +817,26 @@ semanal con lo entrenado; marcadores solo cada mes.
   se ve "Press con mancuernas: 18×10, 18×9, 18×8, 16×8 / Sentadilla goblet: 24 kg × 10, 10, 9, 8"
   (lo real) y no lo previsto (16/20 kg), sin overflow. Las 85 comprobaciones previas (v54-v58)
   siguen en verde: 95 en total, 0 fallos.
+
+## v60: el Análisis del entrenador muestra un único análisis vigente (no acumula semanas)
+- BUG REPORTADO: al adaptar la semana y pegar la respuesta de Claude, el "Análisis del entrenador"
+  (pestaña Progreso) conservaba el texto de la semana anterior y añadía el nuevo debajo, dejando
+  dos análisis a la vista y generando dudas sobre cuál era el vigente.
+- CAUSA: `applyBridgePlan` usaba `appendInsight()` para las tres piezas del análisis
+  (`analisis_progreso`, fase del mesociclo y cardio), y esa función ACUMULA entradas (solo limitaba
+  el tamaño total a 4000 caracteres). Diseño heredado de cuando se quería un histórico de análisis;
+  en la práctica confunde.
+- FIX: al aplicar un plan, el análisis se RECONSTRUYE desde cero con solo las piezas de la
+  adaptación actual (análisis + fase + cardio de ESE plan), reemplazando el anterior. Un único
+  análisis vigente. No se pierde nada del historial de lo realizado: eso vive aparte en `S.history`
+  y se le sigue enviando a Claude en cada adaptación, así que su análisis ya tiene en cuenta la
+  progresión previa — que es justo lo que se pedía ("un solo análisis, pero teniendo en cuenta el
+  historial"). Si un plan no trae análisis nuevo, se conserva el anterior en vez de vaciar el panel.
+- `appendInsight()` queda sin uso en el flujo de aplicar plan (se mantiene definida; los tests de
+  su límite de tamaño siguen pasando).
+- VERIFICADO: 12 pruebas nuevas (un plan reemplaza el análisis anterior; dos adaptaciones seguidas
+  dejan solo la última; no se acumulan líneas de "Fase del mesociclo"; el historial de lo realizado
+  queda intacto; un plan sin análisis no vacía el panel; renderProg pinta el vigente) + verificación
+  visual real con Playwright/Chromium en iPhone 12 mini partiendo de un estado con análisis previo,
+  confirmando que tras adaptar solo se ve el análisis nuevo (con su fase y cardio) y no el anterior,
+  sin overflow. Las 95 comprobaciones previas (v54-v59) siguen en verde: 107 en total, 0 fallos.

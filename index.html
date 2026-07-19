@@ -452,7 +452,7 @@ body{font-size:calc(15px*var(--fs))}
       <button class="btn btn-block" style="margin-top:8px;border-color:var(--danger);color:var(--danger)" onclick="confirmDeleteAll()">🗑️ Eliminar todos mis datos</button>
       <div id="data-status" style="margin-top:7px;font-size:12px"></div>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 59</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 60</div>
     <div id="sw-status" style="text-align:center;font-size:11px;color:var(--warn);margin-top:4px;display:none"></div>
   </div>
 </div>
@@ -2415,13 +2415,18 @@ function applyBridgePlan(plan){
     if(plan.mesociclo.enfoque)S.mesoFocus=plan.mesociclo.enfoque;
     if(plan.mesociclo.semanas_bloque)S.mesoLen=parseInt(plan.mesociclo.semanas_bloque)||S.mesoLen;
   }
-  // análisis del entrenador: se acumulan como entradas independientes (appendInsight limita el tamaño total)
-  if(plan.analisis_progreso)appendInsight(plan.analisis_progreso);
+  // Análisis del entrenador: SIEMPRE refleja solo la adaptación actual (un único análisis vigente).
+  // El historial de lo realizado se conserva aparte en S.history y se le envía a Claude en cada
+  // adaptación, así que su análisis ya tiene en cuenta la progresión previa sin necesidad de
+  // acumular textos de semanas anteriores aquí (que confundían sobre cuál es el vigente).
+  const insightParts=[];
+  if(plan.analisis_progreso)insightParts.push(plan.analisis_progreso);
   if(plan.mesociclo&&(plan.mesociclo.enfoque||plan.mesociclo.justificacion)){
     const j=plan.mesociclo.justificacion?' — '+plan.mesociclo.justificacion:'';
-    appendInsight('🗓️ Fase del mesociclo: '+(plan.mesociclo.enfoque||S.mesoFocus)+j);
+    insightParts.push('🗓️ Fase del mesociclo: '+(plan.mesociclo.enfoque||S.mesoFocus)+j);
   }
-  if(plan.recomendacion_cardio)appendInsight('🏃 Cardio recomendado: '+plan.recomendacion_cardio);
+  if(plan.recomendacion_cardio)insightParts.push('🏃 Cardio recomendado: '+plan.recomendacion_cardio);
+  if(insightParts.length)S.insight=insightParts.join('\n\n');
   save();closeSheet('bridge-bg');renderCal();renderNutri();renderProg();tab('cal');
 }
 function matchYT(ex){
