@@ -865,3 +865,87 @@ semanal con lo entrenado; marcadores solo cada mes.
   en el selector, el mensaje del de 1 sesión y la gráfica del de 2, sin overflow. Se actualizó la
   prueba de v56 que codificaba el umbral antiguo (n>=2) al nuevo comportamiento. Las 107
   comprobaciones previas siguen en verde: 126 en total, 0 fallos.
+
+## v62: registro por tipo de banda y ejercicios de banda sin anclaje
+Dos problemas reportados sobre el entrenamiento con bandas elásticas.
+
+### 1. El registro no tenía en cuenta QUÉ banda se usaba
+- SÍNTOMA: al hacer un ejercicio con banda, el reproductor mostraba un campo "kg" que quedaba
+  vacío (una banda no tiene peso en kg) y solo se registraban las repeticiones. La resistencia
+  usada (baja/media/alta) se perdía, así que ni el registro, ni la plantilla de notas, ni el
+  historial que se envía a Claude sabían con qué banda se había entrenado — imposible progresar.
+- FIX: en ejercicios de banda, el campo "kg" se sustituye por un SELECTOR de resistencia
+  (baja/media/alta, limitado a las que el usuario tiene en su perfil), preseleccionado con la banda
+  que proponía la sesión. La serie se guarda como `{reps, banda}` y `fmtSets()` la formatea como
+  "banda media × 18, 16, 14". Como todo el resto de la app ya usaba `fmtSets`, la banda se propaga
+  automáticamente a: pantalla de fin de sesión, plantilla de cargas del registro (v59), historial y
+  el bloque "CARGAS REALES serie a serie" del prompt de Claude.
+- `isBandExercise()` solo trata un ejercicio como "de banda" si es exclusivo de banda con el
+  material del usuario: si tiene mancuernas y el ejercicio admite ambas (p. ej. curl de bíceps), se
+  sigue registrando en kg. El registro en kg no cambia en nada.
+
+### 2. Se proponían ejercicios que exigen anclar la banda
+- SÍNTOMA: con bandas seleccionadas se proponían ejercicios que requieren anclarla a una puerta,
+  barra o poste, sin que el usuario tenga dónde hacerlo.
+- FIX: se marcan en la base los 6 ejercicios que dependen de un anclaje externo (`anc:1`): jalón,
+  face pull, press Pallof, aperturas, leñador y curl femoral con banda. Los otros 12 de banda se
+  pueden hacer pisándola o sujetándola con el cuerpo y no se tocan.
+- Nueva pregunta en Perfil → Bandas elásticas: "¿Puedes anclar la banda a un punto fijo?" con dos
+  opciones ("No, solo pisarla o sujetarla" / "Sí, puerta, barra…"). **Por defecto: NO**, que es lo
+  más restrictivo y evita proponer algo que no se pueda hacer.
+- Sin anclaje, esos 6 ejercicios se excluyen del generador offline (centralizado en
+  `pickExercises`, así que cubre los tres flujos de generación) y de la adaptación por material de
+  v58. En el buscador manual de sustitución se marcan con ⚓ pero NO se bloquean, siguiendo el
+  mismo criterio que las limitaciones de v56: ahí el usuario elige deliberadamente y puede tener
+  un anclaje puntual.
+- El prompt a Claude refleja la restricción: sin anclaje se le indica explícitamente que no
+  disponemos de ningún punto donde anclar, se listan los ejercicios a evitar y se le pide explicar
+  cómo pisar o sujetar la banda; con anclaje, se le indica que sí puede proponerlos. También se le
+  pide siempre indicar la banda (baja/media/alta), no un peso en kg.
+- VERIFICADO: 35 pruebas nuevas (formato de banda uniforme y variable, registro en kg intacto,
+  detección de ejercicio de banda con y sin mancuernas, banda sugerida según carga propuesta y
+  resistencias disponibles, los 6 ejercicios marcados y los otros no, 40 generaciones sin ningún
+  ejercicio anclado con el ajuste en "No", sí aparecen con "Sí", adaptación por material coherente,
+  y ambas variantes del prompt) + verificación visual real con Playwright/Chromium en iPhone 12
+  mini: el reproductor muestra el selector "banda baja/media/alta" y ningún campo kg, al completar
+  la serie guarda `{reps:"15", banda:"alta"}`, y la plantilla del registro muestra "Remo con banda:
+  banda media × 18, 16, 14". Las 126 comprobaciones previas siguen en verde: 161 en total, 0 fallos.
+
+## v63: refactor de estilos inline a clases CSS (con verificación pixel a pixel)
+Pendiente desde v56, cuando se aplazó por no poder verificar el resultado visualmente. Con
+Playwright disponible desde v57, ya era abordable con garantías.
+
+- POR QUÉ ERA DELICADO: 93 de los 282 atributos `style=""` estaban en etiquetas que YA tenían
+  `class=""`. Un buscar/reemplazar ingenuo crea un SEGUNDO atributo `class`, el navegador se queda
+  con uno de los dos y la clase original (`card`, `chip`, `note`…) desaparece en silencio, rompiendo
+  el layout sin que ningún test de lógica lo detecte.
+- SOLUCIÓN: el script de refactor FUSIONA la utilidad dentro del `class` existente
+  (`class="card" style="margin-top:8px"` → `class="card mt-8"`), nunca crea un atributo nuevo, y
+  aborta si detecta cualquier `class` duplicado. Las utilidades se declaran al FINAL de la hoja de
+  estilos para conservar la precedencia que tenía el inline frente a reglas anteriores.
+- RED DE SEGURIDAD (lo que hacía viable el refactor): baseline de 22 capturas a pantalla completa
+  (11 pantallas/estados × 2 tamaños de letra: normal y "Máximo"), comparadas pixel a pixel tras cada
+  lote. Incluye calendario, sesión (cerrada/abierta/con buscador), progreso, nutrición, perfil, hoja
+  de registro, reproductor guiado, modal de modificar y puente con Claude. Se validó el comparador
+  en ambos sentidos: da "idénticas" sin cambios, y detecta un cambio deliberado de 1px en el margen
+  de `.card` (20 de 22 capturas marcadas). Para que fuera determinista hubo que congelar animaciones
+  y transiciones durante la captura (las figuras de ejercicio y el fade de pestaña se captaban en
+  fotogramas distintos).
+- REGRESIÓN REAL DETECTADA Y CORREGIDA EN EL PROCESO: el primer lote convirtió
+  `style="display:none"` en `class="hide"` y el comparador detectó que la pantalla de Progreso se
+  acortaba 710px. Causa: la app muestra esas tarjetas con `el.style.display=''`, que limpia el
+  estilo inline pero NO puede desactivar una clase, así que la tarjeta de progresión de carga
+  quedaba oculta para siempre. `display:none` se excluyó del refactor y queda documentado.
+- RESULTADO: 282 → 207 estilos inline (−27%); los casos delicados `class`+`style` bajan de 93 a 37
+  (−60%); 75 conversiones en 3 lotes (espaciado/layout, contenedores, color/tipografía), cada uno
+  verificado por separado. Nuevas utilidades: `.mt-4/6/8/9/10/12/16`, `.mb-8/9/10/11/12`, `.my-8`,
+  `.w100`, `.flex1`, `.flexrow`, `.gap8`, `.pad-exsec`, `.box-sub`, `.nodec`, `.ul-tight`,
+  `.c-free`, `.c-stand`, `.fw6`, `.c-text`.
+- 9 pruebas nuevas de integridad estructural y de regresión: sin `class` duplicados, todas las
+  utilidades usadas están definidas, los elementos que el JS muestra/oculta no llevan el display en
+  una clase, y las tarjetas de progresión y de salud siguen mostrándose y ocultándose según haya
+  datos. Verificado que este test DETECTA la regresión si se reintroduce.
+- Herramientas añadidas al flujo de trabajo (no se despliegan): `visual-baseline.js`,
+  `visual-diff.js` y `refactor-css.js`, reutilizables para futuros cambios de maquetación.
+- Las 161 comprobaciones previas siguen en verde: 170 en total, 0 fallos, y las 22 capturas son
+  pixel-idénticas al estado anterior al refactor.

@@ -207,6 +207,26 @@ body{font-size:calc(15px*var(--fs))}
   .stat-l{font-size:calc(10px*var(--fs))!important}
 }
 .chip{font-size:calc(13px*var(--fs))!important}
+/* Utilidades de refactor (v63) — al final para conservar la precedencia que tenía el estilo inline */
+.mt-4{margin-top:4px}
+.mb-8{margin-bottom:8px}
+.mb-9{margin-bottom:9px}
+.mb-10{margin-bottom:10px}
+.mb-11{margin-bottom:11px}
+.mb-12{margin-bottom:12px}
+.my-8{margin:8px 0}
+.flexrow{display:flex}
+/* Utilidades de refactor (v63) — al final para conservar la precedencia que tenía el estilo inline */
+.pad-exsec{padding:0 13px 12px}
+.box-sub{background:var(--surface2);border-radius:12px;padding:11px 12px;margin-bottom:8px}
+.nodec{text-decoration:none}
+.gap8{gap:8px}
+.ul-tight{margin:5px 0 0;padding-left:18px}
+/* Utilidades de refactor (v63) — al final para conservar la precedencia que tenía el estilo inline */
+.c-free{color:var(--free)}
+.c-stand{color:var(--ring-stand)}
+.fw6{font-weight:600}
+.c-text{color:var(--text)}
 </style>
 </head>
 <body>
@@ -232,7 +252,7 @@ body{font-size:calc(15px*var(--fs))}
       <span><span class="d" style="background:var(--done)"></span>Completado</span>
     </div>
     <div id="day-panel"></div>
-    <button class="btn btn-primary btn-block" style="margin-top:6px" onclick="openAdd()">＋ Añadir actividad libre</button>
+    <button class="btn btn-primary btn-block mt-6" onclick="openAdd()">＋ Añadir actividad libre</button>
   </div>
 
   <!-- SESIÓN -->
@@ -245,10 +265,10 @@ body{font-size:calc(15px*var(--fs))}
     <div class="stat-grid" id="stats"></div>
     <div class="card">
       <div class="card-t">🏁 Punto de partida (entrenamiento previo)</div>
-      <p class="note" style="margin-bottom:9px">Describe lo que ya venías haciendo para que la progresión arranque desde tu nivel real, no desde cero. Ej: "Circuito cuerpo completo con banda, 40 min, 40s trabajo / 20s descanso" o "Press mancuerna 12kg 3×10, sentadilla goblet 16kg 3×12". Es la referencia de partida: cuando lleves varias semanas registrando sesiones, Claude prioriza esas; actualiza o vacía este texto si tu rutina cambia.</p>
+      <p class="note mb-9">Describe lo que ya venías haciendo para que la progresión arranque desde tu nivel real, no desde cero. Ej: "Circuito cuerpo completo con banda, 40 min, 40s trabajo / 20s descanso" o "Press mancuerna 12kg 3×10, sentadilla goblet 16kg 3×12". Es la referencia de partida: cuando lleves varias semanas registrando sesiones, Claude prioriza esas; actualiza o vacía este texto si tu rutina cambia.</p>
       <textarea id="baseline-in" rows="10" style="min-height:220px;font-size:15px;line-height:1.6" placeholder="Tu entrenamiento de las últimas semanas: ejercicios, kilos, series, estructura, duración..."></textarea>
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <button class="btn" style="flex:1" onclick="saveBaseline()">💾 Guardar</button>
+      <div class="flexrow gap8 mt-8">
+        <button class="btn flex1" onclick="saveBaseline()">💾 Guardar</button>
         <button class="btn" onclick="openBaselineFull()">⛶ Pantalla completa</button>
       </div>
       <div id="baseline-saved" style="font-size:12px;color:var(--free);margin-top:6px"></div>
@@ -258,7 +278,7 @@ body{font-size:calc(15px*var(--fs))}
       <div id="wk-prog"></div>
       <div class="divider"></div>
       <button class="btn btn-primary btn-block" onclick="openBridge('adapt')">✨ Adaptar próxima semana con Claude</button>
-      <p class="note" style="margin-top:9px">Genera la semana siguiente según tu progreso real (incluye tu punto de partida e historial). Gratis con tu plan Pro vía copiar/pegar.</p>
+      <p class="note mt-9">Genera la semana siguiente según tu progreso real (incluye tu punto de partida e historial). Gratis con tu plan Pro vía copiar/pegar.</p>
     </div>
     <div class="card">
       <div class="card-t">🧠 Análisis del entrenador</div>
@@ -276,7 +296,7 @@ body{font-size:calc(15px*var(--fs))}
       <div class="card-t">📊 Progresión de carga</div>
       <select id="prog-ex-select" onchange="renderLoadProgression()" style="width:100%;padding:9px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;margin-bottom:8px"></select>
       <div id="prog-ex-chart"></div>
-      <p class="note" style="margin-top:8px">Carga máxima registrada por sesión (kg), de las series que anotas en el reproductor guiado. Cada ejercicio aparece en la lista en cuanto registras carga una vez; la gráfica de evolución se dibuja a partir de la segunda sesión.</p>
+      <p class="note mt-8">Carga máxima registrada por sesión (kg), de las series que anotas en el reproductor guiado. Cada ejercicio aparece en la lista en cuanto registras carga una vez; la gráfica de evolución se dibuja a partir de la segunda sesión.</p>
     </div>
     <div class="card">
       <div class="card-t">📋 Historial</div>
@@ -322,7 +342,7 @@ body{font-size:calc(15px*var(--fs))}
       <div id="h-lastimport" style="margin-top:5px;font-size:12px"></div>
       <details class="mt-10">
         <summary style="cursor:pointer;font-size:13px;color:var(--accent)">Formatos admitidos (XML o JSON)</summary>
-        <p class="note" style="margin:8px 0">El export.xml nativo de Salud contiene años de datos y puede ser enorme o fallar. Como alternativa más ligera puedes subir un <b>JSON de los últimos 30 días</b>:<br>
+        <p class="note my-8">El export.xml nativo de Salud contiene años de datos y puede ser enorme o fallar. Como alternativa más ligera puedes subir un <b>JSON de los últimos 30 días</b>:<br>
         • Apps como <b>Health Auto Export</b> o <b>Health Export Kit</b> generan ese JSON automáticamente.<br>
         • O un JSON simple con esta forma:</p>
         <pre style="font-size:11px;background:var(--surface2);padding:10px;border-radius:8px;overflow:auto;line-height:1.4">{
@@ -336,11 +356,11 @@ body{font-size:calc(15px*var(--fs))}
     {"date":"2026-06-10","type":"Fuerza","duration":50}
   ]
 }</pre>
-        <p class="note" style="margin:8px 0">Todos los campos son opcionales: incluye solo los que tengas.</p>
+        <p class="note my-8">Todos los campos son opcionales: incluye solo los que tengas.</p>
       </details>
       <details class="mt-10">
         <summary style="cursor:pointer;font-size:13px;color:var(--accent)">✏️ Introducir / actualizar marcadores a mano (medias del mes)</summary>
-        <p class="note" style="margin:8px 0">La forma recomendada. En la app Salud abre cada dato, filtra por mes (pestaña <b>M</b>) y apunta el <b>PROMEDIO</b>; para VO₂max y % grasa usa el valor más reciente. Rutas: FC reposo, HRV y VO₂max → Examinar → Corazón. Pasos y energía activa → Examinar → Actividad. % grasa → Examinar → Medidas corporales. Déjalo en blanco si no lo tienes; se prellenan tus valores anteriores para que solo cambies lo necesario.</p>
+        <p class="note my-8">La forma recomendada. En la app Salud abre cada dato, filtra por mes (pestaña <b>M</b>) y apunta el <b>PROMEDIO</b>; para VO₂max y % grasa usa el valor más reciente. Rutas: FC reposo, HRV y VO₂max → Examinar → Corazón. Pasos y energía activa → Examinar → Actividad. % grasa → Examinar → Medidas corporales. Déjalo en blanco si no lo tienes; se prellenan tus valores anteriores para que solo cambies lo necesario.</p>
         <div class="row2">
           <div class="field"><label>FC reposo (lpm)</label><input type="text" id="m-rhr" inputmode="decimal" placeholder="58"></div>
           <div class="field"><label>HRV / VFC (ms)</label><input type="text" id="m-hrv" inputmode="decimal" placeholder="45"></div>
@@ -364,7 +384,7 @@ body{font-size:calc(15px*var(--fs))}
       <div class="card-t">❤️ Marcadores de estado (medias mensuales)</div>
       <div class="hm-grid stat-grid" style="grid-template-columns:1fr 1fr 1fr"></div>
       <div id="h-reminder"></div>
-      <p class="note" style="margin-top:10px">Claude usa estos marcadores para valorar tu recuperación y ajustar el plan (p. ej. HRV baja o pulso en reposo alto → semana más suave). Las flechas muestran la tendencia frente a tu actualización anterior. Orientativo, no diagnóstico médico.</p>
+      <p class="note mt-10">Claude usa estos marcadores para valorar tu recuperación y ajustar el plan (p. ej. HRV baja o pulso en reposo alto → semana más suave). Las flechas muestran la tendencia frente a tu actualización anterior. Orientativo, no diagnóstico médico.</p>
     </div>
     <div class="card">
       <div class="card-t">Datos personales</div>
@@ -397,7 +417,7 @@ body{font-size:calc(15px*var(--fs))}
     </div>
     <div class="card">
       <div class="card-t">🩹 Limitaciones y lesiones</div>
-      <p class="note" style="margin-bottom:9px">Si marcas una zona, el generador offline evita los ejercicios de mayor carga o impacto para esa zona, y se lo indicamos también a Claude en el mensaje semanal. Orientativo, no sustituye la valoración de un profesional; si hay dolor persistente o agudo, consúltalo antes de seguir entrenando esa zona.</p>
+      <p class="note mb-9">Si marcas una zona, el generador offline evita los ejercicios de mayor carga o impacto para esa zona, y se lo indicamos también a Claude en el mensaje semanal. Orientativo, no sustituye la valoración de un profesional; si hay dolor persistente o agudo, consúltalo antes de seguir entrenando esa zona.</p>
       <div id="limit-chips" style="margin-bottom:8px"></div>
       <div class="field"><label>Nota (opcional)</label><textarea id="limit-nota" placeholder="Ej: molestia en el hombro derecho al elevar por encima de la cabeza" style="min-height:60px"></textarea></div>
     </div>
@@ -421,38 +441,38 @@ body{font-size:calc(15px*var(--fs))}
       </div>
     </div>
     <button class="btn btn-primary btn-block" onclick="buildWeekOffline()">⚡ Generar semana (offline)</button>
-    <button class="btn btn-block" style="margin-top:8px" onclick="openBridge('new')">✨ Generar con Claude (más detallado)</button>
+    <button class="btn btn-block mt-8" onclick="openBridge('new')">✨ Generar con Claude (más detallado)</button>
     <div class="card">
       <div class="card-t">🗓️ Mesociclo</div>
-      <p class="note" style="margin-bottom:9px">Tu entrenador (Claude) decide la fase del bloque según tu objetivo global y tu progreso, y la propone en cada adaptación semanal. La semana del programa se cuenta desde tu primer registro. Sin descarga programada.</p>
+      <p class="note mb-9">Tu entrenador (Claude) decide la fase del bloque según tu objetivo global y tu progreso, y la propone en cada adaptación semanal. La semana del programa se cuenta desde tu primer registro. Sin descarga programada.</p>
       <div id="meso-info" style="font-size:calc(13px*var(--fs));font-weight:600;margin-bottom:6px"></div>
       <div id="meso-focus-view" style="font-size:calc(13px*var(--fs));color:var(--text2);margin-bottom:10px"></div>
       <details>
         <summary style="cursor:pointer;font-size:calc(12px*var(--fs));color:var(--accent)">Ajuste avanzado (opcional)</summary>
-        <div class="field" style="margin-top:8px"><label>Semanas por bloque (orientativo; Claude puede ajustarlo)</label><select id="meso-len" onchange="saveMeso()">
+        <div class="field mt-8"><label>Semanas por bloque (orientativo; Claude puede ajustarlo)</label><select id="meso-len" onchange="saveMeso()">
           <option value="3">3</option><option value="4" selected>4</option><option value="5">5</option><option value="6">6</option></select></div>
       </details>
     </div>
     <div class="card">
       <div class="card-t">🔠 Tamaño de texto</div>
-      <p class="note" style="margin-bottom:9px">Ajusta el tamaño de letra de toda la app a tu gusto y visión.</p>
+      <p class="note mb-9">Ajusta el tamaño de letra de toda la app a tu gusto y visión.</p>
       <div id="fs-chips"></div>
     </div>
     <div class="card">
       <div class="card-t">🔊 Aviso sonoro</div>
-      <p class="note" style="margin-bottom:9px">Pitidos en los últimos 3 segundos de cada cuenta atrás. Si apenas se oyen: sube el volumen del móvil con los botones laterales <b>mientras suena</b>, y comprueba que el interruptor de silencio (lateral del iPhone) no esté activado.</p>
+      <p class="note mb-9">Pitidos en los últimos 3 segundos de cada cuenta atrás. Si apenas se oyen: sube el volumen del móvil con los botones laterales <b>mientras suena</b>, y comprueba que el interruptor de silencio (lateral del iPhone) no esté activado.</p>
       <button class="btn btn-block" onclick="testBeep()">▶ Probar sonido</button>
     </div>
     <div class="card">
       <div class="card-t">💾 Mis datos</div>
-      <p class="note" style="margin-bottom:9px">Todo vive solo en este iPhone (no hay servidor). Si cambias de móvil, reinstalas la app borrando el icono, o el navegador pierde el almacenamiento, <b>sin una copia exportada no hay forma de recuperar tus datos</b>. Exporta una copia de vez en cuando.</p>
+      <p class="note mb-9">Todo vive solo en este iPhone (no hay servidor). Si cambias de móvil, reinstalas la app borrando el icono, o el navegador pierde el almacenamiento, <b>sin una copia exportada no hay forma de recuperar tus datos</b>. Exporta una copia de vez en cuando.</p>
       <button class="btn btn-block" onclick="exportData()">⬇️ Exportar mis datos</button>
       <input type="file" id="restore-file" accept="application/json,.json" style="display:none" onchange="restoreData(event)">
-      <button class="btn btn-block" style="margin-top:8px" onclick="document.getElementById('restore-file').click()">⬆️ Restaurar copia de seguridad</button>
+      <button class="btn btn-block mt-8" onclick="document.getElementById('restore-file').click()">⬆️ Restaurar copia de seguridad</button>
       <button class="btn btn-block" style="margin-top:8px;border-color:var(--danger);color:var(--danger)" onclick="confirmDeleteAll()">🗑️ Eliminar todos mis datos</button>
       <div id="data-status" style="margin-top:7px;font-size:12px"></div>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 61</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 63</div>
     <div id="sw-status" style="text-align:center;font-size:11px;color:var(--warn);margin-top:4px;display:none"></div>
   </div>
 </div>
@@ -475,7 +495,7 @@ body{font-size:calc(15px*var(--fs))}
       <button class="btn btn-sm" style="background:rgba(255,255,255,.2);border-color:transparent;color:#fff" onclick="stopTimer()">✕</button>
     </div>
   </div>
-  <div class="timer-pf"><div class="timer-pi" id="tm-pi" style="width:100%"></div></div>
+  <div class="timer-pf"><div class="timer-pi w100" id="tm-pi"></div></div>
 </div>
 
 <div class="tabbar">
@@ -521,26 +541,26 @@ body{font-size:calc(15px*var(--fs))}
   <div class="sheet" style="max-height:94vh">
     <div class="sheet-h"><h3>🏁 Punto de partida</h3><button class="btn btn-sm" onclick="closeSheet('baseline-bg')">✕</button></div>
     <textarea id="bf-text" style="width:100%;min-height:60vh;font-size:16px;line-height:1.6;padding:12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);font-family:inherit;resize:vertical" placeholder="Escribe o edita aquí con todo el espacio..."></textarea>
-    <button class="btn btn-primary btn-block" style="margin-top:10px" onclick="saveBaselineFull()">💾 Guardar y cerrar</button>
+    <button class="btn btn-primary btn-block mt-10" onclick="saveBaselineFull()">💾 Guardar y cerrar</button>
   </div>
 </div>
 
 <div class="sheet-bg" id="mod-bg">
   <div class="sheet">
     <div class="sheet-h"><h3>⚙ Modificar sesión</h3><button class="btn btn-sm" onclick="closeSheet('mod-bg')">✕</button></div>
-    <p class="note" style="margin-bottom:11px">Ajusta el material o el tiempo disponible solo para esta sesión, sin cambiar tu perfil. Se mantienen los mismos ejercicios adaptando la variante al nuevo material siempre que sea posible; solo se sustituyen los que no se puedan hacer con lo que tengas hoy.</p>
+    <p class="note mb-11">Ajusta el material o el tiempo disponible solo para esta sesión, sin cambiar tu perfil. Se mantienen los mismos ejercicios adaptando la variante al nuevo material siempre que sea posible; solo se sustituyen los que no se puedan hacer con lo que tengas hoy.</p>
     <div class="field"><label>Material disponible para hoy</label><div id="mod-equip"></div></div>
     <div id="mod-equip-sum"></div>
     <div class="field"><label>Tiempo disponible: <span id="mod-min-out" style="font-weight:600;color:var(--text)">45</span> min</label>
       <input type="range" id="mod-min" min="15" max="120" step="5" value="45" style="width:100%"></div>
     <button class="btn btn-primary btn-block" onclick="regenerateDayOffline()">⚡ Adaptar a mi material (offline)</button>
-    <button class="btn btn-block" style="margin-top:8px" onclick="modifyWithClaude()">✨ Pedir a Claude (más detallado)</button>
+    <button class="btn btn-block mt-8" onclick="modifyWithClaude()">✨ Pedir a Claude (más detallado)</button>
     <div id="mod-claude" style="display:none;margin-top:12px">
       <div class="divider"></div>
       <button class="btn btn-primary btn-block" onclick="copyModPrompt()" id="mod-copy">📋 Copiar mensaje para Claude</button>
-      <a class="btn btn-block" style="margin-top:8px;text-decoration:none" href="https://claude.ai/new" target="_blank" rel="noopener">↗ Abrir claude.ai</a>
-      <button class="btn btn-primary btn-block" style="margin-top:10px" onclick="pasteInto('mod-in',applyModify)">📋 Pegar respuesta y aplicar</button>
-      <div class="field" style="margin-top:10px"><label>…o pega aquí la respuesta JSON a mano</label>
+      <a class="btn btn-block mt-8 nodec" href="https://claude.ai/new" target="_blank" rel="noopener">↗ Abrir claude.ai</a>
+      <button class="btn btn-primary btn-block mt-10" onclick="pasteInto('mod-in',applyModify)">📋 Pegar respuesta y aplicar</button>
+      <div class="field mt-10"><label>…o pega aquí la respuesta JSON a mano</label>
         <textarea class="bridge-out" id="mod-in" placeholder='{ "titulo":..., "ejercicios":[...] }'></textarea></div>
       <button class="btn btn-block" onclick="applyModify()">✓ Aplicar a esta sesión</button>
     </div>
@@ -550,7 +570,7 @@ body{font-size:calc(15px*var(--fs))}
 <div class="sheet-bg" id="gen-bg">
   <div class="sheet">
     <div class="sheet-h"><h3>✨ Generar sesión IA</h3><button class="btn btn-sm" onclick="closeSheet('gen-bg')">✕</button></div>
-    <p class="note" style="margin-bottom:11px">Crea una sesión a medida para este día. Se añade como sesión adicional y no altera tu plan de la semana.</p>
+    <p class="note mb-11">Crea una sesión a medida para este día. Se añade como sesión adicional y no altera tu plan de la semana.</p>
     <div class="field"><label>Objetivo de esta sesión</label><div id="gen-obj"></div></div>
     <div class="field"><label>Nivel</label><div id="gen-niv"></div></div>
     <div class="field"><label>Material disponible</label><div id="gen-equip"></div></div>
@@ -560,13 +580,13 @@ body{font-size:calc(15px*var(--fs))}
     <div class="field"><label>¿Qué hacer con esta sesión?</label><div id="gen-mode"></div></div>
     <label style="display:flex;align-items:center;gap:8px;margin:2px 0 12px;font-size:13px;color:var(--text2)"><input type="checkbox" id="gen-hist" checked style="width:auto"> Complementar mi entrenamiento reciente (priorizar grupos menos trabajados)</label>
     <button class="btn btn-primary btn-block" onclick="generateDayOffline()">⚡ Generar (offline)</button>
-    <button class="btn btn-block" style="margin-top:8px" onclick="generateWithClaude()">✨ Pedir a Claude (más detallado)</button>
+    <button class="btn btn-block mt-8" onclick="generateWithClaude()">✨ Pedir a Claude (más detallado)</button>
     <div id="gen-claude" style="display:none;margin-top:12px">
       <div class="divider"></div>
       <button class="btn btn-primary btn-block" onclick="copyGenPrompt()" id="gen-copy">📋 Copiar mensaje para Claude</button>
-      <a class="btn btn-block" style="margin-top:8px;text-decoration:none" href="https://claude.ai/new" target="_blank" rel="noopener">↗ Abrir claude.ai</a>
-      <button class="btn btn-primary btn-block" style="margin-top:10px" onclick="pasteInto('gen-in',applyGen)">📋 Pegar respuesta y aplicar</button>
-      <div class="field" style="margin-top:10px"><label>…o pega aquí la respuesta JSON a mano</label>
+      <a class="btn btn-block mt-8 nodec" href="https://claude.ai/new" target="_blank" rel="noopener">↗ Abrir claude.ai</a>
+      <button class="btn btn-primary btn-block mt-10" onclick="pasteInto('gen-in',applyGen)">📋 Pegar respuesta y aplicar</button>
+      <div class="field mt-10"><label>…o pega aquí la respuesta JSON a mano</label>
         <textarea class="bridge-out" id="gen-in" placeholder='{ "titulo":..., "ejercicios":[...] }'></textarea></div>
       <button class="btn btn-block" onclick="applyGen()">✓ Añadir esta sesión</button>
     </div>
@@ -601,7 +621,7 @@ const EXDB=[
   {n:'Puente de glúteo a una pierna',p:'pierna',eq:['ninguno'],m:'Glúteos, isquios',comp:0,d:'Como el puente pero con una pierna extendida: duplica la carga sobre el glúteo de apoyo y corrige asimetrías.'},
   {n:'Paseo lateral con banda',p:'pierna',eq:['bandas'],m:'Glúteo medio',comp:0,d:'Banda alrededor de rodillas o tobillos, semisentadilla; pasos laterales manteniendo tensión constante. Clave para estabilizar cadera y rodilla.'},
   {n:'Patada de glúteo con banda',p:'pierna',eq:['bandas'],m:'Glúteos',comp:0,d:'Banda pisada con el pie de apoyo y enganchada al otro; extiende la pierna atrás sin arquear la lumbar y aprieta el glúteo al final.'},
-  {n:'Curl femoral con banda',p:'pierna',eq:['bandas'],m:'Isquios',comp:0,d:'Tumbado boca abajo con la banda anclada baja y al tobillo; flexiona la rodilla llevando el talón al glúteo, vuelta lenta. El isquio no se trabaja igual con ningún gesto de mancuerna en casa.'},
+  {n:'Curl femoral con banda',p:'pierna',eq:['bandas'],m:'Isquios',comp:0,anc:1,d:'Tumbado boca abajo con la banda anclada baja y al tobillo; flexiona la rodilla llevando el talón al glúteo, vuelta lenta. El isquio no se trabaja igual con ningún gesto de mancuerna en casa.'},
   {n:'Elevación de talones',p:'pierna',eq:['ninguno','mancuernas'],m:'Gemelos',comp:0,d:'De pie, sube a la punta de los pies con pausa de 1s arriba y bajada lenta de 3s; en un escalón el rango es mayor.'},
   {n:'Sentadilla sumo con mancuerna',p:'pierna',eq:['mancuernas','kettlebell'],m:'Aductores, glúteos',comp:1,d:'Postura ancha con puntas hacia fuera, mancuerna colgando entre las piernas; enfatiza aductor y glúteo respecto a la sentadilla normal.'},
   {n:'Prensa de piernas',p:'pierna',eq:['gimnasio'],yt:'IZxyjW7MPJQ',m:'Cuádriceps, glúteos',comp:1,d:'Pies a lo ancho de la plataforma; baja hasta 90° sin despegar la cadera del respaldo y empuja sin bloquear rodillas.'},
@@ -616,7 +636,7 @@ const EXDB=[
   {n:'Press Arnold',p:'empuje',eq:['mancuernas'],m:'Hombro completo',comp:1,d:'Comienza con palmas hacia ti y rota mientras empujas arriba; recorre las tres cabezas del deltoides en un solo gesto.'},
   {n:'Press banda por encima',p:'empuje',eq:['bandas'],yt:'2yjwXTZQDDI',m:'Hombros',comp:1,d:'Pisa la banda y empuja vertical; la resistencia crece hacia el bloqueo, así que remata el gesto arriba y baja lento.'},
   {n:'Press de pecho con banda',p:'empuje',eq:['bandas'],m:'Pecho, tríceps',comp:1,d:'Banda anclada a la espalda (o rodeando la espalda alta); empuja al frente juntando las manos. La tensión máxima llega al final, donde el pecho remata.'},
-  {n:'Aperturas con banda',p:'empuje',eq:['bandas'],m:'Pecho',comp:0,d:'Banda anclada detrás a la altura del pecho; abre y cierra los brazos semiextendidos como un abrazo. Aísla el pectoral sin carga axial.'},
+  {n:'Aperturas con banda',p:'empuje',eq:['bandas'],m:'Pecho',comp:0,anc:1,d:'Banda anclada detrás a la altura del pecho; abre y cierra los brazos semiextendidos como un abrazo. Aísla el pectoral sin carga axial.'},
   {n:'Fondos en banco',p:'empuje',eq:['ninguno','gimnasio'],yt:'0326dy_-CzM',m:'Tríceps',comp:0,d:'Manos en el borde del banco, baja doblando codos hacia atrás (no abiertos) y sube sin bloquear de golpe.'},
   {n:'Extensión de tríceps con banda',p:'empuje',eq:['bandas'],m:'Tríceps',comp:0,d:'Banda anclada arriba (puerta) o sujeta tras la nuca; extiende los codos sin mover los hombros y controla la vuelta.'},
   {n:'Elevaciones laterales',p:'empuje',eq:['mancuernas','bandas','gimnasio'],yt:'3VcKaXpzqRo',m:'Hombro lateral',comp:0,d:'Sube los brazos a la altura del hombro con el codo semiflexionado, como sirviendo dos jarras; sin impulso del tronco.'},
@@ -627,9 +647,9 @@ const EXDB=[
   {n:'Remo con mancuerna',p:'tiron',eq:['mancuernas','gimnasio'],yt:'pYcpY20QaE8',m:'Espalda, bíceps',comp:1,d:'Una mano apoyada en banco; tira de la mancuerna hacia la cadera (no al pecho) con el codo pegado y pausa arriba.'},
   {n:'Remo renegado',p:'tiron',eq:['mancuernas'],m:'Espalda, core',comp:1,d:'En posición de plancha sobre las mancuernas, rema alternando sin girar la cadera; espalda y anti-rotación de core a la vez.'},
   {n:'Remo con banda',p:'tiron',eq:['bandas'],yt:'xQNrFHEMhI4',m:'Espalda',comp:1,d:'Sentado con la banda en los pies o anclada al frente; tira de los codos atrás y junta escápulas con pausa de 1s. Vuelta lenta: ahí está la mitad del trabajo.'},
-  {n:'Jalón con banda',p:'tiron',eq:['bandas'],yt:'xQNrFHEMhI4',m:'Dorsal',comp:1,d:'Banda anclada arriba (puerta); tira de los codos hacia las costillas manteniendo el pecho alto. El dorsal manda, no el bíceps.'},
+  {n:'Jalón con banda',p:'tiron',eq:['bandas'],yt:'xQNrFHEMhI4',m:'Dorsal',comp:1,anc:1,d:'Banda anclada arriba (puerta); tira de los codos hacia las costillas manteniendo el pecho alto. El dorsal manda, no el bíceps.'},
   {n:'Jalón al pecho',p:'tiron',eq:['gimnasio'],yt:'CAwf7n6Luuc',m:'Dorsal',comp:1,d:'Agarre amplio; tira de la barra a la parte alta del pecho llevando los codos abajo y atrás, sin balancear el torso.'},
-  {n:'Face pull con banda',p:'tiron',eq:['bandas'],m:'Deltoides posterior, rotadores',comp:0,d:'Banda anclada a la altura de la cara; tira hacia la frente separando las manos y rotando los nudillos atrás. Oro para hombro sano y postura.'},
+  {n:'Face pull con banda',p:'tiron',eq:['bandas'],m:'Deltoides posterior, rotadores',comp:0,anc:1,d:'Banda anclada a la altura de la cara; tira hacia la frente separando las manos y rotando los nudillos atrás. Oro para hombro sano y postura.'},
   {n:'Pull-apart con banda',p:'tiron',eq:['bandas'],m:'Deltoides posterior, espalda alta',comp:0,d:'Brazos al frente sujetando la banda; sepárala hasta tocar el pecho apretando escápulas. Ideal entre series de press o como acabado.'},
   {n:'Pájaros con mancuernas',p:'tiron',eq:['mancuernas'],m:'Deltoides posterior',comp:0,d:'Torso inclinado; abre los brazos semiflexionados hacia los lados como alas, sin impulso. Compensa todo el empuje que haces.'},
   {n:'Curl de bíceps',p:'tiron',eq:['mancuernas','barra','bandas','gimnasio'],yt:'ykJmrZ5v0Oo',m:'Bíceps',comp:0,d:'Codos pegados al torso; sube sin balanceo y baja en 2-3 segundos. La bajada lenta construye tanto como la subida.'},
@@ -639,8 +659,8 @@ const EXDB=[
   {n:'Plancha',p:'core',eq:['ninguno'],yt:'pSHjTRCQxIw',m:'Core',comp:0,d:'Antebrazos y puntas de pies; glúteo y abdomen apretados formando una línea. Si aguantas más de 60s, endurece (pies elevados o toques de hombro).'},
   {n:'Plancha lateral',p:'core',eq:['ninguno'],yt:'K2VljzCC16g',m:'Oblicuos',comp:0,d:'Apoyo en un antebrazo, cadera alta y alineada; trabaja el costado que la plancha frontal no toca.'},
   {n:'Plancha con toque de hombro',p:'core',eq:['ninguno'],m:'Core, estabilidad',comp:0,d:'En plancha alta, toca el hombro contrario alternando sin balancear la cadera; anti-rotación real.'},
-  {n:'Press Pallof con banda',p:'core',eq:['bandas'],m:'Core anti-rotación',comp:0,d:'Banda anclada lateral a la altura del pecho; extiende los brazos al frente resistiendo el giro y aguanta 2s. El core entrenado como se usa: evitando rotar.'},
-  {n:'Leñador con banda',p:'core',eq:['bandas'],m:'Oblicuos, core',comp:0,d:'Banda anclada arriba o abajo; lleva las manos en diagonal cruzando el cuerpo con brazos semiextendidos, girando desde el tronco.'},
+  {n:'Press Pallof con banda',p:'core',eq:['bandas'],m:'Core anti-rotación',comp:0,anc:1,d:'Banda anclada lateral a la altura del pecho; extiende los brazos al frente resistiendo el giro y aguanta 2s. El core entrenado como se usa: evitando rotar.'},
+  {n:'Leñador con banda',p:'core',eq:['bandas'],m:'Oblicuos, core',comp:0,anc:1,d:'Banda anclada arriba o abajo; lleva las manos en diagonal cruzando el cuerpo con brazos semiextendidos, girando desde el tronco.'},
   {n:'Crunch abdominal',p:'core',eq:['ninguno'],yt:'Xyd_fa5zoEU',m:'Abdominales',comp:0,d:'Despega solo la parte alta de la espalda enrollándote hacia las rodillas; la lumbar queda en el suelo.'},
   {n:'Elevación de piernas',p:'core',eq:['ninguno'],yt:'JB2oyawG9KI',m:'Abdomen inferior',comp:0,d:'Tumbado, sube las piernas rectas y bájalas SIN que la lumbar se despegue; dobla rodillas si hace falta.'},
   {n:'Bicho muerto',p:'core',eq:['ninguno'],m:'Core profundo',comp:0,d:'Tumbado con brazos y rodillas arriba; extiende lentamente brazo y pierna contrarios sin que la lumbar se arquee. Control puro.'},
@@ -769,6 +789,9 @@ function initState(){
   if(!S.briefDays)S.briefDays=[]; // días IA de fuerza breve (los que coinciden con carrera, p. ej. M/J)
   if(!S.dumbbells)S.dumbbells={min:8,max:24,step:2}; // rango de mancuernas disponible (kg por mancuerna)
   if(!S.bands)S.bands={baja:true,media:true,alta:true}; // resistencias de bandas disponibles
+  // v62: ¿puede anclar la banda a un punto fijo (puerta, barra, poste)? Por defecto NO: así solo se
+  // proponen ejercicios que se pueden hacer pisando la banda o sujetándola con el propio cuerpo.
+  if(S.bandAnchor==null)S.bandAnchor=false;
   if(!S.kettlebells)S.kettlebells={list:'8, 12, 16'}; // pesos de kettlebell disponibles (kg), texto
   if(!S.freeDays)S.freeDays=['M','J'];
   if(!S.schedule)S.schedule={};
@@ -864,7 +887,10 @@ function pickExercises(equipSet,objetivo,minutos,seed,opts){
   const exclude=new Set(opts.exclude||[]);
   if(riskAreas.size)riskExcludeNames(riskAreas).forEach(n=>exclude.add(n));
   // disponible: peso corporal SIEMPRE + lo que coincida con el equipo seleccionado
-  const avail=EXDB.filter(e=>(e.eq.includes('ninguno')||e.eq.some(t=>equipSet.has(t)))&&!exclude.has(e.n));
+  // v62: si el usuario no puede anclar la banda a un punto fijo, se excluyen los ejercicios que lo
+  // exigen (anc:1): solo se proponen los que se hacen pisando la banda o sujetándola con el cuerpo.
+  const avail=EXDB.filter(e=>(e.eq.includes('ninguno')||e.eq.some(t=>equipSet.has(t)))&&!exclude.has(e.n)
+    &&!(e.anc&&!S.bandAnchor));
   const g=GOALS[objetivo];
   const isCircuit=g.split.includes('circuito');
   const count=minutos<=25?4:minutos<=40?5:minutos<=55?6:minutos<=75?7:8;
@@ -934,6 +960,7 @@ function equivalentForEquip(exEntry,eqSet,avoidNames){
     e.n!==exEntry.nombre &&
     e.p===pat &&
     (e.eq.includes('ninguno')||e.eq.some(t=>eqSet.has(t))) &&
+    !(e.anc&&!S.bandAnchor) && // v62: sin punto de anclaje, no proponer ejercicios que lo exigen
     !avoid.has(e.n)
   );
   // preferimos misma musculatura principal y misma naturaleza (compuesto/aislado) si la hay
@@ -1714,8 +1741,8 @@ function showSess(key){
   const riskNames=riskExcludeNames(activeRiskAreas()); // v56: para marcar ⚠ en el buscador de sustitución
   let h=`<div class="card"><div style="font-size:16px;font-weight:600">${esc(sess.title)}</div>
     <div style="font-size:12px;color:var(--text2);margin-top:3px">${esc(sess.meta)||''}</div>
-    <button class="btn btn-primary btn-block" style="margin-top:12px" onclick="startPlayer('${key}')">▶ Empezar sesión guiada</button></div>`;
-  if(sess.warmup)h+=`<div class="note" style="margin-bottom:11px">🔥 <b>Calentamiento:</b> ${esc(sess.warmup)}</div>`;
+    <button class="btn btn-primary btn-block mt-12" onclick="startPlayer('${key}')">▶ Empezar sesión guiada</button></div>`;
+  if(sess.warmup)h+=`<div class="note mb-11">🔥 <b>Calentamiento:</b> ${esc(sess.warmup)}</div>`;
   sess.exercises.forEach((ex,i)=>{
     if(isBlock(ex)){h+=blockCard(ex,i);return;}
     const errs=(ex.errores&&ex.errores.length?ex.errores:(ERRORS[figKey(ex.nombre)]||[]));
@@ -1724,21 +1751,22 @@ function showSess(key){
     if(alts&&alts.length){
       const opts=[(ex._orig?{nombre:ex._orig.nombre}:{nombre:ex.nombre})].concat(alts);
       const curName=ex.nombre;
-      altHtml=`<div style="padding:0 13px 12px">
+      altHtml=`<div class="pad-exsec">
         <div style="font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">⇄ Alternativas (elige una; por defecto la propuesta)</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">
         ${opts.map((o,oi)=>`<span class="chip${o.nombre===curName?' sel':''}" onclick="event.stopPropagation();swapExercise('${key}',${i},${oi})">${oi===0?'★ ':''}${esc(o.nombre)}</span>`).join('')}
         </div></div>`;
     }
     const compat=compatibleExercises(ex);
-    const searchHtml=compat.length?`<div style="padding:0 13px 12px">
+    const searchHtml=compat.length?`<div class="pad-exsec">
         <button class="btn btn-xs" onclick="event.stopPropagation();toggleSearch(${i})">🔍 Buscar otro ejercicio (${compat.length})</button>
         <div id="srch-${i}" style="display:none;margin-top:8px">
           <select onchange="event.stopPropagation();swapToName('${key}',${i},this.value)" onclick="event.stopPropagation()" style="width:100%;padding:9px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px">
             <option value="">Elige un ejercicio del mismo patrón (${ex.p||'?'})…</option>
-            ${compat.map(e=>`<option value="${esc(e.n)}">${riskNames.has(e.n)?'⚠ ':''}${esc(e.n)}</option>`).join('')}
+            ${compat.map(e=>`<option value="${esc(e.n)}">${riskNames.has(e.n)?'⚠ ':''}${(e.anc&&!S.bandAnchor)?'⚓ ':''}${esc(e.n)}</option>`).join('')}
           </select>
-          ${riskNames.size?'<p class="note" style="margin-top:6px">⚠ = ejercicio de mayor carga/impacto para una zona que tienes marcada como limitación o con dolor reciente. Puedes elegirlo igualmente; es solo un aviso.</p>':''}
+          ${riskNames.size?'<p class="note mt-6">⚠ = ejercicio de mayor carga/impacto para una zona que tienes marcada como limitación o con dolor reciente. Puedes elegirlo igualmente; es solo un aviso.</p>':''}
+          ${(!S.bandAnchor&&compat.some(e=>e.anc))?'<p class="note mt-6">⚓ = necesita anclar la banda a un punto fijo (puerta, barra…), que has indicado no tener. Puedes elegirlo si hoy sí puedes anclarla.</p>':''}
         </div></div>`:'';
     h+=`<div class="ex"><div class="ex-h" onclick="toggleEx(${i})">
       <div class="ex-n">${i+1}</div>
@@ -1754,11 +1782,11 @@ function showSess(key){
       </div>
       ${altHtml}
       ${searchHtml}
-      ${errs.length?`<div style="padding:0 13px 12px"><div style="font-size:11px;font-weight:600;color:var(--danger);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">⚠ Errores a evitar</div><ul style="margin:0;padding-left:16px;font-size:12px;color:var(--text2);line-height:1.6">${errs.map(e=>`<li>${esc(e)}</li>`).join('')}</ul></div>`:''}
+      ${errs.length?`<div class="pad-exsec"><div style="font-size:11px;font-weight:600;color:var(--danger);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">⚠ Errores a evitar</div><ul style="margin:0;padding-left:16px;font-size:12px;color:var(--text2);line-height:1.6">${errs.map(e=>`<li>${esc(e)}</li>`).join('')}</ul></div>`:''}
       </div></div>`;
   });
   if(sess.cooldown)h+=`<div class="note" style="margin:11px 0">🧘 <b>Vuelta a la calma:</b> ${esc(sess.cooldown)}</div>`;
-  h+=`<div class="note" style="margin-bottom:11px">🎬 ¿Prefieres una sesión completa en vídeo? <a href="https://www.youtube.com/@TIFFxDAN/search?query=${encodeURIComponent(sess.title||'')}" target="_blank" rel="noopener" style="color:var(--accent)">Buscar en TIFFxDAN ↗</a></div>`;
+  h+=`<div class="note mb-11">🎬 ¿Prefieres una sesión completa en vídeo? <a href="https://www.youtube.com/@TIFFxDAN/search?query=${encodeURIComponent(sess.title||'')}" target="_blank" rel="noopener" style="color:var(--accent)">Buscar en TIFFxDAN ↗</a></div>`;
   h+=`<button class="btn btn-primary btn-block" onclick="openLog('${key}')">✓ Completar y registrar</button>`;
   document.getElementById('sess-content').innerHTML=h;
   tab('sess');
@@ -1803,7 +1831,7 @@ function openLog(key,mode){
       </div></div>
     <div class="field"><label>Dolor o molestias durante la sesión (opcional)</label>
       <div class="feel">${PAIN_AREAS.filter(a=>a[0]!=='otra').map(([k,lab])=>`<div class="pain-b" onclick="togglePain(this)" data-a="${k}">${lab}</div>`).join('')}</div>
-      <p class="note" style="margin-top:6px">Si marcas una zona aquí, el generador offline evitará ejercicios de riesgo para esa zona durante los próximos 14 días, además de lo que hayas fijado como limitación fija en Ajustes.</p></div>
+      <p class="note mt-6">Si marcas una zona aquí, el generador offline evitará ejercicios de riesgo para esa zona durante los próximos 14 días, además de lo que hayas fijado como limitación fija en Ajustes.</p></div>
     <div class="field"><label style="display:flex;justify-content:space-between;align-items:center">Notas (pesos, series reales, sensaciones)${isAdd?'':`<button class="btn btn-xs" onclick="insertLoadTemplate('${key}')">${(()=>{const s=mainAISess(key);return (s&&s.sets&&s.sets.length)?'＋ Cargas reales':'＋ Plantilla cargas';})()}</button>`}</label>
       <textarea id="l-notes" placeholder="${isAdd?'Ej: 7,1 km, 5:30/km, 412 kcal, FC media 152...':'Ej: goblet 16kg llegué a 12, press 16kg 3×10 justo...'}"></textarea></div>`;
   openSheet('log-bg');
@@ -1913,8 +1941,8 @@ function renderProg(){
   const dates=weekDates(S.currentWeek);
   const {planned,done,pct}=weekAdherencePct();
   document.getElementById('wk-prog').innerHTML=`
-    <div class="prog-r"><span style="color:var(--text2)">Completadas</span><span style="font-weight:600">${done}/${planned}</span></div>
-    <div class="prog-r"><div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div><span style="font-weight:600">${pct}%</span></div>`;
+    <div class="prog-r"><span style="color:var(--text2)">Completadas</span><span class="fw6">${done}/${planned}</span></div>
+    <div class="prog-r"><div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div><span class="fw6">${pct}%</span></div>`;
   document.getElementById('stats').innerHTML=`
     <div class="stat"><div class="stat-v">${S.history.length}</div><div class="stat-l">Total</div></div>
     <div class="stat"><div class="stat-v">${done}</div><div class="stat-l">Esta semana</div></div>
@@ -1943,8 +1971,8 @@ function renderBadges(){
   S.earnedBadges=[...ids];save();
   c.innerHTML=`
     <div style="display:flex;gap:14px;margin-bottom:12px">
-      <div class="stat" style="flex:1"><div class="stat-v">🔥 ${st.streak}</div><div class="stat-l">racha (sem. con ≥3 ses.)</div></div>
-      <div class="stat" style="flex:1"><div class="stat-v">🏃 ${st.km}</div><div class="stat-l">km registrados</div></div>
+      <div class="stat flex1"><div class="stat-v">🔥 ${st.streak}</div><div class="stat-l">racha (sem. con ≥3 ses.)</div></div>
+      <div class="stat flex1"><div class="stat-v">🏃 ${st.km}</div><div class="stat-l">km registrados</div></div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
     ${BADGES.map(b=>{const on=ids.has(b.id);
@@ -2018,9 +2046,9 @@ function renderNutri(){
     let hint='';
     if(off)hint=' — si quieres, prueba unos días hacia el extremo '+(wantsDown?'bajo':'alto')+' del rango y revisa en 1-2 semanas más, sin prisa.';
     else if(aligned)hint=' — va en línea con tu objetivo actual; no hace falta tocar nada.';
-    trendNote=`<div class="note" style="margin-top:8px">📉 Tu peso lleva una tendencia ${dirTxt} esta semana (${Math.abs(trend.diff)} kg de media vs. la semana anterior).${hint}</div>`;
+    trendNote=`<div class="note mt-8">📉 Tu peso lleva una tendencia ${dirTxt} esta semana (${Math.abs(trend.diff)} kg de media vs. la semana anterior).${hint}</div>`;
   } else if(!trend){
-    trendNote=`<div class="note" style="margin-top:8px">Registra tu peso unas cuantas veces (se guarda solo al tocar "Guardar" en Datos personales) para ver aquí la tendencia y poder afinar el rango.</div>`;
+    trendNote=`<div class="note mt-8">Registra tu peso unas cuantas veces (se guarda solo al tocar "Guardar" en Datos personales) para ver aquí la tendencia y poder afinar el rango.</div>`;
   }
   c.innerHTML=`<div class="card"><div class="card-t">🍽 Objetivos diarios</div>
     ${n.modo?`<div style="font-size:12px;color:var(--text2);margin:-4px 0 10px">Enfoque: ${esc(n.modo)}</div>`:''}
@@ -2032,7 +2060,7 @@ function renderNutri(){
     ${(n.menu_dia||[]).map(m=>`<div class="meal"><div class="meal-t">${esc(m.momento)} · ${esc(m.hora)}</div>
       <div class="meal-n">${esc(m.plato)}</div><div class="meal-m">${esc(m.kcal)} kcal · ${esc(m.proteina_g)}g proteína</div></div>`).join('')}
     <p class="note">Valores orientativos calculados desde tu gasto energético${hasRange?' (el rango es a propósito: no lo tomes como un objetivo exacto a cumplir)':''}. Ajusta según tu evolución y consulta a un profesional para necesidades específicas.</p>
-    <div class="card" style="margin-top:12px">
+    <div class="card mt-12">
       <div class="card-t">📅 Revisión semanal</div>
       <div class="note">Adherencia de esta semana: <b style="color:var(--text)">${pct}%</b>.</div>
       ${trendNote}
@@ -2053,7 +2081,10 @@ function equipDetailFor(equipos){
   }
   if(eq.includes('bandas')){
     const b=S.bands||{};const res=['baja','media','alta'].filter(r=>b[r]);
-    if(res.length)d+=`\nBandas elásticas disponibles, resistencias: ${res.join(', ')}. Indica qué banda usar en cada ejercicio.`;
+    if(res.length)d+=`\nBandas elásticas disponibles, resistencias: ${res.join(', ')}. Indica SIEMPRE qué banda usar en cada ejercicio (baja/media/alta), no un peso en kg.`;
+    d+=S.bandAnchor
+      ? `\nSÍ dispongo de un punto de anclaje para la banda (puerta, barra o poste), así que puedes proponer ejercicios anclados (jalón, face pull, Pallof, aperturas, leñador, curl femoral), indicando siempre a qué altura anclarla.`
+      : `\nIMPORTANTE: NO dispongo de ningún punto donde anclar la banda (ni puerta, ni barra, ni poste). Propón SOLO ejercicios de banda que se puedan hacer pisándola con los pies o sujetándola con el propio cuerpo (rodeando la espalda, entre las manos, alrededor de rodillas/tobillos). NO propongas jalón con banda, face pull, press Pallof, aperturas ancladas, leñador ni curl femoral con banda anclada, ni ningún ejercicio cuya ejecución dependa de un anclaje externo. Explica en cada uno cómo pisar o sujetar la banda.`;
   }
   if(eq.includes('kettlebell')){
     const kl=kettlebellList();
@@ -2076,7 +2107,10 @@ function equipLabels(equipos){
 function coachExtrasFor(equipos,beforeKey){
   let t=`\n- ACTÚA COMO ENTRENADOR PROFESIONAL: en "descripcion" de cada ejercicio explica en 1-2 frases la técnica clave Y por qué está en esta sesión (qué aporta al objetivo). En "meta" resume en una frase el propósito de la sesión.`;
   if((equipos||[]).includes('bandas')){
-    t+=`\n- ENTRENAMIENTO CON BANDAS (importante): programa ejercicios PROPIOS de banda que aprovechen su curva de tensión creciente —face pull, pull-apart, press Pallof, paseo lateral, curl femoral tumbado con banda, empuje de cadera con banda, jalón con banda, aperturas con banda—, no solo versiones con banda de ejercicios de mancuerna. Usa repeticiones algo más altas (12-20), pide vuelta lenta (la excéntrica es donde la banda más trabaja) y especifica en cada ejercicio el anclaje (puerta/pie) o cómo pisar la banda y cómo ajustar la tensión (acortar agarre o alejarse).`;
+    const ejAnc=S.bandAnchor
+      ? 'face pull, pull-apart, press Pallof, paseo lateral, curl femoral tumbado con banda, empuje de cadera con banda, jalón con banda, aperturas con banda'
+      : 'pull-apart, paseo lateral, patada de glúteo, empuje de cadera pisando la banda, peso muerto rumano con banda pisada, remo sentado con la banda en los pies, press de pecho rodeando la espalda, press por encima pisando la banda';
+    t+=`\n- ENTRENAMIENTO CON BANDAS (importante): programa ejercicios PROPIOS de banda que aprovechen su curva de tensión creciente —${ejAnc}—, no solo versiones con banda de ejercicios de mancuerna. Usa repeticiones algo más altas (12-20), pide vuelta lenta (la excéntrica es donde la banda más trabaja) y especifica en cada ejercicio ${S.bandAnchor?'el anclaje (puerta/pie) o cómo pisar la banda':'cómo pisar o sujetar la banda con el cuerpo (sin anclajes externos)'} y cómo ajustar la tensión (acortar agarre o separar los pies).`;
   }
   const rot=beforeKey?[...recentExerciseNames(beforeKey,21)]:[];
   if(rot.length){
@@ -2263,15 +2297,15 @@ function openBridge(mode){
       <div class="bridge-step"><div class="num">4</div><div class="tx">Revisa el resumen del plan y pulsa "Aplicar plan".</div></div>
     </div>
     <button class="btn btn-primary btn-block" onclick="copyPrompt()" id="copy-btn">📋 Copiar mensaje para Claude</button>
-    <button class="btn btn-block" style="margin-top:8px" onclick="sharePrompt()" id="share-btn">📤 Compartir con Claude (recomendado en iPhone)</button>
-    <a class="btn btn-block" style="margin-top:8px;text-decoration:none" href="https://claude.ai/new" target="_blank" rel="noopener">↗ Abrir claude.ai</a>
+    <button class="btn btn-block mt-8" onclick="sharePrompt()" id="share-btn">📤 Compartir con Claude (recomendado en iPhone)</button>
+    <a class="btn btn-block mt-8 nodec" href="https://claude.ai/new" target="_blank" rel="noopener">↗ Abrir claude.ai</a>
     <p class="note" style="margin-top:7px;font-size:calc(11px*var(--fs))">En iPhone, si al pegar se adjunta como archivo .txt, usa "Compartir con Claude": envía el texto directamente. Funciona igual; Claude lo lee y responde el JSON.</p>
     <div class="divider"></div>
     <button class="btn btn-primary btn-block" onclick="pasteInto('bridge-in',previewBridge)">📋 Pegar respuesta y revisar</button>
-    <div class="field" style="margin-top:10px"><label>…o pégala aquí a mano</label>
+    <div class="field mt-10"><label>…o pégala aquí a mano</label>
       <textarea class="bridge-out" id="bridge-in" placeholder='{ "sesiones_ia": [...], "nutricion": {...} }'></textarea></div>
     <button class="btn btn-block" onclick="previewBridge()">✓ Revisar y aplicar</button>
-    <p class="note" style="margin-top:9px">El prompt ya incluye tu perfil${mode==='adapt'?' y tu historial de sesiones':''}. Claude no necesita ningún dato extra. Antes de aplicar verás un resumen del plan y cualquier problema detectado.</p>`;
+    <p class="note mt-9">El prompt ya incluye tu perfil${mode==='adapt'?' y tu historial de sesiones':''}. Claude no necesita ningún dato extra. Antes de aplicar verás un resumen del plan y cualquier problema detectado.</p>`;
   window._prompt=prompt;
   if(window._bridgeRaw){const bi=document.getElementById('bridge-in');if(bi)bi.value=window._bridgeRaw;}
   openSheet('bridge-bg');
@@ -2365,22 +2399,22 @@ function previewBridge(){
     const exs=(s.ejercicios||[]).map(e=>isBlock(e)
       ?`<li>${esc(e.nombre)} · ${esc(_fmtBlock(e,blockType(e)))}</li>`
       :`<li>${esc(e.nombre)||'?'} — ${e.series!=null?esc(e.series):'?'}×${e.reps!=null?esc(e.reps):'?'}${e.peso?' · '+esc(e.peso):''}</li>`).join('');
-    return `<div style="margin-bottom:10px"><b>${day}</b> · ${esc(s.titulo)||''}${replaces}
+    return `<div class="mb-10"><b>${day}</b> · ${esc(s.titulo)||''}${replaces}
       <ul style="margin:4px 0 0;padding-left:18px;font-size:calc(12px*var(--fs));color:var(--text2)">${exs}</ul></div>`;
   }).join('');
   const nutri=plan.nutricion?`<div style="margin-top:6px;font-size:calc(12px*var(--fs));color:var(--text2)">🍎 Nutrición: ${esc(plan.nutricion.calorias_diarias||plan.nutricion.kcal||'?')} kcal · ${esc(plan.nutricion.proteina_g||'?')} g proteína${Array.isArray(plan.nutricion.menu_dia)?' · menú de '+plan.nutricion.menu_dia.length+' comidas':''}</div>`:'';
   const meso=(plan.mesociclo&&plan.mesociclo.enfoque)?`<div style="margin-top:4px;font-size:calc(12px*var(--fs));color:var(--text2)">🗓️ Fase: ${esc(plan.mesociclo.enfoque)}</div>`:'';
-  const errBox=issues.errors.length?`<div style="background:rgba(255,69,58,.12);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:10px;font-size:calc(12px*var(--fs))"><b>✕ Corrige antes de aplicar:</b><ul style="margin:5px 0 0;padding-left:18px">${issues.errors.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
-    <button class="btn btn-xs" style="margin-top:8px" onclick="copyFixMsg()">📋 Copiar petición de corrección para Claude</button></div>`:'';
-  const warnBox=issues.warns.length?`<div style="background:rgba(255,214,10,.12);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:10px;font-size:calc(12px*var(--fs))"><b>⚠ Avisos</b> (puedes aplicar igualmente):<ul style="margin:5px 0 0;padding-left:18px">${issues.warns.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
-    ${issues.errors.length?'':'<button class="btn btn-xs" style="margin-top:8px" onclick="copyFixMsg()">📋 Copiar petición de corrección para Claude</button>'}</div>`:'';
+  const errBox=issues.errors.length?`<div style="background:rgba(255,69,58,.12);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:10px;font-size:calc(12px*var(--fs))"><b>✕ Corrige antes de aplicar:</b><ul class="ul-tight">${issues.errors.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+    <button class="btn btn-xs mt-8" onclick="copyFixMsg()">📋 Copiar petición de corrección para Claude</button></div>`:'';
+  const warnBox=issues.warns.length?`<div style="background:rgba(255,214,10,.12);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:10px;font-size:calc(12px*var(--fs))"><b>⚠ Avisos</b> (puedes aplicar igualmente):<ul class="ul-tight">${issues.warns.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+    ${issues.errors.length?'':'<button class="btn btn-xs mt-8" onclick="copyFixMsg()">📋 Copiar petición de corrección para Claude</button>'}</div>`:'';
   document.getElementById('bridge-body').innerHTML=`
     <div style="font-weight:700;margin-bottom:10px">Revisa el plan antes de aplicarlo</div>
     ${errBox}${warnBox}
     <div style="border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px;max-height:320px;overflow-y:auto;-webkit-overflow-scrolling:touch">
       ${rows||'<i>Sin sesiones</i>'}${nutri}${meso}</div>
     ${issues.errors.length?'':'<button class="btn btn-primary btn-block" onclick="confirmBridge()">✓ Aplicar plan</button>'}
-    <button class="btn btn-block" style="margin-top:8px" onclick="openBridge(S.bridgeMode||'adapt')">‹ Volver</button>`;
+    <button class="btn btn-block mt-8" onclick="openBridge(S.bridgeMode||'adapt')">‹ Volver</button>`;
 }
 function confirmBridge(){
   if(!window._pendingPlan)return;
@@ -3118,13 +3152,41 @@ function parseKg(peso){const m=String(peso||'').match(/(\d+(?:[.,]\d+)?)/);const
 // Objetivo de reps a prellenar: el tope del rango ("8-12" → "12"; "12" → "12").
 function targetReps(reps){const m=String(reps||'').match(/(\d+)(?:\s*-\s*(\d+))?/);return m?(m[2]||m[1]):'';}
 // Formatea series registradas: [{kg,reps}] → "16 kg × 12, 12, 10" | "12, 10 reps" | "16×12, 18×10"
+// v62: si la serie es de banda elástica ({banda:'media'}), se muestra la resistencia en vez de kg.
 function fmtSets(series){
   if(!series||!series.length)return '';
   const rep=s=>s.reps==null||s.reps===''?'?':s.reps;
+  // Registro de banda: prevalece sobre kg (una banda no tiene peso en kg)
+  if(series.some(s=>s.banda)){
+    const bandas=[...new Set(series.map(s=>s.banda||'-'))];
+    if(bandas.length===1&&bandas[0]!=='-')return `banda ${bandas[0]} × `+series.map(rep).join(', ');
+    return series.map(s=>(s.banda?`${s.banda}×`:'×')+rep(s)).join(', ');
+  }
   const kgs=[...new Set(series.map(s=>(s.kg==null||s.kg==='')?'-':String(s.kg)))];
   if(kgs.length===1&&kgs[0]!=='-')return kgs[0]+' kg × '+series.map(rep).join(', ');
   if(kgs.length===1)return series.map(rep).join(', ')+' reps';
   return series.map(s=>((s.kg!=null&&s.kg!=='')?s.kg+'×':'×')+rep(s)).join(', ');
+}
+// ¿El ejercicio se hace con banda elástica? (según EXDB y el material del usuario)
+function isBandExercise(ex){
+  if(!ex)return false;
+  const db=EXDB.find(e=>e.n===ex.nombre);
+  const eq=(db&&db.eq)||ex.eq||[];
+  if(!eq.includes('bandas'))return false;
+  const mine=equipSet();
+  if(!mine.has('bandas'))return false;
+  // si además admite mancuernas/barra y las tengo, no lo tratamos como ejercicio de banda
+  if(eq.some(t=>t!=='bandas'&&t!=='ninguno'&&mine.has(t)))return false;
+  return true;
+}
+// Resistencias de banda disponibles del usuario, en orden
+function availableBands(){const b=S.bands||{};return ['baja','media','alta'].filter(x=>b[x]);}
+// Banda sugerida a partir del texto de carga propuesto ("banda baja o media; ...") 
+function suggestedBand(ex){
+  const t=String((ex&&ex.peso)||'').toLowerCase();
+  const av=availableBands();
+  for(const b of ['baja','media','alta'])if(t.includes(b)&&av.includes(b))return b;
+  return av[0]||'';
 }
 // Último rendimiento registrado (serie a serie) para un ejercicio, buscando en el historial.
 function lastPerformance(nombre){
@@ -3311,44 +3373,52 @@ function renderPlayer(){
         <div style="font-size:calc(12px*var(--fs));color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">A continuación</div>
         <div style="width:130px;height:104px;margin:0 auto 10px">${exSVG(ex.nombre,ex.p)}</div>
         <div style="font-weight:700;font-size:calc(16px*var(--fs))">${ex.nombre}</div>
-        <div class="pl-cue" style="margin-top:4px">${ex.series>1?`${ex.series} series`:'1 serie'} · ${ex.reps}${/^\d+$/.test(String(ex.reps))?' reps':''}${ex.rir?' · RIR '+ex.rir:''}</div>
+        <div class="pl-cue mt-4">${ex.series>1?`${ex.series} series`:'1 serie'} · ${ex.reps}${/^\d+$/.test(String(ex.reps))?' reps':''}${ex.rir?' · RIR '+ex.rir:''}</div>
         ${ex.peso?`<div style="margin-top:6px;color:var(--ring-ex);font-weight:600;font-size:calc(14px*var(--fs))">🏋 ${ex.peso}</div>`:''}
-        ${ex.descripcion?`<div class="pl-cue" style="margin-top:6px">${ex.descripcion}</div>`:''}
+        ${ex.descripcion?`<div class="pl-cue mt-6">${ex.descripcion}</div>`:''}
         ${errs.length?`<div class="pl-cue" style="margin-top:6px;color:var(--danger)">⚠ Evita: ${errs[0].toLowerCase()}</div>`:''}
       </div>`;
     }
-    mid=`<div class="pl-phase" style="color:var(--free)">DESCANSO</div>
+    mid=`<div class="pl-phase c-free">DESCANSO</div>
       <div class="pl-timer" id="pl-timer">${fmtSec(P.sec)}</div>
       <div class="pl-next">${nuevoEj?'Prepárate para el siguiente ejercicio':'Siguiente: serie '+P.set+' de '+ex.series}</div>
       ${preview}
       <button class="btn btn-block" style="margin-top:14px;background:rgba(255,255,255,.15);border-color:transparent;color:#fff" onclick="skipRest()">Saltar descanso →</button>`;
   } else if(P.phase==='work'&&repSecs){
-    const side=isPerSide(ex)?` · <b style="color:var(--ring-stand)">lado ${P.side||1} de 2</b>`:'';
-    mid=`<div class="pl-phase" style="color:var(--free)">TRABAJO</div>
+    const side=isPerSide(ex)?` · <b class="c-stand">lado ${P.side||1} de 2</b>`:'';
+    mid=`<div class="pl-phase c-free">TRABAJO</div>
       <div class="pl-timer" id="pl-timer">${fmtSec(P.sec)}</div>
       <div class="pl-next">${ex.nombre} · serie ${P.set}/${ex.series}${side}</div>`;
   } else {
     const errs=ex.errores&&ex.errores.length?ex.errores:(ERRORS[figKey(ex.nombre)]||[]);
     const canRec=!repSecs; // solo ejercicios por repeticiones (los de tiempo se registran solos)
     const last=canRec?lastPerformance(ex.nombre):null;
+    const esBanda=isBandExercise(ex); // v62: con banda se registra la resistencia, no kg
     const prefKg=(P.rec&&P.rec.exi===P.exi&&P.rec.kg!=null)?P.rec.kg:(parseKg(ex.peso)!=null?parseKg(ex.peso):'');
     const prefReps=(P.rec&&P.rec.exi===P.exi&&P.rec.reps!=null)?P.rec.reps:targetReps(ex.reps);
+    const prefBanda=(P.rec&&P.rec.exi===P.exi&&P.rec.banda)?P.rec.banda:suggestedBand(ex);
     const inpSt='text-align:center;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:10px;color:#fff;padding:8px 6px;font-size:16px';
+    const bandOpts=availableBands();
+    const cargaInput=esBanda
+      ? `<select id="pl-banda" style="${inpSt};width:auto;min-width:96px">
+           ${(bandOpts.length?bandOpts:['baja','media','alta']).map(b=>`<option value="${b}"${b===prefBanda?' selected':''}>banda ${b}</option>`).join('')}
+         </select><span class="pl-cue">×</span>`
+      : `<input type="text" inputmode="decimal" id="pl-kg" value="${prefKg}" placeholder="kg" style="width:72px;${inpSt}"><span class="pl-cue">kg ×</span>`;
     const recHTML=canRec?`
       <div style="display:flex;gap:6px;justify-content:center;align-items:center;margin-top:12px">
-        <input type="text" inputmode="decimal" id="pl-kg" value="${prefKg}" placeholder="kg" style="width:72px;${inpSt}"><span class="pl-cue">kg ×</span>
+        ${cargaInput}
         <input type="text" inputmode="numeric" id="pl-reps" value="${prefReps}" placeholder="reps" style="width:62px;${inpSt}"><span class="pl-cue">reps</span>
       </div>
-      <div class="pl-cue" style="margin-top:4px;font-size:calc(11px*var(--fs))">Carga real de esta serie · corrige solo si difiere</div>
+      <div class="pl-cue" style="margin-top:4px;font-size:calc(11px*var(--fs))">${esBanda?'Banda usada en esta serie · corrige si has cambiado de resistencia':'Carga real de esta serie · corrige solo si difiere'}</div>
       ${last?`<div class="pl-cue" style="margin-top:4px;color:var(--ring-stand)">Última vez (${last.date}): ${fmtSets(last.series)}</div>`:''}`:'';
     mid=`<div style="width:170px;height:135px;margin:0 auto 14px">${exSVG(ex.nombre,ex.p)}</div>
       <div class="pl-reps">${ex.series>1?`Serie ${P.set} de ${ex.series}`:'1 serie'} · ${ex.reps}${/^\d+$/.test(String(ex.reps))?' reps':''}</div>
       ${ex.peso?`<div class="pl-cue" style="margin-top:4px;color:var(--ring-ex);font-weight:600">🏋 ${ex.peso}</div>`:''}
       ${(ex.rir||ex.rpe)?`<div class="pl-cue">Deja ${ex.rir||ex.rpe} reps en reserva (RIR)${ex.tempo?' · tempo '+ex.tempo:''}</div>`:''}
-      <div class="pl-cue" style="margin-top:8px">${ex.descripcion||''}</div>
+      <div class="pl-cue mt-8">${ex.descripcion||''}</div>
       ${errs.length?`<div class="pl-cue" style="margin-top:8px;color:var(--danger)">⚠ Evita: ${errs[0].toLowerCase()}</div>`:''}
       ${recHTML}
-      <button class="btn btn-primary btn-block" style="margin-top:16px" onclick="finishSet()">${repSecs?'Iniciar ('+repSecs+'s)':'✓ Serie completada'}</button>`;
+      <button class="btn btn-primary btn-block mt-16" onclick="finishSet()">${repSecs?'Iniciar ('+repSecs+'s)':'✓ Serie completada'}</button>`;
   }
   document.getElementById('player-body').innerHTML=`
     <div class="pl-prog"><div class="pl-prog-i" style="width:${pct}%"></div></div>
@@ -3370,24 +3440,29 @@ function finishSet(){
   recordSet(ex);
   beginRest();
 }
-/* Guarda la serie recién hecha (kg×reps de los campos del reproductor) en P.setLog */
+/* Guarda la serie recién hecha (kg×reps, o banda×reps, de los campos del reproductor) en P.setLog */
 function recordSet(ex){
-  const kEl=document.getElementById('pl-kg'),rEl=document.getElementById('pl-reps');
-  if(!kEl&&!rEl)return;
+  const kEl=document.getElementById('pl-kg'),rEl=document.getElementById('pl-reps'),bEl=document.getElementById('pl-banda');
+  if(!kEl&&!rEl&&!bEl)return;
   const kgRaw=kEl?kEl.value.trim():'';const rpRaw=rEl?rEl.value.trim():'';
+  const banda=bEl?bEl.value:null; // v62: ejercicios de banda registran la resistencia, no kg
   const kg=kgRaw!==''?toNum(kgRaw):null;
   const reps=rpRaw!==''?rpRaw:null;
-  if((kg==null||isNaN(kg))&&reps==null)return;
+  if((kg==null||isNaN(kg))&&reps==null&&!banda)return;
   let e=(P.setLog=P.setLog||[]).find(x=>x.nombre===ex.nombre);
   if(!e){e={nombre:ex.nombre,series:[]};P.setLog.push(e);}
-  e.series.push({kg:(kg!=null&&!isNaN(kg))?kg:null,reps});
-  P.rec={exi:P.exi,kg:kgRaw,reps:rpRaw}; // prellenar la siguiente serie del MISMO ejercicio
+  const serie={kg:(kg!=null&&!isNaN(kg))?kg:null,reps};
+  if(banda)serie.banda=banda;
+  e.series.push(serie);
+  P.rec={exi:P.exi,kg:kgRaw,reps:rpRaw,banda}; // prellenar la siguiente serie del MISMO ejercicio
 }
 /* Ejercicios por tiempo: se registran solos ("40s" por serie) */
 function recordTimedSet(ex){
   let e=(P.setLog=P.setLog||[]).find(x=>x.nombre===ex.nombre);
   if(!e){e={nombre:ex.nombre,series:[]};P.setLog.push(e);}
-  e.series.push({kg:parseKg(ex.peso),reps:String(ex.reps)});
+  const serie={kg:parseKg(ex.peso),reps:String(ex.reps)};
+  if(isBandExercise(ex)){const b=suggestedBand(ex);if(b)serie.banda=b;}
+  e.series.push(serie);
 }
 function startWorkCountdown(ex,repSecs){
   P.phase='work';P.sec=repSecs;P.tot=repSecs;renderPlayer();
@@ -3443,24 +3518,24 @@ function renderBlock(){
     const defDesc=t==='amrap'?'Tantas rondas como puedas en el tiempo. Pulsa “Ronda completada” al cerrar cada vuelta; anota cuántas haces.'
       :t==='emom'?'Cada minuto (al pitido): completa los movimientos y descansa el resto del minuto.'
       :'Completa todas las rondas a buen ritmo. Pulsa “Ronda completada” al cerrar cada vuelta.';
-    mid=`<div class="pl-phase" style="color:var(--free)">${fmtLabel}</div>
+    mid=`<div class="pl-phase c-free">${fmtLabel}</div>
       <div class="pl-cue" style="margin:8px 0 4px">${ex.descripcion||defDesc}</div>
       <div class="mt-10">${_movList(ex)}</div>
-      <button class="btn btn-primary btn-block" style="margin-top:16px" onclick="startBlock()">▶ Iniciar bloque</button>`;
+      <button class="btn btn-primary btn-block mt-16" onclick="startBlock()">▶ Iniciar bloque</button>`;
   } else {
     const b=P.blk;
     const counter=t==='circuito'
-      ? `<div class="pl-next">Ronda <b style="color:var(--ring-stand)">${Math.min(b.rounds+1,b.totalRounds)}</b> de ${b.totalRounds}</div>`
-      : `<div class="pl-next">Rondas completadas: <b style="color:var(--ring-stand)">${b.rounds}</b></div>`;
+      ? `<div class="pl-next">Ronda <b class="c-stand">${Math.min(b.rounds+1,b.totalRounds)}</b> de ${b.totalRounds}</div>`
+      : `<div class="pl-next">Rondas completadas: <b class="c-stand">${b.rounds}</b></div>`;
     const timer=(t==='amrap'||t==='emom')
       ? `<div class="pl-timer" id="pl-timer">${fmtSec(b.leftSec)}</div>${t==='emom'?`<div class="pl-cue">Minuto ${Math.min(b.minute,b.totalMin)} de ${b.totalMin}</div>`:''}`
       : '';
-    mid=`<div class="pl-phase" style="color:var(--free)">${fmtLabel}${b.paused?' · PAUSA':''}</div>
+    mid=`<div class="pl-phase c-free">${fmtLabel}${b.paused?' · PAUSA':''}</div>
       ${timer}
       ${counter}
       <div class="mt-10">${_movList(ex)}</div>
-      ${t!=='emom'?`<button class="btn btn-primary btn-block" style="margin-top:12px" onclick="blockRound()">✓ Ronda completada (+1)</button>`:''}
-      <div style="display:flex;gap:8px;margin-top:8px">
+      ${t!=='emom'?`<button class="btn btn-primary btn-block mt-12" onclick="blockRound()">✓ Ronda completada (+1)</button>`:''}
+      <div class="flexrow gap8 mt-8">
         ${(t==='amrap'||t==='emom')?`<button class="btn btn-block" style="background:rgba(255,255,255,.15);border-color:transparent;color:#fff" onclick="pauseBlock()">${b.paused?'▶ Reanudar':'⏸ Pausa'}</button>`:''}
         <button class="btn btn-block" style="background:rgba(255,255,255,.15);border-color:transparent;color:#fff" onclick="endBlock(false)">${t==='circuito'?'Terminar bloque':'Terminar antes'}</button>
       </div>`;
@@ -3708,7 +3783,7 @@ function renderEquipDetail(){
   const eq=S.profile.equipos||[];let h='';
   if(eq.includes('mancuernas')){
     const db=S.dumbbells||{min:8,max:24,step:2};
-    h+=`<div style="background:var(--surface2);border-radius:12px;padding:11px 12px;margin-bottom:8px">
+    h+=`<div class="box-sub">
       <div style="font-size:calc(12px*var(--fs));font-weight:600;margin-bottom:8px">🏋 Mancuernas disponibles (kg por mancuerna)</div>
       <div class="row2">
         <div class="field"><label>Desde</label><input type="text" id="db-min" value="${db.min}" inputmode="decimal" onchange="saveDumbbells()"></div>
@@ -3721,16 +3796,22 @@ function renderEquipDetail(){
   }
   if(eq.includes('bandas')){
     const b=S.bands||{baja:true,media:true,alta:true};
-    h+=`<div style="background:var(--surface2);border-radius:12px;padding:11px 12px;margin-bottom:8px">
+    h+=`<div class="box-sub">
       <div style="font-size:calc(12px*var(--fs));font-weight:600;margin-bottom:8px">🎗 Bandas elásticas disponibles</div>
-      <div style="display:flex;gap:8px">
+      <div class="flexrow gap8">
         ${['baja','media','alta'].map(r=>`<span class="chip${b[r]?' sel':''}" onclick="toggleBand('${r}')" style="text-transform:capitalize">${r}</span>`).join('')}
       </div>
+      <div style="font-size:calc(12px*var(--fs));font-weight:600;margin:12px 0 6px">⚓ ¿Puedes anclar la banda a un punto fijo?</div>
+      <div class="flexrow gap8">
+        <span class="chip${!S.bandAnchor?' sel':''}" onclick="setBandAnchor(false)">No, solo pisarla o sujetarla</span>
+        <span class="chip${S.bandAnchor?' sel':''}" onclick="setBandAnchor(true)">Sí (puerta, barra…)</span>
+      </div>
+      <div style="font-size:calc(11px*var(--fs));color:var(--text3);margin-top:6px">Si no puedes anclarla, solo se te propondrán ejercicios que se hacen pisando la banda o sujetándola con el propio cuerpo (se descartan jalón, face pull, Pallof, aperturas, leñador y curl femoral con banda).</div>
     </div>`;
   }
   if(eq.includes('kettlebell')){
     const kb=S.kettlebells||{list:'8, 12, 16'};
-    h+=`<div style="background:var(--surface2);border-radius:12px;padding:11px 12px;margin-bottom:8px">
+    h+=`<div class="box-sub">
       <div style="font-size:calc(12px*var(--fs));font-weight:600;margin-bottom:8px">🔔 Kettlebells disponibles (kg)</div>
       <input type="text" id="kb-list" value="${kb.list}" placeholder="p. ej. 8, 12, 16, 20" inputmode="text" onchange="saveKettlebells()" style="width:100%">
       <div style="font-size:calc(11px*var(--fs));color:var(--text3);margin-top:5px">Escribe los pesos que tengas, separados por comas.</div>
@@ -3755,6 +3836,10 @@ function saveDumbbells(){
   const step=toNum(document.getElementById('db-step').value);
   S.dumbbells={min:isNaN(min)?8:min,max:isNaN(max)?24:max,step:isNaN(step)?2:step};
   save();updateDbPreview();
+}
+function setBandAnchor(v){
+  S.bandAnchor=!!v;
+  save();renderEquipDetail();
 }
 function toggleBand(r){
   if(!S.bands)S.bands={baja:true,media:true,alta:true};
