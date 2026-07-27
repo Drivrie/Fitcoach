@@ -949,3 +949,40 @@ Playwright disponible desde v57, ya era abordable con garantías.
   `visual-diff.js` y `refactor-css.js`, reutilizables para futuros cambios de maquetación.
 - Las 161 comprobaciones previas siguen en verde: 170 en total, 0 fallos, y las 22 capturas son
   pixel-idénticas al estado anterior al refactor.
+
+## v64: instrucciones de texto libre en todos los flujos de generación y adaptación
+- QUÉ RESUELVE: había cosas que ningún ajuste predefinido podía expresar ("el jueves solo tengo
+  25 minutos", "añade un día de carrera suave", "hoy me molesta el hombro, cambia los press",
+  "esta semana sin saltos"). Ahora hay un campo de texto libre en los tres puntos donde se pide
+  un plan, y alimenta tanto la vía offline como la de Claude.
+- DÓNDE: tres campos que cubren los seis flujos (cada uno sirve a su versión offline y a la de IA):
+  · Perfil → "💬 Instrucciones adicionales": generar/adaptar SEMANA (offline y con Claude).
+  · Modal "Modificar sesión": adaptar UNA sesión (offline y con Claude).
+  · Modal "Generar sesión IA": crear una sesión suelta (offline y con Claude).
+- CON CLAUDE: el texto se inyecta literal en el mensaje, en un bloque marcado como INSTRUCCIONES
+  ADICIONALES DEL USUARIO, indicando que tienen PRIORIDAD sobre las preferencias generales y que,
+  si algo contradice al resto del mensaje, mande la instrucción libre y lo explique en "meta".
+- OFFLINE, CON HONESTIDAD: el generador offline NO interpreta lenguaje natural — hacerlo con
+  coincidencia de palabras sería adivinar y fallaría con frases como "no quiero reducir el tiempo".
+  En vez de fingirlo, la nota se guarda adjunta a la sesión y se muestra al entrenar (en la vista
+  de sesión y en el reproductor guiado), y un aviso bajo el campo lo dice claramente: "el generador
+  offline no interpreta texto libre: para que se aplique de verdad, usa el botón de Claude". El
+  aviso aparece en vivo mientras se escribe, antes de pulsar nada.
+- La nota queda adjunta a la sesión también cuando se aplica la respuesta de Claude, para que quede
+  constancia de lo que se pidió, y sobrevive a una adaptación posterior por material si no se
+  escribe una nueva.
+- Límite de 600 caracteres (cuota de localStorage) y escapado de HTML al mostrarla.
+- VERIFICADO: 24 pruebas nuevas (los 3 campos y sus avisos existen; la nota llega al prompt en los
+  3 flujos de IA y no se añade la sección si está vacía; se adjunta a la sesión en los 3 flujos
+  offline; el aviso menciona que offline no la interpreta y dirige a Claude; se muestra al entrenar;
+  se escapa el HTML; se recorta a 600; una nota en blanco se ignora) + comprobación visual real con
+  Playwright/Chromium en iPhone 12 mini a tamaño de letra normal y máximo: sin desbordamiento en
+  perfil, sesión, modificar, generar y calendario.
+- NOTA SOBRE LA VERIFICACIÓN: el entorno de trabajo se reinició durante esta sesión y se perdieron
+  los ficheros de test acumulados de v54-v63 (los archivos entregados no se vieron afectados). Se
+  reconstruyó `test-core.js`, que cubre los invariantes no negociables: persistencia aditiva con un
+  usuario veterano completo (21 campos, incluidos limitaciones, bandas/anclaje, cargas reales,
+  dolor/fatiga, rangos de nutrición, weightLog y notas de sesión), arranque de usuario nuevo,
+  escapado HTML, la regla de v63 sobre `display:none` y la ausencia de `class` duplicados. Total
+  actual: 52 comprobaciones, 0 fallos. Las suites específicas de v55-v63 habrá que rehacerlas si se
+  quiere volver a esa cobertura.

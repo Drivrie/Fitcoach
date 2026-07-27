@@ -440,6 +440,12 @@ body{font-size:calc(15px*var(--fs))}
         <div id="equip-detail" style="margin-top:10px"></div>
       </div>
     </div>
+    <div class="card">
+      <div class="card-t">💬 Instrucciones adicionales (opcional)</div>
+      <p class="note mb-9">Cualquier cosa que no encaje en los ajustes de arriba, dicha con tus palabras. Ej: "el jueves solo tengo 25 minutos", "añade un día de carrera suave", "esta semana evita saltos", "quiero centrarme en espalda".</p>
+      <textarea id="week-note" placeholder="Escribe aquí lo que quieras pedirle a tu entrenador para esta semana…" style="min-height:70px"></textarea>
+      <div id="week-note-hint" class="note mt-6"></div>
+    </div>
     <button class="btn btn-primary btn-block" onclick="buildWeekOffline()">⚡ Generar semana (offline)</button>
     <button class="btn btn-block mt-8" onclick="openBridge('new')">✨ Generar con Claude (más detallado)</button>
     <div class="card">
@@ -472,7 +478,7 @@ body{font-size:calc(15px*var(--fs))}
       <button class="btn btn-block" style="margin-top:8px;border-color:var(--danger);color:var(--danger)" onclick="confirmDeleteAll()">🗑️ Eliminar todos mis datos</button>
       <div id="data-status" style="margin-top:7px;font-size:12px"></div>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 63</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 64</div>
     <div id="sw-status" style="text-align:center;font-size:11px;color:var(--warn);margin-top:4px;display:none"></div>
   </div>
 </div>
@@ -553,6 +559,9 @@ body{font-size:calc(15px*var(--fs))}
     <div id="mod-equip-sum"></div>
     <div class="field"><label>Tiempo disponible: <span id="mod-min-out" style="font-weight:600;color:var(--text)">45</span> min</label>
       <input type="range" id="mod-min" min="15" max="120" step="5" value="45" style="width:100%"></div>
+    <div class="field"><label>💬 Instrucciones adicionales (opcional)</label>
+      <textarea id="mod-note" placeholder='Ej: "hoy me molesta el hombro, cambia los press", "hazla más corta", "sin saltos"…' style="min-height:60px"></textarea>
+      <div id="mod-note-hint" class="note mt-6"></div></div>
     <button class="btn btn-primary btn-block" onclick="regenerateDayOffline()">⚡ Adaptar a mi material (offline)</button>
     <button class="btn btn-block mt-8" onclick="modifyWithClaude()">✨ Pedir a Claude (más detallado)</button>
     <div id="mod-claude" style="display:none;margin-top:12px">
@@ -579,6 +588,9 @@ body{font-size:calc(15px*var(--fs))}
       <input type="range" id="gen-min" min="15" max="120" step="5" value="45" style="width:100%"></div>
     <div class="field"><label>¿Qué hacer con esta sesión?</label><div id="gen-mode"></div></div>
     <label style="display:flex;align-items:center;gap:8px;margin:2px 0 12px;font-size:13px;color:var(--text2)"><input type="checkbox" id="gen-hist" checked style="width:auto"> Complementar mi entrenamiento reciente (priorizar grupos menos trabajados)</label>
+    <div class="field"><label>💬 Instrucciones adicionales (opcional)</label>
+      <textarea id="gen-note" placeholder='Ej: "algo suave de movilidad", "solo tren superior", "que incluya core al final"…' style="min-height:60px"></textarea>
+      <div id="gen-note-hint" class="note mt-6"></div></div>
     <button class="btn btn-primary btn-block" onclick="generateDayOffline()">⚡ Generar (offline)</button>
     <button class="btn btn-block mt-8" onclick="generateWithClaude()">✨ Pedir a Claude (más detallado)</button>
     <div id="gen-claude" style="display:none;margin-top:12px">
@@ -1136,6 +1148,7 @@ function buildNutriOffline(){
 }
 
 function buildWeekOffline(){
+  const weekNote=userNoteFrom('week-note');showNoteHint('week-note-hint',weekNote);
   saveProfile();
   const p=S.profile;
   if(!p.peso||!p.altura||!p.edad){alert('Completa peso, altura y edad en el perfil.');return}
@@ -1158,6 +1171,7 @@ function buildWeekOffline(){
     if(isBrief)sess.titulo='Fuerza breve · complemento de carrera';
     const ex=S.schedule[key].findIndex(x=>x.type==='ai');
     const entry={type:'ai',title:sess.titulo,meta:sess.meta,warmup:sess.calentamiento,cooldown:sess.vuelta_calma,exercises:sess.ejercicios,done:false,brief:isBrief};
+    if(weekNote)entry.userNote=weekNote; // v64: nota del usuario, visible al entrenar
     if(ex>=0)S.schedule[key][ex]=entry;else S.schedule[key].push(entry);
   });
   S.freeDays.forEach(code=>{
@@ -1742,6 +1756,7 @@ function showSess(key){
   let h=`<div class="card"><div style="font-size:16px;font-weight:600">${esc(sess.title)}</div>
     <div style="font-size:12px;color:var(--text2);margin-top:3px">${esc(sess.meta)||''}</div>
     <button class="btn btn-primary btn-block mt-12" onclick="startPlayer('${key}')">▶ Empezar sesión guiada</button></div>`;
+  if(sess.userNote)h+=`<div class="note mb-11" style="border-left:3px solid var(--accent)">💬 <b>Tu nota para esta sesión:</b> ${esc(sess.userNote)}</div>`;
   if(sess.warmup)h+=`<div class="note mb-11">🔥 <b>Calentamiento:</b> ${esc(sess.warmup)}</div>`;
   sess.exercises.forEach((ex,i)=>{
     if(isBlock(ex)){h+=blockCard(ex,i);return;}
@@ -2104,6 +2119,30 @@ function equipLabels(equipos){
   return (equipos||['ninguno']).map(e=>({ninguno:'peso corporal',mancuernas:'mancuernas',bandas:'bandas elásticas',barra:'barra y discos',kettlebell:'kettlebell',gimnasio:'gimnasio completo',dominadas:'barra de dominadas'}[e]||e)).join(', ');
 }
 // Principios de entrenador profesional compartidos por los 3 prompts (semanal, modificar, generar).
+/* --- Instrucciones de texto libre del usuario (v64) ---
+   Un mismo campo alimenta las dos vías de cada flujo:
+   · Con Claude: el texto se inyecta literal en el mensaje, como instrucción prioritaria.
+   · Offline: el motor NO interpreta lenguaje natural (sería adivinar), así que la nota se
+     GUARDA junto a la sesión y se muestra al entrenar, como recordatorio visible. La interfaz
+     lo dice claramente para no dar a entender que el generador offline la ha aplicado. */
+const NOTE_MAX=600;
+function userNoteFrom(id){
+  const el=document.getElementById(id);
+  if(!el)return '';
+  return String(el.value||'').trim().slice(0,NOTE_MAX);
+}
+// Bloque para el prompt de Claude (vacío si no hay nota)
+function noteForPrompt(txt){
+  if(!txt)return '';
+  return `\n- INSTRUCCIONES ADICIONALES DEL USUARIO (tienen prioridad sobre las preferencias generales; si algo contradice al resto del mensaje, haz caso a esto y explica brevemente el ajuste en "meta"): "${txt}"`;
+}
+// Aviso bajo el campo cuando se usa la vía offline
+function showNoteHint(hintId,txt){
+  const el=document.getElementById(hintId);if(!el)return;
+  el.innerHTML=txt
+    ? '📌 Nota guardada y visible al entrenar. El generador <b>offline</b> no interpreta texto libre: para que se aplique de verdad, usa el botón de <b>Claude</b>.'
+    : '';
+}
 function coachExtrasFor(equipos,beforeKey){
   let t=`\n- ACTÚA COMO ENTRENADOR PROFESIONAL: en "descripcion" de cada ejercicio explica en 1-2 frases la técnica clave Y por qué está en esta sesión (qué aporta al objetivo). En "meta" resume en una frase el propósito de la sesión.`;
   if((equipos||[]).includes('bandas')){
@@ -2134,7 +2173,7 @@ function buildPrompt(mode){
   const fullDays=ordDays(S.aiDays.filter(d=>!S.briefDays.includes(d)));
   const briefDays=ordDays(S.aiDays.filter(d=>S.briefDays.includes(d)));
   const freeOrd=ordDays(S.freeDays);
-  const cfg=`Objetivos (combinar de forma coherente): ${objLabels}. Nivel: ${p.nivel}. Equipo disponible: ${eqLabels}.${eqDetail}${coachExtrasFor(p.equipos,fmt(weekDates(S.currentWeek)[0]))}${limitTxt}
+  const cfg=`Objetivos (combinar de forma coherente): ${objLabels}. Nivel: ${p.nivel}. Equipo disponible: ${eqLabels}.${eqDetail}${coachExtrasFor(p.equipos,fmt(weekDates(S.currentWeek)[0]))}${limitTxt}${noteForPrompt(userNoteFrom('week-note'))}
 Días de fuerza COMPLETA (~${p.minutos} min, cuerpo entero): ${fullDays.join(', ')||'ninguno'}.
 Días de fuerza BREVE (15-20 min, complementaria porque ese día también hago carrera): ${briefDays.join(', ')||'ninguno'}.
 Días de entrenamiento libre (cardio/paseo): ${freeOrd.join(', ')||'ninguno'}.
@@ -2424,6 +2463,7 @@ function confirmBridge(){
 // Aplica un plan ya parseado y validado (antes era el cuerpo de applyBridge)
 function applyBridgePlan(plan){
   const dates=weekDates(S.currentWeek);
+  const _wNote=userNoteFrom('week-note');
   // Aviso si el plan va a sustituir una sesión que el usuario ya marcó como completada
   const overwrites=[];
   (plan.sesiones_ia||[]).forEach(s=>{
@@ -2438,6 +2478,7 @@ function applyBridgePlan(plan){
     const key=fmt(dates[idx]);if(!S.schedule[key])S.schedule[key]=[];
     s.ejercicios=(s.ejercicios||[]).map(matchYT);
     const entry={type:'ai',title:s.titulo,meta:s.meta,warmup:s.calentamiento,cooldown:s.vuelta_calma,exercises:s.ejercicios,done:false};
+    if(_wNote)entry.userNote=_wNote; // v64: la instrucción libre queda visible al entrenar
     const ex=S.schedule[key].findIndex(x=>x.type==='ai');
     if(ex>=0)S.schedule[key][ex]=entry;else S.schedule[key].push(entry);
   });
@@ -2489,6 +2530,7 @@ function openModify(key){
   document.getElementById('mod-min').value=mins;document.getElementById('mod-min-out').textContent=mins;
   document.getElementById('mod-claude').style.display='none';
   document.getElementById('mod-in')&&(document.getElementById('mod-in').value='');
+  const mn=document.getElementById('mod-note');if(mn)mn.value='';showNoteHint('mod-note-hint','');
   renderModEquip();
   openSheet('mod-bg');
 }
@@ -2503,6 +2545,11 @@ function renderModEquip(){
   const s=document.getElementById('mod-equip-sum');if(s)s.innerHTML=equipSummaryHTML(MOD.equipos);
 }
 document.getElementById('mod-min').addEventListener('input',e=>{document.getElementById('mod-min-out').textContent=e.target.value;});
+// v64: aviso en vivo de que el motor offline no interpreta el texto libre
+[['week-note','week-note-hint'],['mod-note','mod-note-hint'],['gen-note','gen-note-hint']].forEach(([id,hint])=>{
+  const el=document.getElementById(id);
+  if(el)el.addEventListener('input',()=>showNoteHint(hint,el.value.trim()));
+});
 document.getElementById('gen-min').addEventListener('input',e=>{document.getElementById('gen-min-out').textContent=e.target.value;});
 
 function regenerateDayOffline(){
@@ -2545,6 +2592,9 @@ function regenerateDayOffline(){
     const sess=buildSessionOffline(eq,objetivo,S.profile.nivel,mins,'X',seed,false,{avoid:recentExerciseNames(key,14)});
     entry={type:'ai',title:sess.titulo,meta:sess.meta+' · modificada',warmup:sess.calentamiento,cooldown:sess.vuelta_calma,exercises:sess.ejercicios,done:false};
   }
+  // v64: nota de texto libre (el motor offline no la interpreta; queda visible al entrenar)
+  const modNote=userNoteFrom('mod-note');showNoteHint('mod-note-hint',modNote);
+  if(modNote)entry.userNote=modNote; else if(current&&current.userNote)entry.userNote=current.userNote;
   if(!S.schedule[key])S.schedule[key]=[];
   const ix=S.schedule[key].findIndex(x=>x.type==='ai');
   if(ix>=0)S.schedule[key][ix]=entry;else S.schedule[key].push(entry);
@@ -2575,7 +2625,7 @@ function modifyWithClaude(){
   window._modPrompt=`Actúa como mi entrenador personal. Adapta UNA sola sesión de fuerza ya prevista para hoy a un cambio de material, manteniéndola coherente con mi plan y mi objetivo global:
 - Material disponible hoy: ${eqLabels}${eqDetail}${coachExtrasFor(MOD.equipos,MOD.key)}
 - Tiempo disponible hoy: ${mins} minutos
-- Mis objetivos: ${objLabels} (prioriza hipertrofia: 6-12 reps, 3-4 series, 1-3 RIR, descansos 90-150s, sobrecarga progresiva).${mesoTxt?`\n- ${mesoTxt}`:''}${currentTxt}${keepInstruction}${hist?`\n- Entrenamiento reciente (tenlo en cuenta para complementar y repartir bien los grupos, no repetir en exceso):\n${hist}`:''}
+- Mis objetivos: ${objLabels} (prioriza hipertrofia: 6-12 reps, 3-4 series, 1-3 RIR, descansos 90-150s, sobrecarga progresiva).${mesoTxt?`\n- ${mesoTxt}`:''}${currentTxt}${keepInstruction}${hist?`\n- Entrenamiento reciente (tenlo en cuenta para complementar y repartir bien los grupos, no repetir en exceso):\n${hist}`:''}${noteForPrompt(userNoteFrom('mod-note'))}
 - Indica el esfuerzo como RIR. En "peso" especifica la carga de forma inequívoca. Incluye 2-3 errores comunes de técnica por ejercicio.
 - Puedes incluir como mucho UN bloque AMRAP/EMOM/circuito (la app lo guía con cronómetro y conteo de rondas) usando un ejercicio con esta forma: {"nombre":"AMRAP 10 min","tipo":"amrap","duracion_min":10,"descanso_seg":90,"movimientos":[{"nombre":"Sentadilla goblet","reps":"12"},{"nombre":"Flexiones","reps":"10"}],"descripcion":"...","musculos":"..."} ("tipo": amrap|emom|circuito; amrap/emom→"duracion_min"; circuito→"rondas").
 
@@ -2599,6 +2649,8 @@ function applyModify(){
   if(issues.warns.length&&!confirm('Avisos:\n- '+issues.warns.join('\n- ')+'\n\n¿Aplicar de todos modos?')){window._fixMsg=fixMsgFor(issues);copyFixMsg();return;}
   const key=MOD.key;s.ejercicios=s.ejercicios.map(matchYT);
   const entry={type:'ai',title:s.titulo||'Sesión modificada',meta:(s.meta||'')+' · modificada',warmup:s.calentamiento,cooldown:s.vuelta_calma,exercises:s.ejercicios,done:false};
+  const modNoteApplied=userNoteFrom('mod-note');
+  if(modNoteApplied)entry.userNote=modNoteApplied; // v64: queda constancia de lo que se pidió
   if(!S.schedule[key])S.schedule[key]=[];
   const ix=S.schedule[key].findIndex(x=>x.type==='ai');
   if(ix>=0)S.schedule[key][ix]=entry;else S.schedule[key].push(entry);
@@ -2622,6 +2674,7 @@ function openGen(key,idx){
   const mo=document.getElementById('gen-min-out');if(mo)mo.textContent=mins;
   const gc=document.getElementById('gen-claude');if(gc)gc.style.display='none';
   const gi=document.getElementById('gen-in');if(gi)gi.value='';
+  const gn=document.getElementById('gen-note');if(gn)gn.value='';showNoteHint('gen-note-hint','');
   renderGenObj();renderGenNiv();renderGenEquip();renderGenMode();
   openSheet('gen-bg');
 }
@@ -2675,7 +2728,10 @@ function generateDayOffline(){
   const repTag=_genModeTag(key);if(repTag!==null)tag=repTag;
   const seed=Math.floor(Math.random()*9999);
   const sess=buildSessionOffline(eq,objetivo,nivel,mins,'X',seed,false,opts);
-  S.schedule[key].push({type:'ai',title:sess.titulo,meta:sess.meta+tag,warmup:sess.calentamiento,cooldown:sess.vuelta_calma,exercises:sess.ejercicios,done:false});
+  const genNote=userNoteFrom('gen-note');showNoteHint('gen-note-hint',genNote);
+  const gEntry={type:'ai',title:sess.titulo,meta:sess.meta+tag,warmup:sess.calentamiento,cooldown:sess.vuelta_calma,exercises:sess.ejercicios,done:false};
+  if(genNote)gEntry.userNote=genNote; // v64
+  S.schedule[key].push(gEntry);
   save();closeSheet('gen-bg');renderCal();
   selDay(key,weekDates(S.currentWeek).map(fmt).indexOf(key),true);
 }
@@ -2693,7 +2749,7 @@ function generateWithClaude(){
 - Objetivo de esta sesión: ${GOAL_LABELS[objetivo]||objetivo}
 - Nivel: ${nivel}
 - Tiempo disponible: ${mins} min
-- Material disponible: ${eqLabels}${eqDetail}${coachExtrasFor(GEN.equipos,GEN.key)}${mesoTxt?`\n- ${mesoTxt}`:''}${hist?`\n- Entrenamiento reciente (para COMPLEMENTAR, no repetir en exceso los mismos grupos):\n${hist}`:''}
+- Material disponible: ${eqLabels}${eqDetail}${coachExtrasFor(GEN.equipos,GEN.key)}${mesoTxt?`\n- ${mesoTxt}`:''}${hist?`\n- Entrenamiento reciente (para COMPLEMENTAR, no repetir en exceso los mismos grupos):\n${hist}`:''}${noteForPrompt(userNoteFrom('gen-note'))}
 - Prioriza los grupos musculares menos trabajados últimamente; respeta el reparto (las piernas son grupos grandes, no las relegues).
 - Indica el esfuerzo como RIR. En "peso" especifica la carga de forma inequívoca (p. ej. "16 kg por mancuerna" o "solo peso corporal"). Incluye 2-3 errores comunes por ejercicio.
 - Puedes incluir como mucho UN bloque AMRAP/EMOM/circuito (la app lo guía con cronómetro y conteo de rondas) con la forma {"nombre":"AMRAP 10 min","tipo":"amrap","duracion_min":10,"descanso_seg":90,"movimientos":[{"nombre":"...","reps":"12"}],...} ("tipo": amrap|emom|circuito; amrap/emom→"duracion_min"; circuito→"rondas").
@@ -2719,7 +2775,9 @@ function applyGen(){
   const key=GEN.key;s.ejercicios=s.ejercicios.map(matchYT);
   if(!S.schedule[key])S.schedule[key]=[];
   const repTag=_genModeTag(key);const tag=repTag!==null?repTag:' · extra';
-  S.schedule[key].push({type:'ai',title:s.titulo||'Sesión IA',meta:(s.meta||'')+tag,warmup:s.calentamiento,cooldown:s.vuelta_calma,exercises:s.ejercicios,done:false});
+  const gEnt={type:'ai',title:s.titulo||'Sesión IA',meta:(s.meta||'')+tag,warmup:s.calentamiento,cooldown:s.vuelta_calma,exercises:s.ejercicios,done:false};
+  const gN=userNoteFrom('gen-note');if(gN)gEnt.userNote=gN; // v64
+  S.schedule[key].push(gEnt);
   save();closeSheet('gen-bg');renderCal();
   selDay(key,weekDates(S.currentWeek).map(fmt).indexOf(key),true);
 }
@@ -3415,6 +3473,7 @@ function renderPlayer(){
       <div class="pl-reps">${ex.series>1?`Serie ${P.set} de ${ex.series}`:'1 serie'} · ${ex.reps}${/^\d+$/.test(String(ex.reps))?' reps':''}</div>
       ${ex.peso?`<div class="pl-cue" style="margin-top:4px;color:var(--ring-ex);font-weight:600">🏋 ${ex.peso}</div>`:''}
       ${(ex.rir||ex.rpe)?`<div class="pl-cue">Deja ${ex.rir||ex.rpe} reps en reserva (RIR)${ex.tempo?' · tempo '+ex.tempo:''}</div>`:''}
+      ${P.sess.userNote?`<div class="pl-cue mt-8" style="color:var(--accent)">💬 ${esc(P.sess.userNote)}</div>`:''}
       <div class="pl-cue mt-8">${ex.descripcion||''}</div>
       ${errs.length?`<div class="pl-cue" style="margin-top:8px;color:var(--danger)">⚠ Evita: ${errs[0].toLowerCase()}</div>`:''}
       ${recHTML}
