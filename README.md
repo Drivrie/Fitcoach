@@ -986,3 +986,35 @@ Playwright disponible desde v57, ya era abordable con garantías.
   escapado HTML, la regla de v63 sobre `display:none` y la ausencia de `class` duplicados. Total
   actual: 52 comprobaciones, 0 fallos. Las suites específicas de v55-v63 habrá que rehacerlas si se
   quiere volver a esa cobertura.
+
+## v65: la resistencia de banda se detecta en TODOS los ejercicios, no solo en algunos
+- SÍNTOMA REPORTADO: en varios ejercicios propuestos con banda, el reproductor seguía mostrando el
+  campo de "kg" (que quedaba vacío) en vez del selector de resistencia, y al registrar la sesión no
+  se reflejaba qué banda se había usado. Solo funcionaba en algunos ejercicios.
+- CAUSA: `isBandExercise()` (v62) deducía si un ejercicio era de banda SOLO consultando la base de
+  ejercicios por nombre exacto. Eso dejaba fuera tres casos, todos frecuentes:
+  1. **Ejercicios propuestos por Claude** cuyo nombre no coincide exactamente con ninguna entrada de
+     EXDB (p. ej. "Remo sentado con banda elástica"): no se encontraba, el equipo quedaba vacío y no
+     se detectaba. Este es el caso más habitual al adaptar la semana con Claude.
+  2. **Ejercicios que admiten banda Y otro material** ("Curl de bíceps", "Elevaciones laterales",
+     "Elevación frontal"): si el usuario tiene mancuernas además de bandas, se descartaban como
+     ejercicio de banda aunque la sesión pidiera explícitamente "banda media".
+  3. **Nunca se leía la carga propuesta**, que es la señal más fiable de cómo se va a hacer HOY ese
+     ejercicio.
+- FIX: `isBandExercise()` ahora prioriza lo que dice LA SESIÓN sobre lo deducido de la base:
+  (1) si la carga propuesta menciona banda/goma/elástica → es de banda; (2) si lo dice el nombre →
+  es de banda; (3) si no, se mantiene la deducción anterior por EXDB (banda como único material
+  compatible disponible). Comparación insensible a tildes y con sinónimos.
+- `suggestedBand()` también se amplía: busca la resistencia en la carga, el nombre Y la descripción
+  (Claude la escribe donde le encaja) y entiende sinónimos habituales (suave/ligera = baja,
+  fuerte/dura = alta), respetando siempre las resistencias que el usuario tiene configuradas.
+- NO se rompe lo que ya iba bien: un "Curl de bíceps" propuesto con "12 kg por mancuerna" sigue
+  registrándose en kg; los ejercicios de mancuerna nunca se confunden con banda.
+- VERIFICADO: 25 pruebas nuevas cubriendo los tres casos que fallaban, los casos de kg que deben
+  seguir igual, los ejercicios de banda de la base, la banda sugerida desde carga/nombre/descripción
+  y con sinónimos, y la integración completa (reproductor y plantilla de registro). **Control
+  positivo: con la lógica anterior fallan 9 de esas pruebas; con el arreglo, 0** — el bug reportado
+  queda reproducido y corregido. Verificación en navegador real (Playwright/Chromium, iPhone 12
+  mini): "Curl de bíceps · banda media" y "Remo sentado con banda elástica · banda alta" muestran
+  ambos el selector de resistencia y ningún campo de kg, y el registro guarda `banda:"media"`.
+- Total: 77 comprobaciones (test-core 28, v64 24, v65 25), 0 fallos, sin desbordamiento.

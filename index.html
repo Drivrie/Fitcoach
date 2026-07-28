@@ -478,7 +478,7 @@ body{font-size:calc(15px*var(--fs))}
       <button class="btn btn-block" style="margin-top:8px;border-color:var(--danger);color:var(--danger)" onclick="confirmDeleteAll()">🗑️ Eliminar todos mis datos</button>
       <div id="data-status" style="margin-top:7px;font-size:12px"></div>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 64</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 65</div>
     <div id="sw-status" style="text-align:center;font-size:11px;color:var(--warn);margin-top:4px;display:none"></div>
   </div>
 </div>
@@ -3226,14 +3226,25 @@ function fmtSets(series){
   return series.map(s=>((s.kg!=null&&s.kg!=='')?s.kg+'×':'×')+rep(s)).join(', ');
 }
 // ¿El ejercicio se hace con banda elástica? (según EXDB y el material del usuario)
+// Normaliza texto para buscar menciones a banda (sin tildes, en minúsculas)
+function _norm(t){return String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
+function _mencionaBanda(t){return /\b(banda|bandas|goma|gomas|elastic)/.test(_norm(t));}
+/* ¿Este ejercicio se hace con banda elástica? (v65)
+   Prioriza lo que dice LA SESIÓN (carga propuesta y nombre) sobre lo deducido de la base de
+   ejercicios: así funciona también con ejercicios propuestos por Claude que no están en EXDB con
+   ese nombre exacto, y con ejercicios que admiten banda o mancuerna cuando el plan pide banda. */
 function isBandExercise(ex){
   if(!ex)return false;
+  // 1) La carga propuesta dice explícitamente que es con banda -> señal más fiable
+  if(_mencionaBanda(ex.peso))return true;
+  // 2) El nombre del ejercicio lo dice ("Remo con banda", "Curl con goma elástica"...)
+  if(_mencionaBanda(ex.nombre))return true;
+  // 3) Deducción por la base de ejercicios: solo si banda es el único material compatible que tengo
   const db=EXDB.find(e=>e.n===ex.nombre);
   const eq=(db&&db.eq)||ex.eq||[];
   if(!eq.includes('bandas'))return false;
   const mine=equipSet();
   if(!mine.has('bandas'))return false;
-  // si además admite mancuernas/barra y las tengo, no lo tratamos como ejercicio de banda
   if(eq.some(t=>t!=='bandas'&&t!=='ninguno'&&mine.has(t)))return false;
   return true;
 }
@@ -3241,9 +3252,15 @@ function isBandExercise(ex){
 function availableBands(){const b=S.bands||{};return ['baja','media','alta'].filter(x=>b[x]);}
 // Banda sugerida a partir del texto de carga propuesto ("banda baja o media; ...") 
 function suggestedBand(ex){
-  const t=String((ex&&ex.peso)||'').toLowerCase();
+  // v65: la resistencia puede venir en la carga, en el nombre o en la descripción (Claude la
+  // escribe donde le encaja), así que se buscan en los tres. Sinónimos habituales incluidos.
+  const t=_norm([ex&&ex.peso,ex&&ex.nombre,ex&&ex.descripcion].filter(Boolean).join(' '));
   const av=availableBands();
-  for(const b of ['baja','media','alta'])if(t.includes(b)&&av.includes(b))return b;
+  const SIN={baja:['baja','suave','ligera','fina','verde'],media:['media','intermedia','roja'],alta:['alta','fuerte','dura','gruesa','negra']};
+  for(const b of ['baja','media','alta']){
+    if(!av.includes(b))continue;
+    if(SIN[b].some(w=>new RegExp('\\b'+w).test(t)))return b;
+  }
   return av[0]||'';
 }
 // Último rendimiento registrado (serie a serie) para un ejercicio, buscando en el historial.
