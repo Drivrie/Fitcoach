@@ -1018,3 +1018,38 @@ Playwright disponible desde v57, ya era abordable con garantías.
   mini): "Curl de bíceps · banda media" y "Remo sentado con banda elástica · banda alta" muestran
   ambos el selector de resistencia y ningún campo de kg, y el registro guarda `banda:"media"`.
 - Total: 77 comprobaciones (test-core 28, v64 24, v65 25), 0 fallos, sin desbordamiento.
+
+## v66: CORRECCIÓN CRÍTICA — la agenda se desplazaba un día si se usaba la app de madrugada
+- SÍNTOMA REPORTADO: todos los registros aparecían movidos un día a la derecha (lo hecho el lunes
+  se mostraba en el martes, y así con todos los días).
+- CAUSA (bug antiguo, latente desde el principio, no introducido por v64/v65): `fmt()` —la función
+  que convierte una fecha en la clave de día que usa toda la app— usaba `toISOString()`, que
+  convierte a UTC. Pero `weekDates()` construye fechas LOCALES conservando la hora actual. En
+  España (UTC+1 en invierno, UTC+2 en verano), al abrir la app entre las 00:00 y las 01:00/02:00,
+  la fecha en UTC es todavía la del día anterior, así que TODAS las claves de la semana retrocedían
+  un día y la agenda guardada aparecía una columna a la derecha. Fuera de esa franja horaria
+  funcionaba bien, por eso no se había detectado antes.
+- REPRODUCIDO Y VERIFICADO EN NAVEGADOR REAL (Playwright/Chromium con `timezoneId:'Europe/Madrid'`
+  y el reloj congelado a las 00:30): con el código anterior, una sesión guardada el lunes 2026-07-27
+  aparecía bajo la columna "Martes" y "hoy" se calculaba como el día anterior; con el arreglo,
+  aparece bajo "Lunes" y "hoy" es correcto.
+- FIX: nuevo formateador `ymd(d)` que compone la fecha a partir de los componentes LOCALES
+  (`getFullYear`/`getMonth`/`getDate`), más `todayKey()`. `fmt()` pasa a usarlo, y se han convertido
+  las 13 apariciones del patrón `toISOString().split('T')[0]` que quedaban en el archivo:
+  `inferProgramStart`, `weekKeyOf`, `computeStats`, el parseo de Salud (JSON y XML), los entrenos
+  del XML, la fecha de los marcadores manuales, la marca de última importación y el nombre del
+  archivo de copia de seguridad. Ya no queda ninguna clave de día generada en UTC, y hay una prueba
+  que lo verifica para que no vuelva a colarse.
+- TUS DATOS ESTÁN INTACTOS: el fallo era de PRESENTACIÓN, no de guardado. Las sesiones se guardaron
+  siempre con la clave del día correcto; lo que fallaba era la fecha con la que se dibujaban las
+  columnas del calendario al abrir la app de madrugada. Al actualizar, todo vuelve a verse en su
+  día. (Único matiz: una sesión REGISTRADA entre las 00:00 y las 02:00 sí pudo guardarse en el día
+  anterior; si ves alguna descolocada, es de esas. No se toca ningún dato automáticamente.)
+- VERIFICADO: 20 pruebas nuevas de regresión con reloj y zona horaria simulados (el lunes es el
+  lunes a las 09:00, 18:00, 23:50, 00:30 y 01:45; `todayKey` correcto de madrugada; la sesión del
+  lunes cae en la columna del lunes a cualquier hora; `weekKeyOf` no retrocede; y ninguna clave se
+  genera ya con `toISOString`). **Control positivo: con el código anterior fallan 5 de ellas, con el
+  arreglo 0.** El test lleva un guardarraíl que pide ejecutarlo con `TZ=Europe/Madrid`.
+- De paso se corrigió el MISMO error en mis propios ficheros de prueba, que calculaban las fechas
+  esperadas con `toISOString()` y daban un falso fallo al ejecutarse en horario español de madrugada.
+- Total: 97 comprobaciones (core 28, v64 24, v65 25, v66 20), 0 fallos.

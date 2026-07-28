@@ -478,7 +478,7 @@ body{font-size:calc(15px*var(--fs))}
       <button class="btn btn-block" style="margin-top:8px;border-color:var(--danger);color:var(--danger)" onclick="confirmDeleteAll()">🗑️ Eliminar todos mis datos</button>
       <div id="data-status" style="margin-top:7px;font-size:12px"></div>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 65</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 66</div>
     <div id="sw-status" style="text-align:center;font-size:11px;color:var(--warn);margin-top:4px;display:none"></div>
   </div>
 </div>
@@ -837,7 +837,7 @@ function inferProgramStart(){
   const first=new Date(validKeys[0]+'T00:00:00');
   if(isNaN(first.getTime()))return null; // dato corrupto: no bloquear el arranque por esto
   const day=first.getDay()||7;first.setDate(first.getDate()-day+1);
-  return first.toISOString().split('T')[0];
+  return ymd(first);
 }
 // nº de semana del programa para una fecha dada (1 = primera semana con registros)
 function programWeekFor(dateStr){
@@ -869,7 +869,12 @@ applyFontScale();
 
 /* --- Fechas --- */
 function weekDates(off){const n=new Date();const d=n.getDay()||7;const mon=new Date(n);mon.setDate(n.getDate()-d+1+off*7);return Array.from({length:7},(_,i)=>{const x=new Date(mon);x.setDate(mon.getDate()+i);return x})}
-function fmt(d){return d.toISOString().split('T')[0]}
+/* v66: formatea SIEMPRE la fecha del calendario LOCAL. Antes se usaba toISOString(), que
+   convierte a UTC: en España (UTC+1/+2), al usar la app de madrugada la clave retrocedía un
+   día y toda la agenda aparecía desplazada. Nunca usar toISOString() para claves de día. */
+function ymd(d){if(!d||isNaN(d.getTime&&d.getTime()))return '';return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function todayKey(){return ymd(new Date());}
+function fmt(d){return ymd(d)}
 function fLabel(d){return d.toLocaleDateString('es-ES',{day:'numeric',month:'short'})}
 function realWeekNum(){return S.currentWeek+1}
 // Etiqueta de la cabecera: nº de semana del PROGRAMA para la semana MOSTRADA
@@ -2825,7 +2830,7 @@ function parseHealthJSON(obj,st){
       } else if(name==='step_count'||name==='active_energy'){
         const metricKey=name==='step_count'?'steps':'energy';
         arr.forEach(d=>{const t=pDate(d.date);if(isNaN(t)||t<sinceMs)return;
-          const day=new Date(t).toISOString().split('T')[0];const src=d.source||'?';
+          const day=ymd(new Date(t));const src=d.source||'?';
           (acc[metricKey][day]=acc[metricKey][day]||{});
           acc[metricKey][day][src]=(acc[metricKey][day][src]||0)+(+d.qty||0);});
       }
@@ -2870,7 +2875,7 @@ function parseHealthJSON(obj,st){
     added=importWorkoutsArr(wos,sinceMs);
   } else { st.textContent='JSON no reconocido. Usa el formato simple {markers, workouts}, Health Auto Export o Health Export Kit.';st.style.color='var(--danger)';return; }
 
-  h.date=new Date().toISOString().split('T')[0];
+  h.date=todayKey();
   if(Object.keys(h).length>1){S.health=h;logHealthSnapshot(h);}
   const markers=[];
   if(h.restingHR)markers.push('FC reposo '+h.restingHR);
@@ -2972,7 +2977,7 @@ function parseHealth(e){
           const dt=new Date(ds.replace(' ','T'));if(dt<since)return;
           const de=rec.getAttribute('endDate');
           const sMs=dt.getTime(), eMs=de?new Date(de.replace(' ','T')).getTime():sMs;
-          const day=dt.toISOString().split('T')[0];
+          const day=ymd(dt);
           const src=rec.getAttribute('sourceName')||'?';
           const v=parseFloat(rec.getAttribute('value'))||0;
           const metric=t==='HKQuantityTypeIdentifierStepCount'?'steps':'energy';
@@ -3010,7 +3015,7 @@ function parseHealth(e){
       const nStepDays=Object.keys(acc.steps).length,nEnDays=Object.keys(acc.energy).length;
       if(nStepDays)h.avgSteps=avgDailyMax(acc.steps);
       if(nEnDays)h.avgActiveKcal=avgDailyMax(acc.energy);
-      h.date=new Date().toISOString().split('T')[0];
+      h.date=todayKey();
       if(Object.keys(h).length>1){S.health=h;logHealthSnapshot(h);save();}
       const markers=[];
       if(h.restingHR)markers.push('FC reposo '+h.restingHR);
@@ -3022,7 +3027,7 @@ function parseHealth(e){
       const added=importWorkouts(doc);
       if(added>0)imp.push(added+' entrenamientos');
       st.textContent='✓ Importado: '+(imp.length?imp.join(', '):'sin datos reconocibles en el archivo');st.style.color='var(--free)';
-      S.lastHealthImport=new Date().toISOString().split('T')[0];save();
+      S.lastHealthImport=todayKey();save();
       renderProg();renderCal();renderHealth();updateImportInfo();
     }catch(err){st.textContent='Error al leer el XML. Exporta desde Salud → tu foto → Exportar todos los datos.';st.style.color='var(--danger)';}
   };
@@ -3031,7 +3036,7 @@ function parseHealth(e){
 
 function logHealthSnapshot(h){
   if(!S.healthLog)S.healthLog=[];
-  const today=h.date||new Date().toISOString().split('T')[0];
+  const today=h.date||todayKey();
   const snap={date:today,restingHR:h.restingHR,hrv:h.hrv,vo2max:h.vo2max,bodyFat:h.bodyFat,avgSteps:h.avgSteps,avgActiveKcal:h.avgActiveKcal,avgSleepH:h.avgSleepH};
   const i=S.healthLog.findIndex(s=>s.date===today);
   if(i>=0)S.healthLog[i]=snap;else S.healthLog.push(snap);
@@ -3049,7 +3054,7 @@ function saveManualHealth(){
   if(st!=null)h.avgSteps=Math.round(st);
   if(ak!=null)h.avgActiveKcal=Math.round(ak);
   if(sl!=null)h.avgSleepH=+sl.toFixed(1);
-  h.date=new Date().toISOString().split('T')[0];h.manual=true;
+  h.date=todayKey();h.manual=true;
   if(Object.keys(h).length>1){S.health=h;S.lastHealthImport=h.date;logHealthSnapshot(h);save();renderHealth();updateImportInfo();
     const st2=document.getElementById('h-status');st2.textContent='✓ Marcadores guardados. Recordatorio: actualízalos cada mes con la media mensual.';st2.style.color='var(--free)';}
 }
@@ -3126,7 +3131,7 @@ function importWorkouts(doc){
     if(!start)return;
     const d=new Date(start.replace(' ','T'));
     if(isNaN(d)||d<cutoff)return;
-    const key=d.toISOString().split('T')[0];
+    const key=ymd(d);
     let dur=w.getAttribute('duration');
     const durUnit=w.getAttribute('durationUnit')||'min';
     dur=dur?parseFloat(dur):null;
@@ -3689,7 +3694,7 @@ function advanceAfter(ex){
 }
 
 /* --- Logros y racha --- */
-function weekKeyOf(dateStr){const d=new Date(dateStr+'T00:00:00');if(isNaN(d.getTime()))return null;const day=d.getDay()||7;d.setDate(d.getDate()-day+1);return d.toISOString().split('T')[0];}
+function weekKeyOf(dateStr){const d=new Date(dateStr+'T00:00:00');if(isNaN(d.getTime()))return null;const day=d.getDay()||7;d.setDate(d.getDate()-day+1);return ymd(d);}
 function computeStats(){
   const hist=S.history||[];
   const byWeek={};
@@ -3698,7 +3703,7 @@ function computeStats(){
   let streak=0;const now=new Date();
   for(let i=0;i<104;i++){
     const d=new Date(now);d.setDate(now.getDate()-7*i);
-    const wk=weekKeyOf(d.toISOString().split('T')[0]);
+    const wk=weekKeyOf(ymd(d));
     const n=byWeek[wk]||0;
     if(n>=3)streak++;
     else{if(i===0&&n>0)continue; // semana en curso aún incompleta no rompe la racha
@@ -4017,7 +4022,7 @@ function exportData(){
     const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');
-    const stamp=new Date().toISOString().split('T')[0];
+    const stamp=todayKey();
     a.href=url;a.download=`fitcoach-backup-${stamp}.json`;
     document.body.appendChild(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),2000);
