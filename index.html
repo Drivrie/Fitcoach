@@ -478,7 +478,7 @@ body{font-size:calc(15px*var(--fs))}
       <button class="btn btn-block" style="margin-top:8px;border-color:var(--danger);color:var(--danger)" onclick="confirmDeleteAll()">🗑️ Eliminar todos mis datos</button>
       <div id="data-status" style="margin-top:7px;font-size:12px"></div>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 66</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 67</div>
     <div id="sw-status" style="text-align:center;font-size:11px;color:var(--warn);margin-top:4px;display:none"></div>
   </div>
 </div>
@@ -798,6 +798,11 @@ function initState(){
   if(S.profile.minutos==null)S.profile.minutos=45;
   if(typeof S.profile.minutos==='string')S.profile.minutos=parseInt(S.profile.minutos)||45;
   if(!S.aiDays)S.aiDays=['L','X','V'];
+  // v67: foto de la distribución de días con la que se generó cada semana (clave = lunes).
+  // La distribución del perfil es una preferencia ACTUAL; sin esto, cambiarla repintaba las
+  // semanas pasadas como si esa hubiera sido su previsión, falseando lo realizado.
+  if(!S.weekPlans)S.weekPlans={};
+  migrateWeekPlans(); // v67: reconstruye la previsión de semanas ya generadas antes de v67
   if(!S.briefDays)S.briefDays=[]; // días IA de fuerza breve (los que coinciden con carrera, p. ej. M/J)
   if(!S.dumbbells)S.dumbbells={min:8,max:24,step:2}; // rango de mancuernas disponible (kg por mancuerna)
   if(!S.bands)S.bands={baja:true,media:true,alta:true}; // resistencias de bandas disponibles
@@ -877,6 +882,38 @@ function todayKey(){return ymd(new Date());}
 function fmt(d){return ymd(d)}
 function fLabel(d){return d.toLocaleDateString('es-ES',{day:'numeric',month:'short'})}
 function realWeekNum(){return S.currentWeek+1}
+/* --- Previsión por semana (v67) --- */
+function weekKeyFor(off){return fmt(weekDates(off)[0]);}   // clave = lunes de esa semana
+function snapshotWeekPlan(off){
+  S.weekPlans[weekKeyFor(off)]={ai:[...(S.aiDays||[])],brief:[...(S.briefDays||[])],free:[...(S.freeDays||[])]};
+}
+// Distribución prevista para la semana mostrada: la foto guardada si existe; si no, solo
+// para la semana actual o futuras se usa la del perfil. Para semanas PASADAS sin foto se
+// devuelve null: no se inventa una previsión retroactiva.
+// Reconstruye la previsión de semanas anteriores a v67 a partir de lo que quedó en la agenda:
+// los días con sesión guardada SON la previsión real de esa semana. Solo se hace una vez por
+// semana y nunca sobrescribe una foto existente (no se pierde ni se inventa nada).
+function migrateWeekPlans(){
+  if(S._weekPlansMigrated)return;
+  const byWeek={};
+  Object.keys(S.schedule||{}).forEach(key=>{
+    const list=S.schedule[key]||[];if(!list.length)return;
+    const wk=weekKeyOf(key);if(!wk)return;
+    const d=new Date(key+'T00:00:00');if(isNaN(d))return;
+    const code=DAYS[(d.getDay()||7)-1];
+    const b=byWeek[wk]=byWeek[wk]||{ai:[],brief:[],free:[]};
+    if(list.some(x=>x.type==='ai')&&!b.ai.includes(code))b.ai.push(code);
+    if(list.some(x=>x.type==='free')&&!b.free.includes(code))b.free.push(code);
+  });
+  Object.keys(byWeek).forEach(wk=>{if(!S.weekPlans[wk])S.weekPlans[wk]=byWeek[wk];});
+  S._weekPlansMigrated=true;
+}
+function planForWeek(off){
+  const snap=S.weekPlans&&S.weekPlans[weekKeyFor(off)];
+  if(snap)return snap;
+  if(off>=0)return {ai:S.aiDays||[],brief:S.briefDays||[],free:S.freeDays||[]};
+  return null;
+}
 // Etiqueta de la cabecera: nº de semana del PROGRAMA para la semana MOSTRADA
 // (independiente del contador relativo a hoy). Sin programa aún → contador relativo.
 function weekHeaderLabel(){
@@ -1155,6 +1192,7 @@ function buildNutriOffline(){
 function buildWeekOffline(){
   const weekNote=userNoteFrom('week-note');showNoteHint('week-note-hint',weekNote);
   saveProfile();
+  snapshotWeekPlan(S.currentWeek); // v67: fija la previsión de ESTA semana
   const p=S.profile;
   if(!p.peso||!p.altura||!p.edad){alert('Completa peso, altura y edad en el perfil.');return}
   const objetivo=primaryGoal(p.objetivos);
@@ -1216,6 +1254,7 @@ function renderTodayHero(){
   // Conteo coherente con el calendario: por cada día, las sesiones reales de la agenda
   // MÁS las previstas implícitas (día marcado IA/libre sin sesión aún en agenda).
   let done=0,plan=0;
+  const hPlan=planForWeek(S.currentWeek); // v67: previsión de la semana mostrada
   dates.forEach((k,i)=>{
     const code=DAYS[i];
     const list=(S.schedule[k]||[]).filter(s=>!s.skipped);
@@ -1226,8 +1265,8 @@ function renderTodayHero(){
     const hasFree=uniq.some(s=>s.type==='free');
     uniq.forEach(s=>{plan++;if(s.done)done++;});
     // previstas implícitas no materializadas todavía en agenda
-    if(S.aiDays.includes(code)&&!hasAI)plan++;
-    if(S.freeDays.includes(code)&&!hasFree)plan++;
+    if(hPlan&&hPlan.ai.includes(code)&&!hasAI)plan++;
+    if(hPlan&&hPlan.free.includes(code)&&!hasFree)plan++;
   });
   const pct=plan?Math.min(100,Math.round(done/plan*100)):0;
   const R=34,C=2*Math.PI*R,off=C*(1-pct/100);
@@ -1266,8 +1305,8 @@ function renderTodayHero(){
           const seen={};const uniq=[];list.forEach(s=>{const sig=s.type+'|'+(s.done?'1':'0')+'|'+(s.title||'');if(!seen[sig]){seen[sig]=1;uniq.push(s);}});
           const hasAI=uniq.some(s=>s.type==='ai'),hasFree=uniq.some(s=>s.type==='free');
           uniq.forEach(s=>{if(s.type==='ai'){ai++;if(s.done)aiDone++;}else{fr++;if(s.done)frDone++;}});
-          if(S.aiDays.includes(code)&&!hasAI)ai++;
-          if(S.freeDays.includes(code)&&!hasFree)fr++;});
+          if(hPlan&&hPlan.ai.includes(code)&&!hasAI)ai++;
+          if(hPlan&&hPlan.free.includes(code)&&!hasFree)fr++;});
         return `${done} de ${plan} completadas · ${aiDone}/${ai} IA, ${frDone}/${fr} libres`;
       })()}${(()=>{const mi=mesoInfo(programWeekFor(dates[0]));return mi?` · semana ${mi.weekNum} del programa`:'';})()}</div>
       ${cta}
@@ -1308,11 +1347,12 @@ function renderCal(){
   setWeekHeader();
   const today=fmt(new Date());
   const grid=document.getElementById('cal');grid.innerHTML='';
+  const wPlan=planForWeek(S.currentWeek); // v67: previsión de ESTA semana, no la del perfil actual
   dates.forEach((d,i)=>{
     const key=fmt(d),code=DAYS[i];
     const sess=S.schedule[key]||[];
-    const hasAI=sess.some(s=>s.type==='ai'&&!s.skipped)||(sess.length===0&&S.aiDays.includes(code));
-    const hasFree=sess.some(s=>s.type==='free'&&!s.skipped)||(sess.length===0&&S.freeDays.includes(code));
+    const hasAI=sess.some(s=>s.type==='ai'&&!s.skipped)||(sess.length===0&&!!wPlan&&wPlan.ai.includes(code));
+    const hasFree=sess.some(s=>s.type==='free'&&!s.skipped)||(sess.length===0&&!!wPlan&&wPlan.free.includes(code));
     const hasDone=sess.some(s=>s.done);
     const el=document.createElement('div');
     el.className='cal-day'+(key===today?' today':'')+(S.selDay===key?' sel':'');
@@ -1333,8 +1373,12 @@ function selDay(key,idx,keep){
   const code=DAYS[idx];const sess=S.schedule[key]||[];
   let h=`<div style="font-size:15px;font-weight:600;margin-bottom:9px">${DAY_NAMES[idx]} · ${fLabel(dates[idx])}</div>`;
   if(sess.length===0){
-    if(S.aiDays.includes(code))h+=`<div class="sess ai"><div class="sess-h"><span class="sess-tt">Sesión IA planificada</span><span class="badge b-ai">IA</span></div><div class="sess-m">Pulsa "Generar semana" en Perfil</div></div>`;
-    else if(S.freeDays.includes(code))h+=`<div class="sess free"><div class="sess-h"><span class="sess-tt">Entrenamiento libre</span><span class="badge b-free">Libre</span></div><div class="sess-m">Registra lo que hagas hoy</div></div>`;
+    // v67: se usa la previsión de ESTA semana. En semanas pasadas sin previsión guardada no se
+    // proyecta la distribución actual del perfil (falsearía lo que estaba planificado entonces).
+    const wPlan=planForWeek(S.currentWeek);
+    if(!wPlan)h+=`<div class="sess rest"><div class="sess-h"><span class="sess-tt">Sin registro</span><span class="badge b-rest">—</span></div><div class="sess-m">No hay nada registrado este día. Esta semana es anterior a tu planificación actual, así que no se muestra una previsión: lo que ves refleja solo lo que quedó guardado.</div></div>`;
+    else if(wPlan.ai.includes(code))h+=`<div class="sess ai"><div class="sess-h"><span class="sess-tt">Sesión IA planificada</span><span class="badge b-ai">IA</span></div><div class="sess-m">Pulsa "Generar semana" en Perfil</div></div>`;
+    else if(wPlan.free.includes(code))h+=`<div class="sess free"><div class="sess-h"><span class="sess-tt">Entrenamiento libre</span><span class="badge b-free">Libre</span></div><div class="sess-m">Registra lo que hagas hoy</div></div>`;
     else h+=`<div class="sess rest"><div class="sess-h"><span class="sess-tt">Día de descanso</span><span class="badge b-rest">Rest</span></div><div class="sess-m">No hay nada previsto. Recuperación activa: camina o estira suave. Si entrenaste igualmente, pulsa "Registrar" o "Añadir" para anotarlo.</div></div>`;
   } else {
     sess.forEach((s,si)=>{
@@ -1951,9 +1995,10 @@ function openAdd(){
 /* --- PROGRESO --- */
 function weekAdherencePct(){
   const dates=weekDates(S.currentWeek);
+  const aPlan=planForWeek(S.currentWeek); // v67: no proyectar la distribución actual hacia atrás
   let planned=0,done=0;
   dates.forEach((d,i)=>{const key=fmt(d),code=DAYS[i];
-    if(S.aiDays.includes(code)||S.freeDays.includes(code)||(S.schedule[key]&&S.schedule[key].length))planned++;
+    if((aPlan&&(aPlan.ai.includes(code)||aPlan.free.includes(code)))||(S.schedule[key]&&S.schedule[key].length))planned++;
     if(S.schedule[key]&&S.schedule[key].some(s=>s.done))done++;});
   return {planned,done,pct:planned?Math.round(done/planned*100):0};
 }
@@ -2469,6 +2514,7 @@ function confirmBridge(){
 function applyBridgePlan(plan){
   const dates=weekDates(S.currentWeek);
   const _wNote=userNoteFrom('week-note');
+  snapshotWeekPlan(S.currentWeek); // v67: fija la previsión de ESTA semana
   // Aviso si el plan va a sustituir una sesión que el usuario ya marcó como completada
   const overwrites=[];
   (plan.sesiones_ia||[]).forEach(s=>{

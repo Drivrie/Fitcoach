@@ -1053,3 +1053,46 @@ Playwright disponible desde v57, ya era abordable con garantías.
 - De paso se corrigió el MISMO error en mis propios ficheros de prueba, que calculaban las fechas
   esperadas con `toISOString()` y daban un falso fallo al ejecutarse en horario español de madrugada.
 - Total: 97 comprobaciones (core 28, v64 24, v65 25, v66 20), 0 fallos.
+
+## v67: la distribución de días deja de aplicarse retroactivamente a semanas pasadas
+- SÍNTOMA REPORTADO: al cambiar la distribución de entrenamientos para la semana siguiente, las
+  semanas ANTERIORES se repintaban con esa nueva distribución, como si hubiera sido lo previsto
+  entonces. El calendario mostraba días "planificados" que nunca lo estuvieron y lo realizado no
+  cuadraba con la previsión real de aquella semana.
+- CAUSA: `S.aiDays`/`S.freeDays` son una preferencia ACTUAL, pero se usaban como si fueran
+  histórico. En los días sin sesión guardada, el calendario rellenaba el hueco con la distribución
+  del perfil, fuese cual fuese la semana que se estuviera mirando. Afectaba a cinco sitios: el
+  calendario, el detalle del día, el anillo de cumplimiento, su desglose IA/libres y el cálculo de
+  adherencia de Progreso y Nutrición.
+- FIX: se guarda una FOTO de la distribución en el momento de generar cada semana
+  (`S.weekPlans`, con el lunes como clave), tanto en la vía offline como al aplicar el plan de
+  Claude. Al pintar se usa `planForWeek(off)`: la foto de esa semana si existe; si no, solo para la
+  semana actual y futuras se usa la del perfil. Para semanas PASADAS sin foto se devuelve `null` y
+  no se proyecta nada — es preferible no mostrar previsión a inventar una retroactiva. Ese día se
+  muestra como "Sin registro", explicando que la semana es anterior a la planificación actual.
+- MIGRACIÓN DE DATOS EXISTENTES: las semanas generadas antes de v67 no tienen foto, así que se
+  reconstruye a partir de la propia agenda (los días con sesión guardada SON la previsión real de
+  aquella semana). Se ejecuta una sola vez, nunca sobrescribe una foto existente y no borra nada.
+- VERIFICADO EN NAVEGADOR REAL (Playwright/Chromium, iPhone 12 mini, TZ Europe/Madrid) con el
+  escenario reportado —se entrenó lunes y miércoles, y después se cambió la distribución a M-J-S—:
+  · ANTES: martes, jueves y sábado aparecían como "IA planificada" en la semana pasada, el viernes
+    (que sí estaba previsto) como descanso, y la adherencia salía 2/5 = 40%.
+  · AHORA: solo el viernes figura como previsto no realizado, y la adherencia es 2/3 = 67%.
+- VERIFICADO ADEMÁS: 18 pruebas nuevas (la previsión pasada no se contamina, la actual sí usa la
+  del perfil, el detalle del día no muestra sesiones fantasma, lo realizado se conserva, adherencia
+  correcta por semana, semanas sin datos no generan previsión, y la migración reconstruye desde la
+  agenda sin pisar fotos existentes). **Control positivo: con la lógica anterior fallan 11 de esas
+  pruebas; con el arreglo, 0.**
+- FLUJO DE USO REAL VERIFICADO (test-flujo-domingo.js, 24 comprobaciones): se simula el
+  procedimiento habitual —domingo por la tarde, con el entreno del día ya registrado: cambiar la
+  vista a la semana siguiente, modificar la distribución, ajustar material y aplicar el plan de
+  Claude— confirmando que la SEMANA EN CURSO no se ve afectada: conserva su distribución, sus
+  sesiones completadas y su adherencia, no aparecen días "planificados" fantasma con la nueva
+  distribución, y las sesiones nuevas se crean todas en la semana siguiente. El mensaje para Claude
+  se construye para la semana siguiente.
+  IMPORTANTE: el orden importa. La foto se toma de la semana que se está VIENDO, así que hay que
+  cambiar la vista a la semana siguiente ANTES de modificar la distribución y generar (que es como
+  se hace habitualmente). Generar sin cambiar antes de vista regeneraría la semana en curso con la
+  distribución nueva — es lo correcto si eso es lo que se quiere, y la app avisa antes de sustituir
+  una sesión ya marcada como completada.
+- Total: 139 comprobaciones (core 28, v64 24, v65 25, v66 20, v67 18, flujo domingo 24), 0 fallos.
