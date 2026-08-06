@@ -1096,3 +1096,40 @@ Playwright disponible desde v57, ya era abordable con garantías.
   distribución nueva — es lo correcto si eso es lo que se quiere, y la app avisa antes de sustituir
   una sesión ya marcada como completada.
 - Total: 139 comprobaciones (core 28, v64 24, v65 25, v66 20, v67 18, flujo domingo 24), 0 fallos.
+
+## v68: el teclado del móvil ya no tapa los campos de registro
+- SÍNTOMA REPORTADO: al registrar una serie, intentar corregir las repeticiones reales, el material
+  o el peso a veces era imposible porque el teclado del teléfono tapaba esa parte de la pantalla.
+- CAUSA: en iOS, al abrir el teclado NO se encoge el viewport de diseño, solo el visible. El
+  reproductor y las hojas modales usan `position:fixed` con `inset:0`, así que mantenían el alto de
+  la pantalla completa y los campos quedaban por debajo del teclado, fuera de alcance.
+- MEDIDO ANTES DEL ARREGLO (Chromium, iPhone 12 mini, teclado de 336px → solo 476px visibles):
+  el reproductor seguía midiendo 812px de alto; el campo de repeticiones caía en 455-491px, el de
+  peso igual, el botón "Serie completada" en 530-570px y las notas del registro en 642-714px.
+  Todos por debajo del límite de 476px, es decir, tapados. Reproducido exactamente.
+- FIX 1 — alto real: se publica la altura de la ventana VISIBLE en la variable CSS `--vvh`,
+  actualizada con la API `visualViewport` (más `orientationchange` y `resize` como respaldo).
+  `.player`, `.sheet-bg` y `.sheet` la usan, así que el contenido siempre cabe por encima del
+  teclado. La hoja conserva su aspecto de siempre cuando no hay teclado (`min(88vh, …)`).
+- FIX 2 — desplazamiento al foco: al enfocar un campo se comprueba si queda fuera de la zona
+  visible y, si es así, se centra automáticamente (con un retardo que espera a que el teclado
+  termine de abrirse).
+- FIX 3 — zoom automático de iOS (encontrado en la auditoría): iOS amplía la página al enfocar
+  cualquier campo con letra menor de 16px, lo que descolocaba la pantalla y agravaba el problema.
+  Los campos estaban a 15px; ahora el mínimo efectivo es 16px, respetando la escala de fuente si
+  el usuario la tiene mayor (`max(16px, …)`).
+- FIX 4 — contenido centrado inalcanzable: `.pl-mid` usaba `justify-content:center`, que al
+  encoger el alto desborda por arriba y deja contenido sin poder alcanzarse ni haciendo scroll.
+  Cambiado a `safe center` con `min-height:0`, para que sea el contenedor el que haga scroll.
+- FIX 5 — cerrar el teclado: los campos de peso/banda y repeticiones del reproductor llevan ahora
+  `enterkeyhint="done"` y se cierra el teclado al pulsar Intro, sin tener que tocar fuera.
+- VERIFICADO CON TECLADO SIMULADO (mismas condiciones que la medición inicial):
+  · alto del reproductor 812px → 476px (se ajusta a lo visible)
+  · repeticiones 455-491 → 211-247 · peso 455-491 → 192-228
+  · botón "Serie completada" 530-570 → 267-307 · notas del registro 642-714 → 306-378
+  · borde inferior de la hoja de registro: 812px → 476px
+  · tamaño de campo: 15px → 16px (sin zoom automático)
+  Todos los elementos quedan dentro de la zona visible. Comprobado además que sin teclado no hay
+  desbordamiento horizontal en calendario, perfil, sesión, registro y reproductor, a tamaño de
+  letra normal y máximo.
+- Las 139 comprobaciones funcionales previas siguen en verde, 0 fallos.

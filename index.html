@@ -56,7 +56,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
 .field{margin-bottom:11px}
 .field label{font-size:12.5px;color:var(--text2);display:block;margin-bottom:5px;font-weight:500}
 .field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);
-  font-size:15px;background:var(--surface2);color:var(--text);font-family:inherit;-webkit-appearance:none}
+  font-size:16px;background:var(--surface2);color:var(--text);font-family:inherit;-webkit-appearance:none}
 .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--accent)}
 .field textarea{min-height:72px;resize:vertical;line-height:1.5}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
@@ -119,9 +119,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
 .tabbar .t{flex:1;padding:9px 0 8px;text-align:center;color:var(--text3);font-size:10px;font-weight:600;cursor:pointer}
 .tabbar .t.active{color:var(--accent)}
 .tabbar .t .ic{font-size:21px;display:block;margin-bottom:2px;line-height:1}
-.sheet-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;align-items:flex-end;animation:fade .2s}
+.sheet-bg{display:none;position:fixed;top:0;left:0;right:0;height:var(--vvh,100%);background:rgba(0,0,0,.55);z-index:50;align-items:flex-end;animation:fade .2s}
 .sheet-bg.show{display:flex}
-.sheet{background:var(--surface);border-radius:20px 20px 0 0;padding:18px 16px calc(28px + var(--safe-bot));width:100%;max-width:480px;margin:0 auto;max-height:88vh;overflow-y:auto;animation:slideup .28s cubic-bezier(.2,.8,.2,1)}
+.sheet{background:var(--surface);border-radius:20px 20px 0 0;padding:18px 16px calc(28px + var(--safe-bot));width:100%;max-width:480px;margin:0 auto;max-height:min(88vh, calc(var(--vvh,100vh) - 24px));overflow-y:auto;animation:slideup .28s cubic-bezier(.2,.8,.2,1);overscroll-behavior:contain}
 @keyframes slideup{from{transform:translateY(100%)}to{transform:none}}
 .sheet-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px}
 .sheet-h h3{font-size:17px;font-weight:600}
@@ -160,16 +160,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
 .empty .ic{font-size:34px;display:block;margin-bottom:9px;opacity:.5}
 .empty p{font-size:13px}
 textarea.bridge-out{font-family:'SF Mono',ui-monospace,monospace;font-size:11px;min-height:120px;background:var(--bg)}
-.player{display:none;position:fixed;inset:0;z-index:60;background:var(--bg);flex-direction:column;padding-top:var(--safe-top)}
+/* v68: en iOS el teclado NO encoge el viewport de diseño, así que un overlay fijo con inset:0
+   deja los campos debajo del teclado. Se usa la altura de la ventana VISIBLE (--vvh, que
+   actualiza visualViewport en JS) para que el contenido siempre quepa por encima. */
+.player{display:none;position:fixed;top:0;left:0;right:0;height:var(--vvh,100%);z-index:60;background:var(--bg);flex-direction:column;padding-top:var(--safe-top)}
 .player.show{display:flex}
 .pl-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)}
 .pl-top h3{font-size:14px;font-weight:600}
-#player-body{flex:1;overflow-y:auto;padding:18px 18px 8px;display:flex;flex-direction:column}
+#player-body{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:18px 18px 8px;display:flex;flex-direction:column}
 .pl-prog{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-bottom:14px}
 .pl-prog-i{height:100%;background:var(--accent);border-radius:3px;transition:width .4s}
 .pl-count{font-size:12px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
 .pl-name{font-size:24px;font-weight:700;margin:3px 0 8px;letter-spacing:-.4px}
-.pl-mid{flex:1;display:flex;flex-direction:column;justify-content:center;text-align:center}
+/* v68: 'safe center' evita que, al encoger el alto por el teclado, el contenido centrado
+   se desborde por arriba y quede inalcanzable; min-height:0 permite que el hijo encoja
+   y sea el contenedor el que haga scroll. */
+.pl-mid{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:safe center;text-align:center}
 .pl-phase{font-size:13px;font-weight:700;letter-spacing:2px;margin-bottom:6px}
 .pl-timer{font-size:68px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-3px;line-height:1}
 .pl-reps{font-size:20px;font-weight:600}
@@ -183,7 +189,7 @@ textarea.bridge-out{font-family:'SF Mono',ui-monospace,monospace;font-size:11px;
 body{font-size:calc(15px*var(--fs))}
 .card-t{font-size:calc(15px*var(--fs))!important}
 .field label{font-size:calc(13px*var(--fs))!important}
-.field input,.field select,.field textarea{font-size:calc(15px*var(--fs))!important}
+.field input,.field select,.field textarea{font-size:max(16px,calc(15px*var(--fs)))!important}
 .btn{font-size:calc(14px*var(--fs))!important}
 .note{font-size:calc(12px*var(--fs))!important}
 .sess-tt{font-size:calc(15px*var(--fs))!important}
@@ -478,7 +484,7 @@ body{font-size:calc(15px*var(--fs))}
       <button class="btn btn-block" style="margin-top:8px;border-color:var(--danger);color:var(--danger)" onclick="confirmDeleteAll()">🗑️ Eliminar todos mis datos</button>
       <div id="data-status" style="margin-top:7px;font-size:12px"></div>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 67</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 68</div>
     <div id="sw-status" style="text-align:center;font-size:11px;color:var(--warn);margin-top:4px;display:none"></div>
   </div>
 </div>
@@ -871,6 +877,38 @@ function appendInsight(text){
 }
 function applyFontScale(){document.documentElement.style.setProperty('--fs',S.fontScale||1);}
 applyFontScale();
+
+/* --- v68: teclado del móvil --------------------------------------------------------------
+   En iOS el teclado no encoge el viewport de diseño: un overlay con position:fixed mantiene su
+   alto y los campos quedan tapados. Se publica la altura de la ventana VISIBLE en --vvh y se
+   desplaza a la vista el campo que recibe el foco. */
+(function(){
+  const vv=window.visualViewport;
+  function setVH(){
+    const h=vv?vv.height:window.innerHeight;
+    document.documentElement.style.setProperty('--vvh',h+'px');
+    document.documentElement.style.setProperty('--kb', Math.max(0,(window.innerHeight-h))+'px');
+  }
+  setVH();
+  if(vv){vv.addEventListener('resize',setVH);vv.addEventListener('scroll',setVH);}
+  window.addEventListener('orientationchange',()=>setTimeout(setVH,250));
+  window.addEventListener('resize',setVH);
+
+  // Al enfocar un campo, asegurarse de que queda visible por encima del teclado.
+  document.addEventListener('focusin',e=>{
+    const el=e.target;
+    if(!el||!/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))return;
+    if(el.type==='checkbox'||el.type==='radio'||el.type==='range'||el.type==='file')return;
+    // esperar a que el teclado termine de abrirse antes de recolocar
+    setTimeout(()=>{
+      try{
+        const r=el.getBoundingClientRect();
+        const visH=(vv?vv.height:window.innerHeight);
+        if(r.bottom>visH-12||r.top<0)el.scrollIntoView({block:'center',behavior:'smooth'});
+      }catch(_){}
+    },320);
+  });
+})();
 
 /* --- Fechas --- */
 function weekDates(off){const n=new Date();const d=n.getDay()||7;const mon=new Date(n);mon.setDate(n.getDate()-d+1+off*7);return Array.from({length:7},(_,i)=>{const x=new Date(mon);x.setDate(mon.getDate()+i);return x})}
@@ -3529,11 +3567,11 @@ function renderPlayer(){
       ? `<select id="pl-banda" style="${inpSt};width:auto;min-width:96px">
            ${(bandOpts.length?bandOpts:['baja','media','alta']).map(b=>`<option value="${b}"${b===prefBanda?' selected':''}>banda ${b}</option>`).join('')}
          </select><span class="pl-cue">×</span>`
-      : `<input type="text" inputmode="decimal" id="pl-kg" value="${prefKg}" placeholder="kg" style="width:72px;${inpSt}"><span class="pl-cue">kg ×</span>`;
+      : `<input type="text" inputmode="decimal" enterkeyhint="done" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" id="pl-kg" value="${prefKg}" placeholder="kg" style="width:72px;${inpSt}"><span class="pl-cue">kg ×</span>`;
     const recHTML=canRec?`
       <div style="display:flex;gap:6px;justify-content:center;align-items:center;margin-top:12px">
         ${cargaInput}
-        <input type="text" inputmode="numeric" id="pl-reps" value="${prefReps}" placeholder="reps" style="width:62px;${inpSt}"><span class="pl-cue">reps</span>
+        <input type="text" inputmode="numeric" enterkeyhint="done" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" id="pl-reps" value="${prefReps}" placeholder="reps" style="width:62px;${inpSt}"><span class="pl-cue">reps</span>
       </div>
       <div class="pl-cue" style="margin-top:4px;font-size:calc(11px*var(--fs))">${esBanda?'Banda usada en esta serie · corrige si has cambiado de resistencia':'Carga real de esta serie · corrige solo si difiere'}</div>
       ${last?`<div class="pl-cue" style="margin-top:4px;color:var(--ring-stand)">Última vez (${last.date}): ${fmtSets(last.series)}</div>`:''}`:'';
