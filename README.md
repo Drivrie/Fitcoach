@@ -1216,3 +1216,60 @@ Playwright disponible desde v57, ya era abordable con garantías.
 - PENDIENTE (detectado en la auditoría, no incluido aquí): desfase del número de semana del
   programa con el cambio de hora, persistencia incremental de las cargas del reproductor,
   cronómetros por marca de tiempo, orden del historial, escapado del JSON de Claude al aplicarlo.
+
+## v71: cambio de hora, cargas del reproductor a salvo y cronómetros que no se quedan clavados
+- ORIGEN: los cinco puntos de integridad que quedaron señalados en la auditoría de la v70. Ninguno
+  daba error visible: fallaban en silencio, que es peor.
+- FIX 1 — el número de semana del programa se descuadraba con el cambio de hora. `programWeekFor()`
+  restaba dos fechas y dividía entre `7*86400000`. La semana del adelanto de marzo dura 167 h
+  (167/168 = 0,994 → se contaba una semana DE MENOS, y el desfase se arrastraba hasta octubre) y la
+  del retraso dura 169 h (se SALTABA una semana). Reproducido en `TZ=Europe/Madrid` con inicio el
+  2026-03-02: los lunes daban 1, 2, 3, 4, **4**, 5, 6. Afectaba a la cabecera, al bloque y semana
+  del mesociclo, y al texto "FASE DEL PROGRAMA" que se envía a Claude, que planificaba creyendo que
+  se repetía una semana. Ahora hay `daysBetween()`, que normaliza a UTC solo año/mes/día, y una
+  diferencia de días de calendario es exacta siempre. Se usa también en los avisos de "hace N días
+  que no actualizas los marcadores", que tenían el mismo error de ±1 día en la frontera.
+- FIX 2 — cerrar el reproductor a media sesión perdía todas las cargas anotadas. `P.setLog` vivía
+  solo en memoria hasta `finishSession()`: si iOS purgaba la app durante un descanso largo, o se
+  pulsaba ✕, se iban los kg×reps de toda la sesión sin ningún aviso. Ahora `persistSetLog()` vuelca
+  lo registrado en la agenda EN CUANTO se anota cada serie, al terminar un bloque, al cerrar el
+  reproductor y al pasar la app a segundo plano. Los resultados de los bloques AMRAP/EMOM/circuito
+  se guardan igual.
+- FIX 3 — los cronómetros se quedaban clavados al salir de la app. Contaban restando 1 por tick de
+  `setInterval`; iOS estrangula los timers en segundo plano y los detiene con la pantalla bloqueada,
+  así que un descanso de 2 min podía mostrar 1:40 después de tres minutos reales. Descanso, trabajo
+  por tiempo, bloques y el cronómetro suelto del botón ⏱ se anclan ahora al reloj del sistema
+  (instante de fin + recálculo en cada tick, cada 250 ms): volver a la app corrige el tiempo al
+  momento. Los pitidos solo suenan en los segundos por los que se pasa de verdad, así que una
+  suspensión larga no encadena avisos atrasados. La pausa de los bloques congela el tiempo restante
+  y al reanudar recalcula el fin.
+- FIX 4 — descanso infinito con un JSON incompleto. Si Claude omitía `descanso_seg`, `P.sec` quedaba
+  en `undefined`: el cronómetro mostraba `NaN:NaN` y, como `NaN` nunca es `<=0`, el descanso no
+  terminaba nunca (solo se salía con "Saltar descanso"). Ahora el reproductor cae a 60 s, `fmtSec()`
+  protege valores inválidos y el validador del puente lo señala como AVISO (no bloquea: el plan es
+  aplicable, solo se advierte del valor que se usará).
+- FIX 5 — el historial dejaba de estar ordenado. `saveLog()` insertaba con `unshift`, así que
+  registrar un día pasado lo colocaba el primero. El prompt de Claude asume "más reciente primero" y
+  recorta a 38 entradas: un registro atrasado podía desplazar fuera sesiones recientes de verdad.
+  Ahora se reordena por fecha tras cada registro (orden estable: varias sesiones del mismo día
+  conservan el orden en que se anotaron).
+- FIX 6 — los datos ilegibles ya no se destruyen. Si `localStorage` no se podía leer, `load()`
+  devolvía `{}` y el primer `save()` lo sobrescribía: siendo la única copia que existe, un simple
+  truncamiento se volvía irrecuperable. Ahora el contenido crudo se aparta bajo
+  `fitcoach-danado-AAAA-MM-DD`, el aviso al usuario dice dónde ha quedado, y un guardado posterior
+  nunca lo pisa. También se trata como dañado un JSON válido que no sea un objeto.
+- VALIDACIÓN: arnés con DOM real (jsdom) — 91 comprobaciones en verde, 0 fallos. Sobre las 58 de la
+  v70 (arranque, persistencia campo a campo del usuario veterano y regresiones de interfaz) se
+  añaden: semanas del programa y bloques del mesociclo en las dos semanas de cambio de hora,
+  `daysBetween` con entradas inválidas y negativas, serie anotada que llega a `localStorage` sin
+  terminar la sesión, cierre del reproductor a media sesión, plantilla de registro con la carga
+  real, instante de fin del descanso, recuperación tras simular una suspensión de iOS, caída a 60 s
+  sin `descanso_seg`, pausa/reanudación del cronómetro suelto, aviso del validador, orden del
+  historial tras registrar un día pasado y copia del almacenamiento dañado.
+- EJECUTADO ADEMÁS en UTC, America/New_York, America/Santiago (hemisferio sur), Australia/Sydney y
+  Atlantic/Canary: 91/91 en todas.
+- CONTRASTE CON v70: el mismo arnés sobre la v70 da 25 fallos, incluida la secuencia de semanas
+  1, 2, 3, 4, **4**, 5, 6 y el descanso que no se recupera tras la suspensión.
+- PENDIENTE (auditoría, para más adelante): sanear el JSON de Claude al aplicarlo (v72), rendimiento
+  del historial y del import XML, división de Perfil/Ajustes y accesibilidad de los elementos
+  pulsables (v73).

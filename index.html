@@ -484,7 +484,7 @@ body{font-size:calc(15px*var(--fs))}
       <button class="btn btn-block" style="margin-top:8px;border-color:var(--danger);color:var(--danger)" onclick="confirmDeleteAll()">🗑️ Eliminar todos mis datos</button>
       <div id="data-status" style="margin-top:7px;font-size:12px"></div>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 70</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 71</div>
     <div id="sw-status" style="text-align:center;font-size:11px;color:var(--warn);margin-top:4px;display:none"></div>
     <div style="text-align:center;margin-top:8px">
       <button class="btn btn-xs" onclick="checkForUpdate()">🔄 Buscar actualización</button>
@@ -767,13 +767,31 @@ function esc(v){
 
 /* --- Estado persistente --- */
 let _loadFailed=false;
+let _corruptKey='';
 let S=load();
+/* v71: si los datos guardados no se pueden leer, se APARTA el contenido crudo antes de arrancar en
+   limpio. Hasta ahora se devolvía {} y el primer save() lo sobrescribía: siendo la única copia que
+   existe (no hay servidor), un simple truncamiento se volvía irrecuperable. Ahora queda bajo la
+   clave 'fitcoach-danado-AAAA-MM-DD' y puede rescatarse a mano. */
 function load(){
+  let raw=null;
   try{
-    const raw=localStorage.getItem('fitcoach');
+    raw=localStorage.getItem('fitcoach');
     if(raw==null)return {};
-    return JSON.parse(raw);
-  }catch(e){_loadFailed=true;return {};}
+    const o=JSON.parse(raw);
+    if(!o||typeof o!=='object'||Array.isArray(o))throw new Error('formato inesperado');
+    return o;
+  }catch(e){
+    _loadFailed=true;
+    try{
+      if(raw){
+        const k='fitcoach-danado-'+ymd(new Date());
+        if(localStorage.getItem(k)==null)localStorage.setItem(k,raw);
+        _corruptKey=k;
+      }
+    }catch(_){}
+    return {};
+  }
 }
 function save(){
   try{localStorage.setItem('fitcoach',JSON.stringify(S));return true;}
@@ -840,11 +858,27 @@ function inferProgramStart(){
   const day=first.getDay()||7;first.setDate(first.getDate()-day+1);
   return ymd(first);
 }
+/* v71: diferencia en días de CALENDARIO, no en milisegundos.
+   Restar dos fechas y dividir entre 86.400.000 falla en las semanas del cambio de hora: en marzo
+   una semana dura 167 h (la división daba 0,994 → se contaba una semana de menos y el número se
+   quedaba desfasado hasta octubre) y en octubre dura 169 h (se saltaba una semana). Normalizando a
+   UTC solo el año/mes/día, la resta es exacta siempre. */
+function daysBetween(aStr,bStr){
+  if(!aStr||!bStr)return null;
+  const a=new Date(aStr+'T00:00:00'),b=new Date(bStr+'T00:00:00');
+  if(isNaN(a.getTime())||isNaN(b.getTime()))return null;
+  const ua=Date.UTC(a.getFullYear(),a.getMonth(),a.getDate());
+  const ub=Date.UTC(b.getFullYear(),b.getMonth(),b.getDate());
+  return Math.round((ub-ua)/86400000);
+}
+// días transcurridos desde una fecha guardada hasta hoy (null si la fecha no es válida)
+function daysSince(dateStr){return daysBetween(dateStr,todayKey());}
 // nº de semana del programa para una fecha dada (1 = primera semana con registros)
 function programWeekFor(dateStr){
   if(!S.programStart)return null;
-  const a=new Date(S.programStart+'T00:00:00'),b=new Date(dateStr+'T00:00:00');
-  return Math.floor((b-a)/(7*86400000))+1;
+  const d=daysBetween(S.programStart,dateStr);
+  if(d==null)return null;
+  return Math.floor(d/7)+1;
 }
 function mesoInfo(weekNum){
   if(!weekNum||weekNum<1)return null;
@@ -855,7 +889,7 @@ function mesoInfo(weekNum){
 }
 initState();
 if(_loadFailed){
-  alert('⚠️ No se pudieron leer tus datos guardados (almacenamiento dañado o vacío). La app ha arrancado con un perfil nuevo para no bloquearse. Si tienes una copia de seguridad exportada, restáurala desde Ajustes → Mis datos.');
+  alert('⚠️ No se pudieron leer tus datos guardados (almacenamiento dañado). La app ha arrancado con un perfil nuevo para no bloquearse.'+(_corruptKey?' Los datos ilegibles NO se han borrado: se han apartado bajo la clave "'+_corruptKey+'" por si se pueden rescatar.':'')+' Si tienes una copia exportada, restáurala desde Ajustes → Mis datos.');
 }
 // Añade una entrada al análisis del entrenador sin dejar que crezca sin límite (localStorage tiene cuota).
 function appendInsight(text){
@@ -1352,8 +1386,8 @@ function sundayRitualHtml(dates,todayKey){
   // pasos pendientes de esta semana
   const pendientes=dates.filter(k=>(S.schedule[k]||[]).some(s=>!s.done&&!s.skipped)).length;
   // ¿toca también actualizar marcadores? (≥30 días)
-  const d=S.lastHealthImport?new Date(S.lastHealthImport+'T00:00:00'):null;
-  const markersDue=!d||Math.floor((Date.now()-d.getTime())/86400000)>=30;
+  const dImp=S.lastHealthImport?daysSince(S.lastHealthImport):null;
+  const markersDue=(dImp==null)||dImp>=30;
   if(nextPlanned&&!markersDue)return '';
   const steps=[];
   if(pendientes)steps.push(`Registra o marca como no realizado lo pendiente (${pendientes} día${pendientes>1?'s':''})`);
@@ -2006,6 +2040,11 @@ function saveLog(){
     else S.schedule[key].push({type:'free',title:type,meta:dur+'min'+(dist?' · '+dist+'km':''),done:true,log});
   }
   S.history.unshift({key,...log,title:type});
+  // v71: al registrar un día pasado, unshift lo colocaba el primero y el historial dejaba de estar
+  // ordenado. El prompt de Claude asume "más reciente primero" y recorta a 38 entradas, así que un
+  // registro atrasado podía desplazar fuera sesiones recientes de verdad. El orden es estable, así
+  // que varias sesiones del mismo día conservan el orden en que se anotaron.
+  S.history.sort((a,b)=>String(b.key).localeCompare(String(a.key)));
   S.logMode='log';
   save();closeSheet('log-bg');renderCal();renderProg();selDay(key,weekDates(S.currentWeek).map(fmt).indexOf(key),true);
 }
@@ -2467,6 +2506,7 @@ function validateExercise(e,i,issues){
   if(isBlock(e))return; // bloques AMRAP/EMOM/circuito: estructura propia ya tolerada
   if(e.series==null)issues.errors.push(`Falta "series" en ${tag}.`);
   if(e.reps==null||e.reps==='')issues.errors.push(`Falta "reps" en ${tag}.`);
+  if(e.descanso_seg==null||isNaN(+e.descanso_seg)||+e.descanso_seg<=0)issues.warns.push(`${tag} no indica "descanso_seg"; la sesión guiada usará 60 s.`);
   if(!e.peso)issues.warns.push(`${tag} no indica "peso" (carga inequívoca).`);
   const eq=S.profile.equipos||[];
   const nm=(e.nombre||'').toLowerCase();
@@ -3163,8 +3203,8 @@ function renderHealth(){
   // recordatorio mensual
   const rem=document.getElementById('h-reminder');
   if(rem){
-    const d=S.lastHealthImport?new Date(S.lastHealthImport+'T00:00:00'):null;
-    const days=d?Math.floor((Date.now()-d.getTime())/86400000):999;
+    const dd=S.lastHealthImport?daysSince(S.lastHealthImport):null;
+    const days=(dd==null)?999:dd;
     if(days>=30)rem.innerHTML=`<div style="background:rgba(245,158,11,.12);border-radius:9px;padding:9px 11px;margin-top:10px;font-size:calc(12px*var(--fs));color:var(--warn)">🔔 Hace ${days} días que no actualizas tus medias mensuales. Abre Salud, lee las medias del mes y actualízalas para seguir la tendencia.</div>`;
     else rem.innerHTML='';
   }
@@ -3174,7 +3214,8 @@ function updateImportInfo(){
   const el=document.getElementById('h-lastimport');if(!el)return;
   if(!S.lastHealthImport){el.textContent='';return;}
   const d=new Date(S.lastHealthImport+'T00:00:00');
-  const days=Math.floor((Date.now()-d.getTime())/86400000);
+  const days=daysSince(S.lastHealthImport);
+  if(days==null){el.textContent='';return;}
   const fecha=d.toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'});
   const cuando=days<=0?'hoy':days===1?'hace 1 día':`hace ${days} días`;
   if(days>=30){
@@ -3445,7 +3486,26 @@ async function acquireWakeLock(){
   try{if('wakeLock' in navigator){WL=await navigator.wakeLock.request('screen');}}catch(e){}
 }
 function releaseWakeLock(){try{if(WL){WL.release();WL=null;}}catch(e){}}
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&P.active)acquireWakeLock();});
+document.addEventListener('visibilitychange',()=>{
+  if(!P.active)return;
+  if(document.visibilityState==='visible')acquireWakeLock();
+  else persistSetLog(); // v71: iOS puede purgar la app en segundo plano; lo anotado ya queda a salvo
+});
+/* v71: vuelca en la agenda lo registrado en el reproductor EN CUANTO se anota, no solo al terminar.
+   Antes P.setLog vivía únicamente en memoria hasta finishSession(): cerrar el reproductor a media
+   sesión, o que iOS matara la app durante un descanso largo, se llevaba por delante todas las
+   cargas anotadas. Es idempotente: se puede llamar tantas veces como haga falta. */
+function persistSetLog(){
+  try{
+    if(!P.key)return;
+    const si=mainAIIdx(P.key);if(si<0)return;
+    const sess=(S.schedule[P.key]||[])[si];if(!sess)return;
+    let hay=false;
+    if(P.setLog&&P.setLog.length){sess.sets=JSON.parse(JSON.stringify(P.setLog));hay=true;}
+    if(P.blockResults&&P.blockResults.length){sess.blockResults=[...P.blockResults];hay=true;}
+    if(hay)save();
+  }catch(e){}
+}
 
 function startPlayer(key){
   const sess=mainAISess(key);
@@ -3459,6 +3519,7 @@ function startPlayer(key){
   renderPlayer();
 }
 function closePlayer(){
+  persistSetLog(); // v71: salir a medias no puede costar lo ya registrado
   P.active=false;clearInterval(P.int);
   releaseWakeLock();
   document.getElementById('player').classList.remove('show');
@@ -3581,7 +3642,29 @@ function renderPlayer(){
     <div class="pl-name">${ex.nombre}</div>
     <div class="pl-mid">${mid}</div>`;
 }
-function fmtSec(s){const m=String(Math.floor(s/60)).padStart(2,'0');return m+':'+String(Math.max(0,s)%60).padStart(2,'0');}
+function fmtSec(s){s=Math.max(0,Math.round(+s||0));const m=String(Math.floor(s/60)).padStart(2,'0');return m+':'+String(s%60).padStart(2,'0');}
+/* v71: cuentas atrás ancladas a la hora del sistema.
+   Antes cada tick de setInterval restaba 1 segundo. iOS estrangula los timers en segundo plano y
+   los detiene con la pantalla bloqueada: al volver al reproductor el descanso seguía clavado en el
+   segundo en que se salió, así que el tiempo real de descanso no tenía nada que ver con el
+   mostrado. Ahora se guarda el instante de fin y cada tick se recalcula lo que queda de reloj: al
+   volver a la app el número se corrige solo. */
+function startCountdown(secs,onTick,onEnd){
+  clearInterval(P.int);
+  const total=Math.max(0,Math.round(+secs||0));
+  P.sec=total;P.endAt=Date.now()+total*1000;
+  let last=total;
+  P.int=setInterval(()=>{
+    const left=Math.max(0,Math.round((P.endAt-Date.now())/1000));
+    if(left!==last){
+      // solo se avisa de los segundos por los que se pasa de verdad: si el móvil estuvo suspendido
+      // y el salto es de 20 a 0, no se encadenan pitidos atrasados
+      if(left>0&&left<=3&&last>left)countdownCue(left);
+      last=left;P.sec=left;onTick(left);
+    }
+    if(left<=0){clearInterval(P.int);P.int=null;P.sec=0;countdownCue(0);onEnd();}
+  },250);
+}
 
 function isPerSide(ex){return /lado|lateral|unilateral|por pierna|por brazo|a una mano|cada (lado|pierna|brazo|mano)/i.test(String(ex.reps)+' '+(ex.nombre||''));}
 function finishSet(){
@@ -3610,6 +3693,7 @@ function recordSet(ex){
   if(banda)serie.banda=banda;
   e.series.push(serie);
   P.rec={exi:P.exi,kg:kgRaw,reps:rpRaw,banda}; // prellenar la siguiente serie del MISMO ejercicio
+  persistSetLog(); // v71
 }
 /* Ejercicios por tiempo: se registran solos ("40s" por serie) */
 function recordTimedSet(ex){
@@ -3618,36 +3702,45 @@ function recordTimedSet(ex){
   const serie={kg:parseKg(ex.peso),reps:String(ex.reps)};
   if(isBandExercise(ex)){const b=suggestedBand(ex);if(b)serie.banda=b;}
   e.series.push(serie);
+  persistSetLog(); // v71
 }
 function startWorkCountdown(ex,repSecs){
   P.phase='work';P.sec=repSecs;P.tot=repSecs;renderPlayer();
-  clearInterval(P.int);if(navigator.vibrate)navigator.vibrate(40);
-  P.int=setInterval(()=>{P.sec--;const t=document.getElementById('pl-timer');if(t)t.textContent=fmtSec(P.sec);countdownCue(P.sec);
-    if(P.sec<=0){clearInterval(P.int);if(navigator.vibrate)navigator.vibrate([100,50,100]);
+  if(navigator.vibrate)navigator.vibrate(40);
+  startCountdown(repSecs,
+    left=>{const t=document.getElementById('pl-timer');if(t)t.textContent=fmtSec(left);},
+    ()=>{
+      if(navigator.vibrate)navigator.vibrate([100,50,100]);
       if(isPerSide(ex)&&P.side===1){ // toca el otro lado: repetir el tiempo
         P.side=2;
         beep(700,0.5,0.9); // tono distinto: cambio de lado
         startWorkCountdown(ex,repSecs);
         return;
       }
-      P.side=0;recordTimedSet(ex);beginRest();}},1000);
+      P.side=0;recordTimedSet(ex);beginRest();
+    });
 }
 function beginRest(){
   const ex=P.sess.exercises[P.exi];
+  // v71: red de seguridad. Si el JSON de Claude no trae "descanso_seg", antes P.sec quedaba en
+  // undefined: el cronómetro mostraba NaN:NaN y, como NaN nunca es <=0, el descanso no terminaba
+  // jamás (solo se salía con "Saltar descanso").
+  const rest=(+ex.descanso_seg>0)?Math.round(+ex.descanso_seg):60;
   if(P.set<ex.series){ // quedan series → descanso y misma serie+1
-    P.set++;P.phase='rest';P.sec=ex.descanso_seg;P.tot=ex.descanso_seg;renderPlayer();
+    P.set++;P.phase='rest';P.sec=rest;P.tot=rest;renderPlayer();
     runRest();
   } else { // siguiente ejercicio
     if(P.exi<P.sess.exercises.length-1){
-      P.phase='rest';P.sec=ex.descanso_seg;P.tot=ex.descanso_seg;
+      P.phase='rest';P.sec=rest;P.tot=rest;
       P.exi++;P.set=1;renderPlayer();runRest();
     } else { finishSession(); }
   }
 }
 function runRest(){
-  clearInterval(P.int);if(navigator.vibrate)navigator.vibrate(40);
-  P.int=setInterval(()=>{P.sec--;const t=document.getElementById('pl-timer');if(t)t.textContent=fmtSec(P.sec);countdownCue(P.sec);
-    if(P.sec<=0){clearInterval(P.int);if(navigator.vibrate)navigator.vibrate([100,50,100]);P.phase='ready';renderPlayer();}},1000);
+  if(navigator.vibrate)navigator.vibrate(40);
+  startCountdown(P.sec,
+    left=>{const t=document.getElementById('pl-timer');if(t)t.textContent=fmtSec(left);},
+    ()=>{if(navigator.vibrate)navigator.vibrate([100,50,100]);P.phase='ready';renderPlayer();});
 }
 function skipRest(){clearInterval(P.int);P.phase='ready';renderPlayer();}
 
@@ -3717,19 +3810,26 @@ function startBlock(){
 }
 function runBlockTimer(){
   clearInterval(P.int);
+  if(!P.blk)return;
+  P.blk.endAt=Date.now()+Math.max(0,P.blk.leftSec)*1000; // v71: mismo criterio de reloj
+  let last=P.blk.leftSec;
   P.int=setInterval(()=>{
     if(!P.blk||P.blk.paused)return;
-    P.blk.leftSec--;
-    const el=document.getElementById('pl-timer');if(el)el.textContent=fmtSec(P.blk.leftSec);
-    countdownCue(P.blk.leftSec);
-    if(P.blk.type==='emom'&&P.blk.leftSec>0){
-      const elapsed=P.blk.totalMin*60-P.blk.leftSec;
-      const nm=Math.floor(elapsed/60)+1;
-      if(nm!==P.blk.minute){P.blk.minute=nm;P.blk.rounds=nm-1;beep(1100,0.25,0.85);if(navigator.vibrate)navigator.vibrate([60,40,60]);renderBlock();}
+    const left=Math.max(0,Math.round((P.blk.endAt-Date.now())/1000));
+    if(left!==last){
+      if(left>0&&left<=3&&last>left)countdownCue(left);
+      last=left;P.blk.leftSec=left;
+      const el=document.getElementById('pl-timer');if(el)el.textContent=fmtSec(left);
+      if(P.blk.type==='emom'&&left>0){
+        const elapsed=P.blk.totalMin*60-left;
+        const nm=Math.floor(elapsed/60)+1;
+        if(nm!==P.blk.minute){P.blk.minute=nm;P.blk.rounds=nm-1;beep(1100,0.25,0.85);if(navigator.vibrate)navigator.vibrate([60,40,60]);renderBlock();}
+      }
     }
-    if(P.blk.leftSec<=0){clearInterval(P.int);if(P.blk.type==='emom')P.blk.rounds=P.blk.totalMin;
+    if(left<=0){clearInterval(P.int);P.int=null;P.blk.leftSec=0;countdownCue(0);
+      if(P.blk.type==='emom')P.blk.rounds=P.blk.totalMin;
       if(navigator.vibrate)navigator.vibrate([120,60,120,60,200]);beep(1600,0.4,0.95);endBlock(true);}
-  },1000);
+  },250);
 }
 function blockRound(){
   if(!P.blk||P.blk.paused)return;
@@ -3737,7 +3837,18 @@ function blockRound(){
   if(P.blk.type==='circuito'&&P.blk.rounds>=P.blk.totalRounds){endBlock(true);return;}
   renderBlock();
 }
-function pauseBlock(){if(P.blk){P.blk.paused=!P.blk.paused;renderBlock();}}
+// v71: al pausar se congela el tiempo restante y al reanudar se recalcula el instante de fin
+// (con la cuenta anclada al reloj, mantener la pausa "por ticks" habría descontado la pausa).
+function pauseBlock(){
+  if(!P.blk)return;
+  if(!P.blk.paused){
+    if(P.blk.endAt)P.blk.leftSec=Math.max(0,Math.round((P.blk.endAt-Date.now())/1000));
+    P.blk.paused=true;clearInterval(P.int);P.int=null;renderBlock();
+  }else{
+    P.blk.paused=false;renderBlock();
+    if(P.blk.type==='amrap'||P.blk.type==='emom')runBlockTimer();
+  }
+}
 function endBlock(auto){
   clearInterval(P.int);
   const ex=P.sess.exercises[P.exi];
@@ -3747,6 +3858,7 @@ function endBlock(auto){
     :t==='emom'?`${ex.nombre}: EMOM ${ex.duracion_min||'?'} min`
     :`${ex.nombre}: ${r} de ${(P.blk&&P.blk.totalRounds)||ex.rondas||'?'} rondas`;
   P.blockResults=P.blockResults||[];P.blockResults.push(label);
+  persistSetLog(); // v71
   if(navigator.vibrate)navigator.vibrate([120,60,120]);
   document.getElementById('player-body').innerHTML=`
     <div style="text-align:center;padding:28px 18px">
@@ -3845,20 +3957,35 @@ function finishSession(){
 /* ============================================================
    TIMER
    ============================================================ */
-let tInt=null,tSec=0,tTot=0,tRun=false;
+let tInt=null,tSec=0,tTot=0,tRun=false,tEndAt=0;
 function startTimer(secs,label){
   initAudio();
-  tSec=secs;tTot=secs;tRun=true;
+  tSec=Math.max(0,Math.round(+secs||0));tTot=tSec||1;tRun=true;
   document.getElementById('tm-l').textContent=label||'Descanso';
   document.getElementById('timer').classList.add('show');
   document.getElementById('tm-btn').textContent='⏸';
   clearInterval(tInt);updTimer();
   if(navigator.vibrate)navigator.vibrate(30);
-  tInt=setInterval(()=>{if(!tRun)return;tSec--;updTimer();countdownCue(tSec);if(tSec<=0){clearInterval(tInt);document.getElementById('tm-l').textContent='¡Siguiente serie!';if(navigator.vibrate)navigator.vibrate([100,50,100]);}},1000);
+  tEndAt=Date.now()+tSec*1000; // v71: anclado al reloj, igual que el reproductor
+  let last=tSec;
+  tInt=setInterval(()=>{
+    if(!tRun)return;
+    const left=Math.max(0,Math.round((tEndAt-Date.now())/1000));
+    if(left!==last){
+      if(left>0&&left<=3&&last>left)countdownCue(left);
+      last=left;tSec=left;updTimer();
+    }
+    if(left<=0){clearInterval(tInt);tInt=null;tSec=0;updTimer();countdownCue(0);
+      document.getElementById('tm-l').textContent='¡Siguiente serie!';if(navigator.vibrate)navigator.vibrate([100,50,100]);}
+  },250);
 }
 function updTimer(){const m=String(Math.floor(tSec/60)).padStart(2,'0'),s=String(Math.max(0,tSec)%60).padStart(2,'0');
-  document.getElementById('tm-c').textContent=m+':'+s;document.getElementById('tm-pi').style.width=Math.max(0,Math.round(tSec/tTot*100))+'%';}
-function toggleTimer(){tRun=!tRun;document.getElementById('tm-btn').textContent=tRun?'⏸':'▶';}
+  document.getElementById('tm-c').textContent=m+':'+s;document.getElementById('tm-pi').style.width=Math.max(0,Math.min(100,Math.round(tSec/(tTot||1)*100)))+'%';}
+function toggleTimer(){
+  tRun=!tRun;
+  if(tRun)tEndAt=Date.now()+tSec*1000; else tSec=Math.max(0,Math.round((tEndAt-Date.now())/1000));
+  document.getElementById('tm-btn').textContent=tRun?'⏸':'▶';
+}
 function stopTimer(){clearInterval(tInt);tRun=false;document.getElementById('timer').classList.remove('show');}
 
 /* ============================================================
