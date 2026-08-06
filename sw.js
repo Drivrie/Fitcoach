@@ -1,10 +1,10 @@
-const CACHE = 'fitcoach-v69';
+const CACHE = 'fitcoach-v70';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './icon192.png',
-  './icon512.png'
+  './icon-192.png',
+  './icon-512.png'
 ];
 
 self.addEventListener('install', e => {

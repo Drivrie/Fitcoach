@@ -1169,3 +1169,50 @@ Playwright disponible desde v57, ya era abordable con garantías.
   · Desde v69 en adelante (red-primero): la versión nueva aparece ya en la PRIMERA reapertura.
   · En ambos casos los datos guardados se conservan íntegros.
 - 139 comprobaciones funcionales en verde y accesibilidad con el teclado (v68) sin cambios.
+
+## v70: cuatro fallos que rompían funciones visibles (cronómetro ⏱, enlace a Ajustes, icono de iOS)
+- ORIGEN: auditoría completa del código. Ninguno de los cuatro afectaba a los datos guardados;
+  los tres primeros dejaban muerta una función de la interfaz sin dar ningún aviso al usuario.
+- FIX 1 — el botón ⏱ de "Ver sesión" no funcionaba en NINGÚN ejercicio. El atributo se generaba con
+  `startTimer(${ex.descanso_seg},${JSON.stringify(ex.nombre)})` dentro de un `onclick="…"`
+  delimitado por comillas dobles: las comillas que añade `JSON.stringify` cerraban el atributo
+  antes de tiempo y el navegador se quedaba con `startTimer(90,` → error de sintaxis y handler
+  nulo. Ahora el nombre se escapa con `esc()` y, si el ejercicio no trae `descanso_seg` (posible
+  en un JSON de Claude), el cronómetro cae a 60 s en vez de mostrar `NaN`.
+- FIX 2 — el enlace "editar en Ajustes" de las hojas Modificar/Generar lanzaba una excepción.
+  Llamaba a `tab('set')`, pero esa pantalla no existe (son `cal`, `sess`, `prog`, `nutri`, `prof`):
+  `getElementById('s-set')` devolvía null. Ni navegaba ni cerraba la hoja. Ahora usa `tab('prof')`.
+- FIX 3 — código muerto con un botón roto: la hoja `add-bg` ("Añadir actividad libre") quedó
+  huérfana al pasar ese flujo a `openLog(key,'add')`, y su botón invocaba `saveAdd()`, una función
+  que no existe en todo el archivo. Eliminada la hoja y la llamada a `closeSheet('add-bg')` que
+  quedaba en `saveLog()`. Además, `openSheet`/`closeSheet` ya no fallan si el id no existe: un
+  panel ausente nunca debe interrumpir un guardado.
+- FIX 4 — nombres de icono, otra vez: CORRECCIÓN DE LA v69. En la v69 se dio por hecho que el
+  repositorio contenía `icon192.png`/`icon512.png` y se cambiaron `sw.js` y `manifest.json` a esos
+  nombres. Es al revés: los archivos del repositorio son `icon-192.png` e `icon-512.png`, con guion
+  (comprobado por el usuario en GitHub). Consecuencia: desde la v69 el manifiesto y el precacheo
+  apuntaban a dos archivos inexistentes. No rompió el modo sin conexión porque la propia v69 hizo
+  el precacheo tolerante a fallos (guarda archivo a archivo), pero sí dejó sin icono la pantalla de
+  inicio de iOS y sin iconos el manifiesto. `index.html` era el único de los tres que conservaba el
+  nombre correcto. Ahora los TRES archivos usan `icon-192.png`/`icon-512.png`.
+- LECCIÓN: el nombre real de los archivos del repositorio es la única fuente de verdad; no debe
+  deducirse del contenido de un paquete de entrega. Antes de tocar rutas de recursos, comprobarlas
+  en GitHub (o abriendo la URL publicada del archivo).
+- VALIDACIÓN: arnés con DOM real (jsdom) sobre el `index.html` entregado — 55 comprobaciones en
+  verde, 0 fallos. Incluye:
+  · Arranque limpio y arranque con datos de usuario veterano, sin errores de consola.
+  · Persistencia: perfil, objetivos, limitaciones, distribución de días, `weekPlans`, agenda,
+    cargas serie a serie, historial, nutrición, insight, punto de partida, marcadores y healthLog,
+    weightLog, mesociclo, material (mancuernas/bandas/kettlebell/anclaje), fontScale y recientes
+    de Spotify — todo idéntico antes y después de subir de versión.
+  · Regresión de los fixes de interfaz, incluido un ejercicio con comillas dobles y `<b>` en el
+    nombre (JSON hostil de Claude): el ⏱ funciona y el nombre se escapa en el HTML.
+  · Coherencia de nombres de icono entre `index.html`, `manifest.json` y `sw.js`.
+  · Flujo dominical (avanzar semana + generar offline) sin tocar semanas pasadas, y apertura del
+    reproductor guiado.
+- CONTRASTE CON v69: el mismo arnés sobre la v69 da 14 fallos, con los dos errores reproducidos en
+  consola (`SyntaxError: Unexpected token '}'` al pulsar ⏱ y `TypeError … reading 'classList'` al
+  pulsar "editar en Ajustes").
+- PENDIENTE (detectado en la auditoría, no incluido aquí): desfase del número de semana del
+  programa con el cambio de hora, persistencia incremental de las cargas del reproductor,
+  cronómetros por marca de tiempo, orden del historial, escapado del JSON de Claude al aplicarlo.

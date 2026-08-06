@@ -484,7 +484,7 @@ body{font-size:calc(15px*var(--fs))}
       <button class="btn btn-block" style="margin-top:8px;border-color:var(--danger);color:var(--danger)" onclick="confirmDeleteAll()">🗑️ Eliminar todos mis datos</button>
       <div id="data-status" style="margin-top:7px;font-size:12px"></div>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 69</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 70</div>
     <div id="sw-status" style="text-align:center;font-size:11px;color:var(--warn);margin-top:4px;display:none"></div>
     <div style="text-align:center;margin-top:8px">
       <button class="btn btn-xs" onclick="checkForUpdate()">🔄 Buscar actualización</button>
@@ -528,20 +528,6 @@ body{font-size:calc(15px*var(--fs))}
     <div class="sheet-h"><h3 id="log-title">Registrar sesión</h3><button class="btn btn-sm" onclick="closeSheet('log-bg')">✕</button></div>
     <div id="log-body"></div>
     <button class="btn btn-primary btn-block" style="margin-top:13px" onclick="saveLog()">✓ Guardar</button>
-  </div>
-</div>
-
-<!-- ADD SHEET -->
-<div class="sheet-bg" id="add-bg">
-  <div class="sheet">
-    <div class="sheet-h"><h3>Añadir actividad libre</h3><button class="btn btn-sm" onclick="closeSheet('add-bg')">✕</button></div>
-    <div class="field"><label>Día</label><select id="a-day"></select></div>
-    <div class="field"><label>Actividad</label><select id="a-type">
-      <option>Carrera / Running</option><option>Bicicleta</option><option>Natación</option>
-      <option>HIIT propio</option><option>Fuerza libre</option><option>Yoga / Movilidad</option><option>Senderismo</option><option>Otro</option>
-    </select></div>
-    <div class="field"><label>Notas</label><textarea id="a-notes" placeholder="Ej: 5 km objetivo, ritmo suave..."></textarea></div>
-    <button class="btn btn-primary btn-block" onclick="saveAdd()">+ Añadir al calendario</button>
   </div>
 </div>
 
@@ -1879,7 +1865,7 @@ function showSess(key){
       <div class="flex1"><div class="ex-nm">${esc(ex.nombre)}</div>
         <div class="ex-mt">${esc(ex.series)}×${esc(ex.reps)} · ${esc(ex.descanso_seg)}s${(ex.rir||ex.rpe)?' · RIR '+esc(ex.rir||ex.rpe):''}${ex.tempo?' · tempo '+esc(ex.tempo):''}</div>
         ${ex.peso?`<div class="ex-mt" style="color:var(--ring-ex);margin-top:3px">🏋 ${esc(ex.peso)}</div>`:''}</div>
-      <button class="btn btn-xs" onclick="event.stopPropagation();startTimer(${ex.descanso_seg},${JSON.stringify(ex.nombre)})">⏱</button>
+      <button class="btn btn-xs" onclick="event.stopPropagation();startTimer(${+ex.descanso_seg||60},${esc(JSON.stringify(ex.nombre||'Descanso'))})">⏱</button>
     </div><div class="ex-b" id="exb-${i}">
       <div style="display:flex;gap:11px;padding:11px 13px">
         <div style="width:96px;height:76px;flex-shrink:0">${exSVG(ex.nombre,ex.p)}</div>
@@ -2021,7 +2007,7 @@ function saveLog(){
   }
   S.history.unshift({key,...log,title:type});
   S.logMode='log';
-  save();closeSheet('log-bg');closeSheet('add-bg');renderCal();renderProg();selDay(key,weekDates(S.currentWeek).map(fmt).indexOf(key),true);
+  save();closeSheet('log-bg');renderCal();renderProg();selDay(key,weekDates(S.currentWeek).map(fmt).indexOf(key),true);
 }
 
 /* --- ADD --- */
@@ -2615,7 +2601,7 @@ function equipSummaryHTML(equipos){
   if(eq.includes('bandas')){const b=S.bands||{};const r=['baja','media','alta'].filter(x=>b[x]);parts.push(r.length?`Bandas: ${r.join(', ')}`:'Bandas: sin resistencias definidas');}
   if(eq.includes('kettlebell')){const kl=kettlebellList();parts.push(kl.length?`Kettlebell: ${kl.join(', ')} kg`:'Kettlebell: sin pesos definidos');}
   if(!parts.length)return '';
-  return `<div class="note" style="margin:-4px 0 10px">${parts.join(' · ')} — <a href="#" onclick="tab('set');closeSheet('mod-bg');closeSheet('gen-bg');return false;" style="color:var(--ai)">editar en Ajustes</a></div>`;
+  return `<div class="note" style="margin:-4px 0 10px">${parts.join(' · ')} — <a href="#" onclick="tab('prof');closeSheet('mod-bg');closeSheet('gen-bg');return false;" style="color:var(--ai)">editar en Ajustes</a></div>`;
 }
 function openModify(key){
   MOD={key,equipos:[...(S.profile.equipos||['ninguno'])]};
@@ -3878,8 +3864,8 @@ function stopTimer(){clearInterval(tInt);tRun=false;document.getElementById('tim
 /* ============================================================
    SHEETS, PERFIL, INIT
    ============================================================ */
-function openSheet(id){document.getElementById(id).classList.add('show');}
-function closeSheet(id){document.getElementById(id).classList.remove('show');}
+function openSheet(id){const el=document.getElementById(id);if(el)el.classList.add('show');}
+function closeSheet(id){const el=document.getElementById(id);if(el)el.classList.remove('show');}
 document.querySelectorAll('.sheet-bg').forEach(bg=>bg.addEventListener('click',e=>{if(e.target===bg)bg.classList.remove('show');}));
 
 function renderDayChips(){
