@@ -1273,3 +1273,45 @@ Playwright disponible desde v57, ya era abordable con garantías.
 - PENDIENTE (auditoría, para más adelante): sanear el JSON de Claude al aplicarlo (v72), rendimiento
   del historial y del import XML, división de Perfil/Ajustes y accesibilidad de los elementos
   pulsables (v73).
+
+## v72: el JSON pegado desde Claude deja de poder deformar la app
+- ORIGEN: la auditoría de la v70 detectó que el contenido del puente (títulos, nombres de ejercicio,
+  descripciones, enfoque del mesociclo, menú) se guardaba tal cual y luego se inyectaba con
+  `innerHTML` SIN escapar en el calendario, la ficha del día, el reproductor, la vista de bloques,
+  el resumen final y el enfoque del mesociclo. `showSess`, la vista previa del puente y nutrición sí
+  escapaban; el resto no. Comprobado sobre la v71 con un JSON hostil: el `<img src=x onerror=…>`
+  llegaba al DOM como elemento real y creaba atributos de evento.
+- DECISIÓN, distinta a la que quedó apuntada en la v71: NO se retira el escapado de las vistas que
+  ya lo hacían. Escapar al pintar es la capa correcta —es donde el texto se convierte en HTML— y es
+  la única que protege también lo ya guardado de versiones anteriores. Guardar el texto ya escapado
+  habría sido peor: los mismos campos alimentan el prompt de Claude, las plantillas de notas y las
+  copias exportadas, y ahí aparecerían `&amp;` y `&lt;` en vez de texto legible.
+- CAPA 1, al pintar: `esc()` en TODOS los puntos que faltaban (ficha del día, las tres vistas del
+  reproductor, lista de movimientos de bloque, resumen final, enfoque del mesociclo, opción del
+  buscador de ejercicios). Los datos dentro de atributos `onclick` (listas de Spotify) pasan al
+  patrón seguro estrenado en la v70: `esc(JSON.stringify(...))`, que sobrevive a comillas simples y
+  dobles en el texto.
+- CAPA 2, al entrar: todo lo que llega por el puente pasa por `cleanStr`/`cleanMulti`/`cleanInt`
+  antes de guardarse. Quita caracteres de control, colapsa espacios, acota longitudes (título 90,
+  nombre 120, descripción 600, análisis 2000), convierte a número lo que debe serlo y acota rangos
+  imposibles (`duracion_min` a 90, `rondas` a 30, `series` a 20, hasta 25 ejercicios y 20
+  movimientos por bloque). `descanso_seg` queda en 60 cuando no viene, que es el valor del que ya
+  avisa el validador antes de aplicar: explícito en el dato en vez de implícito en el reproductor.
+  Los bloques AMRAP/EMOM/circuito quedan exentos de `series` y `descanso_seg`, que no les aplican.
+- LO QUE NO HACE EL SANEADO, a propósito: no toca el contenido legítimo. No elimina `<` ni `>` del
+  texto, así que un nombre con símbolos raros se guarda tal cual y se ve tal cual; lo que cambia es
+  que al pintarse ya no puede ser HTML. Un ejercicio llamado `Press " onmouseover="x` se guarda
+  íntegro, se muestra íntegro y llega íntegro al prompt.
+- VALIDACIÓN: 118 comprobaciones en verde, 0 fallos, con un JSON deliberadamente hostil (marcador
+  `<img src=x onerror=…>` en título, meta, nombre, descripción, plato, enfoque y análisis; nombre
+  con comillas dobles pensado para romper un atributo; 30 movimientos; duración 999; ejercicio sin
+  series ni descanso; título y nombre de 400 caracteres). Se comprueba que el texto se guarda tal
+  cual, que ninguna vista crea elementos ni atributos de evento a partir de él, que sí aparece
+  escapado (`&lt;img`), que no se ejecuta nada, y que la plantilla de notas y el prompt lo reciben
+  como texto plano sin entidades HTML. Ejecutado en Madrid, UTC, Nueva York, Santiago, Sídney y
+  Auckland: 118/118 en todas.
+- CONTRASTE CON v71: el mismo arnés sobre la v71 da 16 fallos, entre ellos "el reproductor inyecta
+  el HTML pegado" y "la ficha del día crea atributos de evento a partir del texto pegado".
+- PENDIENTE (auditoría): rendimiento del historial y del import XML de Salud, división de
+  Perfil/Ajustes, accesibilidad de los elementos pulsables y controles de retroceso en el
+  reproductor (v73).

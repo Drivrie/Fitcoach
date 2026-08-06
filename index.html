@@ -484,7 +484,7 @@ body{font-size:calc(15px*var(--fs))}
       <button class="btn btn-block" style="margin-top:8px;border-color:var(--danger);color:var(--danger)" onclick="confirmDeleteAll()">🗑️ Eliminar todos mis datos</button>
       <div id="data-status" style="margin-top:7px;font-size:12px"></div>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 71</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 72</div>
     <div id="sw-status" style="text-align:center;font-size:11px;color:var(--warn);margin-top:4px;display:none"></div>
     <div style="text-align:center;margin-top:8px">
       <button class="btn btn-xs" onclick="checkForUpdate()">🔄 Buscar actualización</button>
@@ -1446,8 +1446,8 @@ function selDay(key,idx,keep){
     sess.forEach((s,si)=>{
       const badge=s.skipped?'<span class="badge b-rest">⃠ No realizado</span>':`<span class="badge ${s.done?'b-done':s.type==='ai'?'b-ai':'b-free'}">${s.done?'✓ Hecho':s.type==='ai'?'IA':'Libre'}</span>`;
       h+=`<div class="sess ${s.type}${s.done?' done':''}${s.skipped?' skipped':''}">
-        <div class="sess-h" onclick="tapSess('${key}',${si})"><span class="sess-tt">${s.title}</span>${badge}</div>
-        <div class="sess-m" onclick="tapSess('${key}',${si})">${s.meta||''}${s.done&&s.log?' · '+s.log.feeling+' '+s.log.duration+'min':''}</div>
+        <div class="sess-h" onclick="tapSess('${key}',${si})"><span class="sess-tt">${esc(s.title)}</span>${badge}</div>
+        <div class="sess-m" onclick="tapSess('${key}',${si})">${esc(s.meta||'')}${s.done&&s.log?' · '+esc(s.log.feeling)+' '+esc(s.log.duration)+'min':''}</div>
         <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">`;
       if(!s.done&&!s.skipped){
         if(s.type==='ai')h+=`<button class="btn btn-xs" onclick="openModify('${key}')">⚙ Modificar</button>`;
@@ -1888,7 +1888,7 @@ function showSess(key){
         <button class="btn btn-xs" onclick="event.stopPropagation();toggleSearch(${i})">🔍 Buscar otro ejercicio (${compat.length})</button>
         <div id="srch-${i}" style="display:none;margin-top:8px">
           <select onchange="event.stopPropagation();swapToName('${key}',${i},this.value)" onclick="event.stopPropagation()" style="width:100%;padding:9px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px">
-            <option value="">Elige un ejercicio del mismo patrón (${ex.p||'?'})…</option>
+            <option value="">Elige un ejercicio del mismo patrón (${esc(ex.p||'?')})…</option>
             ${compat.map(e=>`<option value="${esc(e.n)}">${riskNames.has(e.n)?'⚠ ':''}${(e.anc&&!S.bandAnchor)?'⚓ ':''}${esc(e.n)}</option>`).join('')}
           </select>
           ${riskNames.size?'<p class="note mt-6">⚠ = ejercicio de mayor carga/impacto para una zona que tienes marcada como limitación o con dolor reciente. Puedes elegirlo igualmente; es solo un aviso.</p>':''}
@@ -2595,7 +2595,7 @@ function applyBridgePlan(plan){
   (plan.sesiones_ia||[]).forEach(s=>{
     const idx=DAYS.indexOf(s.dia_codigo);if(idx<0)return;
     const key=fmt(dates[idx]);if(!S.schedule[key])S.schedule[key]=[];
-    s.ejercicios=(s.ejercicios||[]).map(matchYT);
+    cleanSession(s); // v72
     const entry={type:'ai',title:s.titulo,meta:s.meta,warmup:s.calentamiento,cooldown:s.vuelta_calma,exercises:s.ejercicios,done:false};
     if(_wNote)entry.userNote=_wNote; // v64: la instrucción libre queda visible al entrenar
     const ex=S.schedule[key].findIndex(x=>x.type==='ai');
@@ -2603,10 +2603,10 @@ function applyBridgePlan(plan){
   });
   S.freeDays.forEach(code=>{const idx=DAYS.indexOf(code);if(idx<0)return;const key=fmt(dates[idx]);
     if(!S.schedule[key])S.schedule[key]=[];
-    if(!S.schedule[key].some(s=>s.type==='free'))S.schedule[key].push({type:'free',title:'Entrenamiento libre',meta:plan.recomendacion_cardio||'Actividad libre',done:false});});
-  if(plan.nutricion)S.nutri=plan.nutricion;
+    if(!S.schedule[key].some(s=>s.type==='free'))S.schedule[key].push({type:'free',title:'Entrenamiento libre',meta:cleanStr(plan.recomendacion_cardio,140)||'Actividad libre',done:false});});
+  if(plan.nutricion)S.nutri=cleanNutri(plan.nutricion); // v72
   if(plan.mesociclo){
-    if(plan.mesociclo.enfoque)S.mesoFocus=plan.mesociclo.enfoque;
+    if(plan.mesociclo.enfoque)S.mesoFocus=cleanStr(plan.mesociclo.enfoque,120);
     if(plan.mesociclo.semanas_bloque)S.mesoLen=parseInt(plan.mesociclo.semanas_bloque)||S.mesoLen;
   }
   // Análisis del entrenador: SIEMPRE refleja solo la adaptación actual (un único análisis vigente).
@@ -2614,14 +2614,91 @@ function applyBridgePlan(plan){
   // adaptación, así que su análisis ya tiene en cuenta la progresión previa sin necesidad de
   // acumular textos de semanas anteriores aquí (que confundían sobre cuál es el vigente).
   const insightParts=[];
-  if(plan.analisis_progreso)insightParts.push(plan.analisis_progreso);
+  if(plan.analisis_progreso)insightParts.push(cleanMulti(plan.analisis_progreso,2000));
   if(plan.mesociclo&&(plan.mesociclo.enfoque||plan.mesociclo.justificacion)){
-    const j=plan.mesociclo.justificacion?' — '+plan.mesociclo.justificacion:'';
-    insightParts.push('🗓️ Fase del mesociclo: '+(plan.mesociclo.enfoque||S.mesoFocus)+j);
+    const j=plan.mesociclo.justificacion?' — '+cleanMulti(plan.mesociclo.justificacion,600):'';
+    insightParts.push('🗓️ Fase del mesociclo: '+(cleanStr(plan.mesociclo.enfoque,120)||S.mesoFocus)+j);
   }
-  if(plan.recomendacion_cardio)insightParts.push('🏃 Cardio recomendado: '+plan.recomendacion_cardio);
+  if(plan.recomendacion_cardio)insightParts.push('🏃 Cardio recomendado: '+cleanStr(plan.recomendacion_cardio,300));
   if(insightParts.length)S.insight=insightParts.join('\n\n');
   save();closeSheet('bridge-bg');renderCal();renderNutri();renderProg();tab('cal');
+}
+/* ============================================================
+   v72 · SANEADO DE LO QUE LLEGA DE FUERA
+   Todo lo que entra por el puente (JSON pegado desde Claude) pasa por aquí antes de guardarse.
+   Qué hace: quita caracteres de control, colapsa espacios, limita longitudes y convierte a número
+   lo que debe ser número, para que un JSON raro no deforme la interfaz ni deje campos imposibles.
+   Qué NO hace, a propósito: escapar HTML. Lo guardado debe ser el texto tal cual, porque de ahí
+   salen también el prompt y los cuadros de texto; el escapado se aplica AL PINTAR, con esc(),
+   que es la capa donde importa. Guardar ya escapado obligaría a des-escapar en todas las demás.
+   ============================================================ */
+function cleanStr(v,max){
+  if(v==null)return '';
+  let t=String(v).replace(/[\u0000-\u001F\u007F]/g,' ').replace(/\s+/g,' ').trim();
+  const lim=max||160;
+  if(t.length>lim)t=t.slice(0,lim).trim()+'…';
+  return t;
+}
+// igual, pero conservando los saltos de línea (textos largos: análisis, justificaciones)
+function cleanMulti(v,max){
+  if(v==null)return '';
+  let t=String(v).replace(/\r/g,'\n').replace(/[\u0000-\u0009\u000B\u000C\u000E-\u001F\u007F]/g,' ')
+    .replace(/[ \t]+/g,' ').replace(/\n{3,}/g,'\n\n').split('\n').map(l=>l.trim()).join('\n').trim();
+  const lim=max||2000;
+  if(t.length>lim)t=t.slice(0,lim).trim()+'…';
+  return t;
+}
+function cleanInt(v,min,max,def){
+  const n=Math.round(Number(v));
+  if(!isFinite(n))return def;
+  return Math.min(max,Math.max(min,n));
+}
+function cleanEx(e){
+  if(!e||typeof e!=='object')return {nombre:'Ejercicio',series:3,reps:'10',descanso_seg:60};
+  const o={...e};
+  ['nombre','peso','musculos','rir','rpe','tempo','tipo','formato','unidad','banda','yt','p'].forEach(k=>{if(o[k]!=null)o[k]=cleanStr(o[k],120);});
+  if(o.reps!=null)o.reps=cleanStr(o.reps,40);
+  if(o.descripcion!=null)o.descripcion=cleanMulti(o.descripcion,600);
+  if(!o.nombre)o.nombre='Ejercicio';
+  if(Array.isArray(o.movimientos))o.movimientos=o.movimientos.slice(0,20).map(m=>({
+    ...(m&&typeof m==='object'?m:{}),
+    nombre:cleanStr(m&&m.nombre,120)||'Movimiento',
+    reps:cleanStr(m&&m.reps,40)
+  }));
+  if(isBlock(o)){ // bloque por tiempo/rondas: no lleva series ni descanso entre series
+    if(o.duracion_min!=null)o.duracion_min=cleanInt(o.duracion_min,1,90,10);
+    if(o.rondas!=null)o.rondas=cleanInt(o.rondas,1,30,3);
+  }else{
+    o.series=cleanInt(o.series,1,20,3);
+    // 60 s cuando no viene o no es un número: es el valor que ya usa la sesión guiada y del que
+    // avisa el validador antes de aplicar, así que queda explícito en vez de implícito
+    o.descanso_seg=cleanInt(o.descanso_seg,0,900,60);
+  }
+  return o;
+}
+function cleanNutri(n){
+  if(!n||typeof n!=='object')return n;
+  const o={...n};
+  ['calorias_diarias','calorias_min','calorias_max','proteina_g'].forEach(k=>{if(o[k]!=null)o[k]=cleanInt(o[k],0,20000,null);});
+  if(o.agua_litros!=null)o.agua_litros=cleanStr(o.agua_litros,10);
+  if(o.modo!=null)o.modo=cleanStr(o.modo,80);
+  if(o.nota!=null)o.nota=cleanMulti(o.nota,600);
+  if(Array.isArray(o.menu_dia))o.menu_dia=o.menu_dia.slice(0,12).map(m=>({
+    ...(m&&typeof m==='object'?m:{}),
+    momento:cleanStr(m&&m.momento,40),hora:cleanStr(m&&m.hora,10),plato:cleanStr(m&&m.plato,200),
+    kcal:cleanInt(m&&m.kcal,0,5000,null),proteina_g:cleanInt(m&&m.proteina_g,0,500,null)
+  }));
+  return o;
+}
+// sanea una sesión del JSON y devuelve sus campos ya listos para guardar
+function cleanSession(s){
+  if(!s||typeof s!=='object')return s;
+  s.titulo=cleanStr(s.titulo,90)||'Sesión';
+  s.meta=cleanStr(s.meta,140);
+  if(s.calentamiento!=null)s.calentamiento=cleanMulti(s.calentamiento,600);
+  if(s.vuelta_calma!=null)s.vuelta_calma=cleanMulti(s.vuelta_calma,600);
+  s.ejercicios=(Array.isArray(s.ejercicios)?s.ejercicios:[]).slice(0,25).map(cleanEx).map(matchYT);
+  return s;
 }
 function matchYT(ex){
   if(ex.yt)return ex;
@@ -2766,7 +2843,7 @@ function applyModify(){
     return;
   }
   if(issues.warns.length&&!confirm('Avisos:\n- '+issues.warns.join('\n- ')+'\n\n¿Aplicar de todos modos?')){window._fixMsg=fixMsgFor(issues);copyFixMsg();return;}
-  const key=MOD.key;s.ejercicios=s.ejercicios.map(matchYT);
+  const key=MOD.key;cleanSession(s); // v72
   const entry={type:'ai',title:s.titulo||'Sesión modificada',meta:(s.meta||'')+' · modificada',warmup:s.calentamiento,cooldown:s.vuelta_calma,exercises:s.ejercicios,done:false};
   const modNoteApplied=userNoteFrom('mod-note');
   if(modNoteApplied)entry.userNote=modNoteApplied; // v64: queda constancia de lo que se pidió
@@ -2891,7 +2968,7 @@ function applyGen(){
     return;
   }
   if(issues.warns.length&&!confirm('Avisos:\n- '+issues.warns.join('\n- ')+'\n\n¿Aplicar de todos modos?')){window._fixMsg=fixMsgFor(issues);copyFixMsg();return;}
-  const key=GEN.key;s.ejercicios=s.ejercicios.map(matchYT);
+  const key=GEN.key;cleanSession(s); // v72
   if(!S.schedule[key])S.schedule[key]=[];
   const repTag=_genModeTag(key);const tag=repTag!==null?repTag:' · extra';
   const gEnt={type:'ai',title:s.titulo||'Sesión IA',meta:(s.meta||'')+tag,warmup:s.calentamiento,cooldown:s.vuelta_calma,exercises:s.ejercicios,done:false};
@@ -3558,9 +3635,9 @@ function renderPlayerMusic(){
         <span style="font-size:18px">🎧</span>
         <span style="font-size:calc(13px*var(--fs));color:rgba(255,255,255,.7)">Música en Spotify</span>
       </div>
-      <button class="btn btn-primary btn-block" onclick="openSpotify('${sug.id}','${sug.n}')">▶ ${sug.n} (recomendada)</button>
+      <button class="btn btn-primary btn-block" onclick="openSpotify(${esc(JSON.stringify(sug.id))},${esc(JSON.stringify(sug.n))})">▶ ${esc(sug.n)} (recomendada)</button>
       ${recents.length?`<div style="font-size:calc(11px*var(--fs));color:rgba(255,255,255,.5);margin:10px 0 6px">Recientes</div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px">${recents.map(r=>`<span class="chip" style="background:rgba(255,255,255,.1);border-color:transparent;color:#fff" onclick="openSpotify('${r.id}','${(r.n||'').replace(/'/g,'')}')">${r.n||'Lista'}</span>`).join('')}</div>`:''}
+        <div style="display:flex;flex-wrap:wrap;gap:6px">${recents.map(r=>`<span class="chip" style="background:rgba(255,255,255,.1);border-color:transparent;color:#fff" onclick="openSpotify(${esc(JSON.stringify(r.id||''))},${esc(JSON.stringify(r.n||'Lista'))})">${esc(r.n||'Lista')}</span>`).join('')}</div>`:''}
       <a class="btn btn-block" style="margin-top:10px;text-decoration:none;background:rgba(255,255,255,.12);border-color:transparent;color:#fff" href="spotify:search" onclick="setTimeout(()=>{if(document.hasFocus())window.open('https://open.spotify.com/search','_blank')},700)">🔎 Buscar otra lista en Spotify</a>
       <div style="font-size:calc(10px*var(--fs));color:rgba(255,255,255,.4);margin-top:8px;line-height:1.4">Se abre la app de Spotify (reproducción completa). Controla la música desde Spotify o el Centro de control de iOS y vuelve a FitCoach.</div>
     </div>`;
@@ -3587,10 +3664,10 @@ function renderPlayer(){
       preview=`<div style="margin-top:14px;padding:12px;background:rgba(255,255,255,.08);border-radius:12px">
         <div style="font-size:calc(12px*var(--fs));color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">A continuación</div>
         <div style="width:130px;height:104px;margin:0 auto 10px">${exSVG(ex.nombre,ex.p)}</div>
-        <div style="font-weight:700;font-size:calc(16px*var(--fs))">${ex.nombre}</div>
-        <div class="pl-cue mt-4">${ex.series>1?`${ex.series} series`:'1 serie'} · ${ex.reps}${/^\d+$/.test(String(ex.reps))?' reps':''}${ex.rir?' · RIR '+ex.rir:''}</div>
-        ${ex.peso?`<div style="margin-top:6px;color:var(--ring-ex);font-weight:600;font-size:calc(14px*var(--fs))">🏋 ${ex.peso}</div>`:''}
-        ${ex.descripcion?`<div class="pl-cue mt-6">${ex.descripcion}</div>`:''}
+        <div style="font-weight:700;font-size:calc(16px*var(--fs))">${esc(ex.nombre)}</div>
+        <div class="pl-cue mt-4">${ex.series>1?`${esc(ex.series)} series`:'1 serie'} · ${esc(ex.reps)}${/^\d+$/.test(String(ex.reps))?' reps':''}${ex.rir?' · RIR '+esc(ex.rir):''}</div>
+        ${ex.peso?`<div style="margin-top:6px;color:var(--ring-ex);font-weight:600;font-size:calc(14px*var(--fs))">🏋 ${esc(ex.peso)}</div>`:''}
+        ${ex.descripcion?`<div class="pl-cue mt-6">${esc(ex.descripcion)}</div>`:''}
         ${errs.length?`<div class="pl-cue" style="margin-top:6px;color:var(--danger)">⚠ Evita: ${errs[0].toLowerCase()}</div>`:''}
       </div>`;
     }
@@ -3603,7 +3680,7 @@ function renderPlayer(){
     const side=isPerSide(ex)?` · <b class="c-stand">lado ${P.side||1} de 2</b>`:'';
     mid=`<div class="pl-phase c-free">TRABAJO</div>
       <div class="pl-timer" id="pl-timer">${fmtSec(P.sec)}</div>
-      <div class="pl-next">${ex.nombre} · serie ${P.set}/${ex.series}${side}</div>`;
+      <div class="pl-next">${esc(ex.nombre)} · serie ${P.set}/${esc(ex.series)}${side}</div>`;
   } else {
     const errs=ex.errores&&ex.errores.length?ex.errores:(ERRORS[figKey(ex.nombre)]||[]);
     const canRec=!repSecs; // solo ejercicios por repeticiones (los de tiempo se registran solos)
@@ -3627,11 +3704,11 @@ function renderPlayer(){
       <div class="pl-cue" style="margin-top:4px;font-size:calc(11px*var(--fs))">${esBanda?'Banda usada en esta serie · corrige si has cambiado de resistencia':'Carga real de esta serie · corrige solo si difiere'}</div>
       ${last?`<div class="pl-cue" style="margin-top:4px;color:var(--ring-stand)">Última vez (${last.date}): ${fmtSets(last.series)}</div>`:''}`:'';
     mid=`<div style="width:170px;height:135px;margin:0 auto 14px">${exSVG(ex.nombre,ex.p)}</div>
-      <div class="pl-reps">${ex.series>1?`Serie ${P.set} de ${ex.series}`:'1 serie'} · ${ex.reps}${/^\d+$/.test(String(ex.reps))?' reps':''}</div>
-      ${ex.peso?`<div class="pl-cue" style="margin-top:4px;color:var(--ring-ex);font-weight:600">🏋 ${ex.peso}</div>`:''}
-      ${(ex.rir||ex.rpe)?`<div class="pl-cue">Deja ${ex.rir||ex.rpe} reps en reserva (RIR)${ex.tempo?' · tempo '+ex.tempo:''}</div>`:''}
+      <div class="pl-reps">${ex.series>1?`Serie ${P.set} de ${esc(ex.series)}`:'1 serie'} · ${esc(ex.reps)}${/^\d+$/.test(String(ex.reps))?' reps':''}</div>
+      ${ex.peso?`<div class="pl-cue" style="margin-top:4px;color:var(--ring-ex);font-weight:600">🏋 ${esc(ex.peso)}</div>`:''}
+      ${(ex.rir||ex.rpe)?`<div class="pl-cue">Deja ${esc(ex.rir||ex.rpe)} reps en reserva (RIR)${ex.tempo?' · tempo '+esc(ex.tempo):''}</div>`:''}
       ${P.sess.userNote?`<div class="pl-cue mt-8" style="color:var(--accent)">💬 ${esc(P.sess.userNote)}</div>`:''}
-      <div class="pl-cue mt-8">${ex.descripcion||''}</div>
+      <div class="pl-cue mt-8">${esc(ex.descripcion||'')}</div>
       ${errs.length?`<div class="pl-cue" style="margin-top:8px;color:var(--danger)">⚠ Evita: ${errs[0].toLowerCase()}</div>`:''}
       ${recHTML}
       <button class="btn btn-primary btn-block mt-16" onclick="finishSet()">${repSecs?'Iniciar ('+repSecs+'s)':'✓ Serie completada'}</button>`;
@@ -3639,7 +3716,7 @@ function renderPlayer(){
   document.getElementById('player-body').innerHTML=`
     <div class="pl-prog"><div class="pl-prog-i" style="width:${pct}%"></div></div>
     <div class="pl-count">Ejercicio ${P.exi+1} de ${total}</div>
-    <div class="pl-name">${ex.nombre}</div>
+    <div class="pl-name">${esc(ex.nombre)}</div>
     <div class="pl-mid">${mid}</div>`;
 }
 function fmtSec(s){s=Math.max(0,Math.round(+s||0));const m=String(Math.floor(s/60)).padStart(2,'0');return m+':'+String(s%60).padStart(2,'0');}
@@ -3750,11 +3827,11 @@ function skipRest(){clearInterval(P.int);P.phase='ready';renderPlayer();}
 function _movList(ex){return (ex.movimientos||[]).map(m=>`
   <div style="display:flex;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.1)">
     <div style="width:54px;height:43px;flex-shrink:0">${exSVG(m.nombre,m.p)}</div>
-    <div style="flex:1;text-align:left"><div style="font-weight:600;font-size:calc(14px*var(--fs))">${m.nombre}</div>
-      <div class="pl-cue">${m.reps||''}</div></div></div>`).join('');}
-function _fmtBlock(ex,t){return t==='amrap'?`AMRAP · ${ex.duracion_min||10} min`
-  :t==='emom'?`EMOM · ${ex.duracion_min||10} min`
-  :`Circuito · ${ex.rondas||3} rondas`;}
+    <div style="flex:1;text-align:left"><div style="font-weight:600;font-size:calc(14px*var(--fs))">${esc(m.nombre)}</div>
+      <div class="pl-cue">${esc(m.reps||'')}</div></div></div>`).join('');}
+function _fmtBlock(ex,t){return t==='amrap'?`AMRAP · ${esc(ex.duracion_min||10)} min`
+  :t==='emom'?`EMOM · ${esc(ex.duracion_min||10)} min`
+  :`Circuito · ${esc(ex.rondas||3)} rondas`;}
 function renderBlock(){
   const ex=P.sess.exercises[P.exi];
   const total=P.sess.exercises.length;
@@ -3767,7 +3844,7 @@ function renderBlock(){
       :t==='emom'?'Cada minuto (al pitido): completa los movimientos y descansa el resto del minuto.'
       :'Completa todas las rondas a buen ritmo. Pulsa “Ronda completada” al cerrar cada vuelta.';
     mid=`<div class="pl-phase c-free">${fmtLabel}</div>
-      <div class="pl-cue" style="margin:8px 0 4px">${ex.descripcion||defDesc}</div>
+      <div class="pl-cue" style="margin:8px 0 4px">${esc(ex.descripcion||defDesc)}</div>
       <div class="mt-10">${_movList(ex)}</div>
       <button class="btn btn-primary btn-block mt-16" onclick="startBlock()">▶ Iniciar bloque</button>`;
   } else {
@@ -3791,7 +3868,7 @@ function renderBlock(){
   document.getElementById('player-body').innerHTML=`
     <div class="pl-prog"><div class="pl-prog-i" style="width:${pct}%"></div></div>
     <div class="pl-count">Ejercicio ${P.exi+1} de ${total}</div>
-    <div class="pl-name">${ex.nombre}</div>
+    <div class="pl-name">${esc(ex.nombre)}</div>
     <div class="pl-mid">${mid}</div>`;
 }
 function startBlock(){
@@ -3940,7 +4017,7 @@ function finishSession(){
     </div>
     ${(P.setLog&&P.setLog.length)?`<div style="background:rgba(255,255,255,.1);border-radius:14px;padding:12px;margin-bottom:16px;text-align:left">
       <div style="font-size:calc(11px*var(--fs));text-transform:uppercase;letter-spacing:.6px;color:var(--ring-ex);margin-bottom:6px">Cargas registradas</div>
-      ${P.setLog.map(e=>`<div style="font-size:calc(13px*var(--fs))">🏋 ${e.nombre}: ${fmtSets(e.series)}</div>`).join('')}</div>`:''}
+      ${P.setLog.map(e=>`<div style="font-size:calc(13px*var(--fs))">🏋 ${esc(e.nombre)}: ${esc(fmtSets(e.series))}</div>`).join('')}</div>`:''}
     ${blockRes.length?`<div style="background:rgba(255,255,255,.1);border-radius:14px;padding:12px;margin-bottom:16px">
       <div style="font-size:calc(11px*var(--fs));text-transform:uppercase;letter-spacing:.6px;color:var(--free);margin-bottom:6px">Resultado de bloques</div>
       ${blockRes.map(r=>`<div style="font-size:calc(14px*var(--fs))">⚡ ${r}</div>`).join('')}</div>`:''}
@@ -4144,7 +4221,7 @@ function renderMeso(){
   const fv=document.getElementById('meso-focus-view');
   const l=document.getElementById('meso-len');
   if(l&&S.mesoLen)l.value=String(S.mesoLen);
-  if(fv)fv.innerHTML=S.mesoFocus?`Enfoque propuesto por tu entrenador: <b style="color:var(--text)">${S.mesoFocus}</b>`:'Aún sin propuesta: pulsa "Adaptar con Claude" y tu entrenador fijará la fase del bloque.';
+  if(fv)fv.innerHTML=S.mesoFocus?`Enfoque propuesto por tu entrenador: <b style="color:var(--text)">${esc(S.mesoFocus)}</b>`:'Aún sin propuesta: pulsa "Adaptar con Claude" y tu entrenador fijará la fase del bloque.';
   if(!info)return;
   const cur=programWeekFor(fmt(new Date()));
   const mi=mesoInfo(cur);
