@@ -484,8 +484,12 @@ body{font-size:calc(15px*var(--fs))}
       <button class="btn btn-block" style="margin-top:8px;border-color:var(--danger);color:var(--danger)" onclick="confirmDeleteAll()">🗑️ Eliminar todos mis datos</button>
       <div id="data-status" style="margin-top:7px;font-size:12px"></div>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 68</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 69</div>
     <div id="sw-status" style="text-align:center;font-size:11px;color:var(--warn);margin-top:4px;display:none"></div>
+    <div style="text-align:center;margin-top:8px">
+      <button class="btn btn-xs" onclick="checkForUpdate()">🔄 Buscar actualización</button>
+      <div id="upd-status" class="note mt-6" style="display:none"></div>
+    </div>
   </div>
 </div>
 
@@ -4099,6 +4103,34 @@ if(window.navigator.standalone||window.matchMedia('(display-mode: standalone)').
   const t=document.getElementById('install-tip');if(t)t.style.display='none';
 }
 
+/* v69: comprobación manual de actualización. Fuerza descargar sw.js e index.html saltándose
+   la caché; si hay versión nueva, el service worker toma el control y la página se recarga sola.
+   NO toca los datos guardados: localStorage es independiente de la caché de la app. */
+function checkForUpdate(){
+  const st=document.getElementById('upd-status');
+  const show=(txt,color)=>{if(st){st.style.display='block';st.style.color=color||'';st.innerHTML=txt;}};
+  if(!('serviceWorker' in navigator)){show('Este navegador no admite actualizaciones automáticas. Recarga la página manualmente.');return;}
+  show('Comprobando…');
+  navigator.serviceWorker.getRegistration().then(reg=>{
+    if(!reg){show('No hay modo sin conexión activo. Recarga la página para obtener la última versión.');return;}
+    return reg.update().then(()=>{
+      if(reg.waiting){show('✓ Hay una versión nueva. Aplicando…','var(--free)');reg.waiting.postMessage('skipWaiting');return;}
+      if(reg.installing){show('Descargando la versión nueva…');return;}
+      // No hay SW nuevo: comprobar si el HTML publicado difiere del que se está ejecutando
+      fetch('index.html',{cache:'no-store'}).then(r=>r.text()).then(txt=>{
+        const m=txt.match(/versión (\d+)/);
+        const actual=(document.body.innerHTML.match(/versión (\d+)/)||[])[1];
+        if(m&&actual&&m[1]!==actual){
+          show('Hay publicada la versión '+m[1]+' (tienes la '+actual+'). Recargando…','var(--free)');
+          setTimeout(()=>location.reload(),900);
+        } else {
+          show('✓ Ya tienes la última versión publicada.','var(--free)');
+        }
+      }).catch(()=>show('No se pudo comprobar (¿sin conexión?). Tus datos están a salvo.'));
+    });
+  }).catch(()=>show('No se pudo comprobar la actualización.'));
+}
+
 /* --- Mis datos: exportar / restaurar / eliminar (v54) --- */
 function exportData(){
   const st=document.getElementById('data-status');
@@ -4145,11 +4177,38 @@ function confirmDeleteAll(){
 
 /* Service worker */
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').catch(err=>{
+  try{
+  navigator.serviceWorker.register('sw.js').then(reg=>{
+    // v69: detectar y aplicar actualizaciones sin quedarse anclado a una versión antigua.
+    // Antes había que cerrar la app por completo (y aun así podía servir el HTML cacheado).
+    if(reg.waiting)reg.waiting.postMessage('skipWaiting');
+    reg.addEventListener('updatefound',()=>{
+      const nw=reg.installing;if(!nw)return;
+      nw.addEventListener('statechange',()=>{
+        if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage('skipWaiting');
+      });
+    });
+    // buscar actualizaciones al abrir y al volver a la app (iOS la suspende, no la cierra)
+    const chk=()=>{try{reg.update();}catch(_){}};
+    chk();
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk();});
+    window.addEventListener('focus',chk);
+  }).catch(err=>{
     console.warn('No se pudo registrar el service worker (el modo offline no estará disponible):',err);
     const el=document.getElementById('sw-status');
     if(el){el.style.display='block';el.textContent='⚠️ El modo sin conexión no se ha podido activar en este arranque. Cierra y reabre la app; si persiste, revisa que no estés en pestaña de navegación privada.';}
   });
+  }catch(_){}
+  // Cuando el service worker nuevo toma el control, recargar UNA vez para mostrar la versión nueva.
+  // Todo el bloque va protegido: si algo aquí fallara, NUNCA debe impedir que arranque la app.
+  try{
+    let _recargando=false;
+    if(navigator.serviceWorker.addEventListener){
+      navigator.serviceWorker.addEventListener('controllerchange',()=>{
+        if(_recargando)return;_recargando=true;location.reload();
+      });
+    }
+  }catch(_){}
 }
 
 /* Arranque */

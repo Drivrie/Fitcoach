@@ -1133,3 +1133,39 @@ Playwright disponible desde v57, ya era abordable con garantías.
   desbordamiento horizontal en calendario, perfil, sesión, registro y reproductor, a tamaño de
   letra normal y máximo.
 - Las 139 comprobaciones funcionales previas siguen en verde, 0 fallos.
+
+## v69: la app se quedaba anclada a una versión antigua (y el modo offline nunca funcionó)
+- SÍNTOMA REPORTADO: tras subir la v68 a GitHub y reabrir la app, seguía mostrando la v67.
+- LOS DATOS NUNCA ESTUVIERON EN RIESGO: viven en `localStorage`, que es independiente de la caché
+  de la aplicación. Verificado en la simulación: tras actualizar, perfil, historial y punto de
+  partida siguen intactos.
+- CAUSA 1 — caché-primero para el HTML: el service worker respondía `caches.match()` antes que la
+  red también para `index.html`, así que una vez cacheada una versión podía servirse
+  indefinidamente aunque se publicara otra. Reproducido en un servidor local: con el SW antiguo
+  activo y la v69 ya publicada, al reabrir seguía mostrando la v68.
+- CAUSA 2 (más grave, encontrada al investigar) — NOMBRES DE ICONO QUE NO COINCIDÍAN: el
+  repositorio tiene `icon192.png`/`icon512.png` pero `sw.js` y `manifest.json` pedían
+  `icon-192.png`/`icon-512.png`. Como `cache.addAll()` rechaza si falla UN solo archivo, la
+  instalación del service worker fallaba siempre: **el modo sin conexión nunca llegó a
+  funcionar**, y la versión antigua venía de la caché HTTP del navegador y del CDN de GitHub Pages.
+  Corregidos los nombres en ambos archivos.
+- FIX 1: `sw.js` reescrito. El DOCUMENTO va a la red primero (con respaldo a caché si no hay
+  conexión, así que offline sigue igual); el resto de recursos siguen con caché primero. El
+  precacheo ahora guarda cada archivo por separado y tolera fallos, de modo que un recurso ausente
+  no vuelve a impedir la instalación. Se añade un mensaje `skipWaiting` para activar al momento.
+- FIX 2: la app detecta versiones nuevas (`updatefound`, y `reg.update()` al abrir y al volver a
+  primer plano, porque iOS suspende la app en vez de cerrarla) y recarga una sola vez cuando el
+  service worker nuevo toma el control.
+- FIX 3: botón "🔄 Buscar actualización" en Ajustes, junto al número de versión, que comprueba y
+  aplica la actualización en el momento e informa de si ya se tiene la última.
+- REGRESIÓN PROPIA DETECTADA Y CORREGIDA ANTES DE ENTREGAR: la primera versión del bloque de
+  actualización llamaba a `navigator.serviceWorker.addEventListener` sin protección; si eso fallaba
+  se interrumpía el arranque de la app (el bloque está antes de `loadProfile()`/`renderCal()`). Lo
+  detectaron dos comprobaciones de las suites existentes. Todo el bloque va ahora en `try/catch`:
+  un problema con las actualizaciones nunca puede impedir que la app arranque.
+- VERIFICADO en un servidor local con el ciclo completo (instalar versión antigua → guardar datos →
+  publicar versión nueva → reabrir):
+  · Desde v68 (service worker antiguo, caché-primero): 1ª reapertura aún v68, 2ª reapertura v69.
+  · Desde v69 en adelante (red-primero): la versión nueva aparece ya en la PRIMERA reapertura.
+  · En ambos casos los datos guardados se conservan íntegros.
+- 139 comprobaciones funcionales en verde y accesibilidad con el teclado (v68) sin cambios.
