@@ -1539,3 +1539,50 @@ Tres afirmaciones se corrigen a la luz de lo que dicen de verdad esas fuentes:
 - PENDIENTE: nutrición (factor de actividad derivado de datos reales en vez de 1,55 fijo, alergias e
   intolerancias, revisión de 2-3 semanas con ajuste concreto de calorías) y redistribución de la
   semana cuando se pierden sesiones.
+
+## v76: corregir repeticiones sin pelearse con el teclado, y bloques metabólicos con reloj
+- ORIGEN: dos fallos detectados usando la app de verdad en el iPhone.
+
+### 1 · Registrar repeticiones era un suplicio
+SÍNTOMA: al tocar el campo de repeticiones para corregirlo, lo que saltaba a primer plano era la
+explicación general del ejercicio y el bloque de registro se iba de la pantalla; había que buscar a
+ciegas dónde escribir.
+CAUSA: dos cosas a la vez. (a) El bloque de registro estaba colocado DETRÁS de la nota de la
+sesión, la descripción técnica y los avisos, así que en cuanto el teclado recortaba la altura
+visible quedaba fuera de la vista. (b) La rutina que desplaza el campo enfocado hasta ponerlo a la
+vista se ejecutaba UNA sola vez, a los 320 ms; en iOS el teclado tarda más en asentarse y, sobre
+todo, cada cambio de `--vvh` vuelve a maquetar el reproductor y deshace ese desplazamiento.
+ARREGLO:
+- **Botones − / + en kilos y repeticiones**, que es el arreglo de fondo: entre serie y serie, con
+  las manos ocupadas, se corrige de un toque y sin abrir el teclado. El escalón de los kilos es el
+  de tu mancuernería real (2 kg, 2,5 kg…), no un incremento inventado. No bajan de cero.
+- El bloque de registro **sube justo debajo del objetivo de la serie**; la técnica, la nota y los
+  avisos pasan debajo del botón, que es donde corresponde a un texto de consulta.
+- La comprobación de visibilidad se reintenta a 120, 320, 600 y 900 ms **y en cada recolocación del
+  viewport** mientras el campo siga enfocado.
+
+### 2 · Los circuitos metabólicos no tenían reloj ni descanso
+SÍNTOMA: un circuito no mostraba tiempo, y al dar por terminado el bloque no aparecía el descanso
+previsto ni cuenta atrás alguna.
+CAUSA: el reloj solo se pintaba y solo se ponía en marcha para AMRAP y EMOM. Y `endBlock()` iba a
+una pantalla de «Continuar» sin más: el descanso solo empezaba DESPUÉS de pulsarla, y ni siquiera
+eso si el ejercicio siguiente era otro bloque.
+ARREGLO:
+- **Cronómetro para el circuito**, contando hacia ARRIBA: AMRAP y EMOM van contra un tiempo fijo, el
+  circuito va contra un número de rondas, así que lo que importa es el tiempo empleado. Anclado al
+  reloj del sistema como el resto desde la v71, de modo que salir de la app no lo congela. Ese
+  tiempo pasa al resumen del bloque («3 de 3 rondas en 08:42»), que ya se guarda con la sesión.
+- **Pausa también en circuito** (antes solo AMRAP/EMOM), congelando el tiempo transcurrido.
+- Al cerrar el bloque, **el descanso pautado se muestra y corre solo**, con su cuenta atrás; al
+  agotarse encadena con el ejercicio siguiente. Si la sesión no traía `descanso_seg`, usa 60 s y lo
+  dice explícitamente en vez de fingir que estaba prescrito. El botón pasa a ser «Saltar descanso».
+- `advanceAfter()` recibe si el descanso ya se ha consumido, para no encadenar dos seguidos.
+
+- VALIDACIÓN: 300 comprobaciones en verde, 0 fallos, en Madrid, UTC y Sídney. Las 35 nuevas cubren:
+  orden del bloque de registro frente a la explicación y al botón, los cuatro botones ±, subida y
+  bajada de repeticiones y de kilos con el escalón real, tope en cero, que lo ajustado con ± es
+  exactamente lo que se registra, cronómetro ascendente del circuito y su anclaje al reloj, pausa
+  que congela de verdad, cierre del bloque con descanso pautado visible y corriendo, encadenado
+  automático sin descanso doble, y caída a 60 s avisada cuando el JSON no trae descanso.
+- CONTRASTE CON v75: el mismo arnés sobre la v75 falla en cuanto busca los botones ± (no existen) y
+  se detiene ahí.

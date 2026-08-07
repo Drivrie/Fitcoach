@@ -170,6 +170,12 @@ textarea.bridge-out{font-family:'SF Mono',ui-monospace,monospace;font-size:11px;
 .player.show{display:flex}
 .pl-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)}
 .pl-top h3{font-size:14px;font-weight:600}
+.pl-rec{margin-top:12px;padding:10px 8px;border-radius:14px;background:rgba(255,255,255,.07)}
+.pl-rec-row{display:flex;gap:8px;justify-content:center;align-items:center}
+.pl-step{width:46px;height:46px;flex-shrink:0;border-radius:12px;border:1px solid rgba(255,255,255,.25);
+  background:rgba(255,255,255,.12);color:#fff;font-size:24px;font-weight:700;line-height:1;cursor:pointer;
+  -webkit-user-select:none;user-select:none;touch-action:manipulation}
+.pl-step:active{background:rgba(255,255,255,.24)}
 .pl-nav{display:flex;gap:8px;margin-top:14px}
 .pl-nav .btn{background:rgba(255,255,255,.12);border-color:transparent;color:#fff}
 .pl-nav .btn[disabled]{opacity:.35}
@@ -544,7 +550,7 @@ body{font-size:calc(15px*var(--fs))}
         <div id="cloud-status" style="margin-top:7px;font-size:12px"></div>
       </details>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 75</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 76</div>
     <div id="sw-status" style="text-align:center;font-size:11px;color:var(--warn);margin-top:4px;display:none"></div>
     <div style="text-align:center;margin-top:8px">
       <button class="btn btn-xs" onclick="checkForUpdate()">🔄 Buscar actualización</button>
@@ -1050,20 +1056,31 @@ applyFontScale();
   window.addEventListener('orientationchange',()=>setTimeout(setVH,250));
   window.addEventListener('resize',setVH);
 
-  // Al enfocar un campo, asegurarse de que queda visible por encima del teclado.
+  /* Al enfocar un campo, asegurarse de que queda visible por encima del teclado.
+     v76: antes se comprobaba UNA sola vez, a los 320 ms. En el iPhone el teclado tarda más en
+     asentarse y, sobre todo, cada cambio de --vvh vuelve a maquetar el reproductor y deshace el
+     desplazamiento: el resultado era que al tocar las repeticiones acababas viendo la explicación
+     del ejercicio y el campo se te iba de la pantalla. Ahora se reintenta varias veces y en cada
+     recolocación del viewport mientras el campo siga enfocado. */
+  let _campoActivo=null;
+  function _asegurarVisible(){
+    const el=_campoActivo;
+    if(!el||!document.contains(el)||document.activeElement!==el)return;
+    try{
+      const r=el.getBoundingClientRect();
+      const visH=(vv?vv.height:window.innerHeight);
+      if(r.bottom>visH-12||r.top<8)el.scrollIntoView({block:'center',behavior:'smooth'});
+    }catch(_){}
+  }
   document.addEventListener('focusin',e=>{
     const el=e.target;
     if(!el||!/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))return;
     if(el.type==='checkbox'||el.type==='radio'||el.type==='range'||el.type==='file')return;
-    // esperar a que el teclado termine de abrirse antes de recolocar
-    setTimeout(()=>{
-      try{
-        const r=el.getBoundingClientRect();
-        const visH=(vv?vv.height:window.innerHeight);
-        if(r.bottom>visH-12||r.top<0)el.scrollIntoView({block:'center',behavior:'smooth'});
-      }catch(_){}
-    },320);
+    _campoActivo=el;
+    [120,320,600,900].forEach(t=>setTimeout(_asegurarVisible,t));
   });
+  document.addEventListener('focusout',()=>{_campoActivo=null;});
+  if(vv)vv.addEventListener('resize',()=>setTimeout(_asegurarVisible,60));
 })();
 
 /* --- Fechas --- */
@@ -4244,22 +4261,41 @@ function renderPlayer(){
            ${(bandOpts.length?bandOpts:['baja','media','alta']).map(b=>`<option value="${b}"${b===prefBanda?' selected':''}>banda ${b}</option>`).join('')}
          </select><span class="pl-cue">×</span>`
       : `<input type="text" inputmode="decimal" enterkeyhint="done" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" id="pl-kg" value="${prefKg}" placeholder="kg" style="width:72px;${inpSt}"><span class="pl-cue">kg ×</span>`;
+    /* v76: corregir las repeticiones era un suplicio en el iPhone. Al tocar el campo se abría el
+       teclado, el cuerpo del reproductor se recolocaba y lo que quedaba a la vista era la
+       explicación del ejercicio, con el campo empujado fuera de pantalla: había que buscarlo a
+       ciegas. Dos cambios: el bloque de registro sube justo debajo del objetivo de la serie (antes
+       estaba detrás de la técnica, los avisos y la nota), y sobre todo se añaden botones − / + para
+       ajustar kilos y repeticiones SIN abrir el teclado, que es como se corrige de verdad entre
+       series, con las manos ocupadas. */
+    // el escalón del ± es el de tu mancuernería real (2 kg, 2,5 kg…), no un incremento inventado
+    const pasoKg=(S.dumbbells&&+S.dumbbells.step)||1;
     const recHTML=canRec?`
-      <div style="display:flex;gap:6px;justify-content:center;align-items:center;margin-top:12px">
-        ${cargaInput}
-        <input type="text" inputmode="numeric" enterkeyhint="done" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" id="pl-reps" value="${prefReps}" placeholder="reps" style="width:62px;${inpSt}"><span class="pl-cue">reps</span>
-      </div>
-      <div class="pl-cue" style="margin-top:4px;font-size:calc(11px*var(--fs))">${esBanda?'Banda usada en esta serie · corrige si has cambiado de resistencia':'Carga real de esta serie · corrige solo si difiere'}</div>
-      ${last?`<div class="pl-cue" style="margin-top:4px;color:var(--ring-stand)">Última vez (${last.date}): ${fmtSets(last.series)}</div>`:''}`:'';
+      <div class="pl-rec">
+        <div class="pl-cue" style="font-size:calc(11px*var(--fs));margin-bottom:6px">${esBanda?'Banda y repeticiones de esta serie':'Carga y repeticiones reales de esta serie'}</div>
+        <div class="pl-rec-row">
+          ${esBanda?cargaInput:`
+            <button type="button" class="pl-step" onclick="stepField('pl-kg',-${pasoKg},0,true)">−</button>
+            ${cargaInput}
+            <button type="button" class="pl-step" onclick="stepField('pl-kg',${pasoKg},0,true)">+</button>`}
+        </div>
+        <div class="pl-rec-row" style="margin-top:8px">
+          <button type="button" class="pl-step" onclick="stepField('pl-reps',-1,0,false)">−</button>
+          <input type="text" inputmode="numeric" enterkeyhint="done" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" id="pl-reps" value="${prefReps}" placeholder="reps" style="width:62px;${inpSt}">
+          <span class="pl-cue">reps</span>
+          <button type="button" class="pl-step" onclick="stepField('pl-reps',1,0,false)">+</button>
+        </div>
+        ${last?`<div class="pl-cue" style="margin-top:6px;color:var(--ring-stand)">Última vez (${last.date}): ${fmtSets(last.series)}</div>`:''}
+      </div>`:'';
     mid=`<div style="width:170px;height:135px;margin:0 auto 14px">${exSVG(ex.nombre,ex.p)}</div>
       <div class="pl-reps">${ex.series>1?`Serie ${P.set} de ${esc(ex.series)}`:'1 serie'} · ${esc(ex.reps)}${/^\d+$/.test(String(ex.reps))?' reps':''}</div>
       ${ex.peso?`<div class="pl-cue" style="margin-top:4px;color:var(--ring-ex);font-weight:600">🏋 ${esc(ex.peso)}</div>`:''}
       ${(ex.rir||ex.rpe)?`<div class="pl-cue">Deja ${esc(ex.rir||ex.rpe)} reps en reserva (RIR)${ex.tempo?' · tempo '+esc(ex.tempo):''}</div>`:''}
-      ${P.sess.userNote?`<div class="pl-cue mt-8" style="color:var(--accent)">💬 ${esc(P.sess.userNote)}</div>`:''}
+      ${recHTML}
+      <button class="btn btn-primary btn-block mt-12" onclick="finishSet()">${repSecs?'Iniciar ('+repSecs+'s)':'✓ Serie completada'}</button>
+      ${P.sess.userNote?`<div class="pl-cue mt-12" style="color:var(--accent)">💬 ${esc(P.sess.userNote)}</div>`:''}
       <div class="pl-cue mt-8">${esc(ex.descripcion||'')}</div>
       ${errs.length?`<div class="pl-cue" style="margin-top:8px;color:var(--danger)">⚠ Evita: ${errs[0].toLowerCase()}</div>`:''}
-      ${recHTML}
-      <button class="btn btn-primary btn-block mt-16" onclick="finishSet()">${repSecs?'Iniciar ('+repSecs+'s)':'✓ Serie completada'}</button>
       ${navEjercicios()}`;
   }
   document.getElementById('player-body').innerHTML=`
@@ -4368,6 +4404,19 @@ function runRest(){
     left=>{const t=document.getElementById('pl-timer');if(t)t.textContent=fmtSec(left);},
     ()=>{if(navigator.vibrate)navigator.vibrate([100,50,100]);P.phase='ready';renderPlayer();});
 }
+/* v76: ajustar un campo numérico sin teclado. Entre serie y serie, con las manos ocupadas y el
+   móvil apoyado, tocar un ± es lo único cómodo; abrir el teclado numérico obliga a recolocar la
+   pantalla, tapa el propio campo y desenfoca el resto. */
+function stepField(id,delta,min,decimales){
+  const el=document.getElementById(id);
+  if(!el)return;
+  let v=toNum(el.value);
+  if(isNaN(v))v=0;
+  v=Math.round((v+delta)*100)/100;
+  if(v<min)v=min;
+  el.value=decimales?String(v).replace('.',','):String(Math.round(v));
+  if(navigator.vibrate)navigator.vibrate(8);
+}
 function skipRest(){clearInterval(P.int);P.phase='ready';renderPlayer();}
 /* v74: hasta ahora la sesión guiada solo iba hacia delante. Si te equivocabas de ejercicio o
    querías saltarte uno (una molestia, el material ocupado), la única salida era cerrar el
@@ -4435,16 +4484,20 @@ function renderBlock(){
     const counter=t==='circuito'
       ? `<div class="pl-next">Ronda <b class="c-stand">${Math.min(b.rounds+1,b.totalRounds)}</b> de ${b.totalRounds}</div>`
       : `<div class="pl-next">Rondas completadas: <b class="c-stand">${b.rounds}</b></div>`;
+    /* v76: el circuito era el único bloque sin reloj. AMRAP y EMOM van contra un tiempo fijo, así
+       que su cuenta es atrás; el circuito va contra un número de rondas, así que lo útil es el
+       tiempo TRANSCURRIDO: es lo que permite comparar el mismo circuito de una semana a otra y lo
+       que convierte un trabajo metabólico en algo medible en vez de una lista de ejercicios. */
     const timer=(t==='amrap'||t==='emom')
       ? `<div class="pl-timer" id="pl-timer">${fmtSec(b.leftSec)}</div>${t==='emom'?`<div class="pl-cue">Minuto ${Math.min(b.minute,b.totalMin)} de ${b.totalMin}</div>`:''}`
-      : '';
+      : `<div class="pl-timer" id="pl-timer">${fmtSec(b.elapsed||0)}</div><div class="pl-cue">Tiempo transcurrido</div>`;
     mid=`<div class="pl-phase c-free">${fmtLabel}${b.paused?' · PAUSA':''}</div>
       ${timer}
       ${counter}
       <div class="mt-10">${_movList(ex)}</div>
       ${t!=='emom'?`<button class="btn btn-primary btn-block mt-12" onclick="blockRound()">✓ Ronda completada (+1)</button>`:''}
       <div class="flexrow gap8 mt-8">
-        ${(t==='amrap'||t==='emom')?`<button class="btn btn-block" style="background:rgba(255,255,255,.15);border-color:transparent;color:#fff" onclick="pauseBlock()">${b.paused?'▶ Reanudar':'⏸ Pausa'}</button>`:''}
+        <button class="btn btn-block" style="background:rgba(255,255,255,.15);border-color:transparent;color:#fff" onclick="pauseBlock()">${b.paused?'▶ Reanudar':'⏸ Pausa'}</button>
         <button class="btn btn-block" style="background:rgba(255,255,255,.15);border-color:transparent;color:#fff" onclick="endBlock(false)">${t==='circuito'?'Terminar bloque':'Terminar antes'}</button>
       </div>`;
   }
@@ -4461,12 +4514,28 @@ function startBlock(){
   const cap=(+ex.duracion_min||0)*60;
   P.blk={type:t,rounds:0,paused:false,
     leftSec:(t==='amrap'||t==='emom')?(cap||600):0,
+    elapsed:0,
     totalRounds:(t==='circuito')?(+ex.rondas||3):0,
     minute:1,totalMin:(t==='emom')?(+ex.duracion_min||10):0};
   P.phase='block';
   renderBlock();
   if(navigator.vibrate)navigator.vibrate(40);beep(900,0.3,0.8);
-  if(t==='amrap'||t==='emom')runBlockTimer();
+  if(t==='amrap'||t==='emom')runBlockTimer(); else runBlockElapsed();
+}
+/* Cronómetro ascendente del circuito. Mismo criterio que el resto desde la v71: anclado al reloj
+   del sistema, no a los ticks, para que salir de la app no lo deje congelado. */
+function runBlockElapsed(){
+  clearInterval(P.int);
+  if(!P.blk)return;
+  P.blk.startAt=Date.now()-(P.blk.elapsed||0)*1000;
+  P.int=setInterval(()=>{
+    if(!P.blk||P.blk.paused)return;
+    const e=Math.max(0,Math.round((Date.now()-P.blk.startAt)/1000));
+    if(e!==P.blk.elapsed){
+      P.blk.elapsed=e;
+      const el=document.getElementById('pl-timer');if(el)el.textContent=fmtSec(e);
+    }
+  },250);
 }
 function runBlockTimer(){
   clearInterval(P.int);
@@ -4503,10 +4572,11 @@ function pauseBlock(){
   if(!P.blk)return;
   if(!P.blk.paused){
     if(P.blk.endAt)P.blk.leftSec=Math.max(0,Math.round((P.blk.endAt-Date.now())/1000));
+    if(P.blk.startAt)P.blk.elapsed=Math.max(0,Math.round((Date.now()-P.blk.startAt)/1000));
     P.blk.paused=true;clearInterval(P.int);P.int=null;renderBlock();
   }else{
     P.blk.paused=false;renderBlock();
-    if(P.blk.type==='amrap'||P.blk.type==='emom')runBlockTimer();
+    if(P.blk.type==='amrap'||P.blk.type==='emom')runBlockTimer(); else runBlockElapsed();
   }
 }
 function endBlock(auto){
@@ -4514,27 +4584,43 @@ function endBlock(auto){
   const ex=P.sess.exercises[P.exi];
   const t=(P.blk&&P.blk.type)||blockType(ex);
   const r=P.blk?P.blk.rounds:0;
+  const tiempo=(t==='circuito'&&P.blk&&P.blk.elapsed)?` en ${fmtSec(P.blk.elapsed)}`:'';
   const label=t==='amrap'?`${ex.nombre}: ${r} ronda${r===1?'':'s'} en ${ex.duracion_min||'?'} min`
     :t==='emom'?`${ex.nombre}: EMOM ${ex.duracion_min||'?'} min`
-    :`${ex.nombre}: ${r} de ${(P.blk&&P.blk.totalRounds)||ex.rondas||'?'} rondas`;
+    :`${ex.nombre}: ${r} de ${(P.blk&&P.blk.totalRounds)||ex.rondas||'?'} rondas${tiempo}`;
   P.blockResults=P.blockResults||[];P.blockResults.push(label);
   persistSetLog(); // v71
   if(navigator.vibrate)navigator.vibrate([120,60,120]);
-  document.getElementById('player-body').innerHTML=`
-    <div style="text-align:center;padding:28px 18px">
-      <div style="font-size:42px;margin-bottom:8px">⏱️</div>
-      <div style="font-size:calc(18px*var(--fs));font-weight:700;margin-bottom:8px">Bloque terminado</div>
-      <div style="color:rgba(255,255,255,.85);font-size:calc(15px*var(--fs));margin-bottom:18px">${label}</div>
-      <button class="btn btn-primary btn-block" onclick="blockContinue()">Continuar →</button>
-    </div>`;
   P._afterBlock=ex;
+  /* v76: al cerrar un bloque no aparecía ni el descanso previsto ni cuenta atrás alguna: se pasaba
+     directo a una pantalla de "Continuar", y el descanso solo arrancaba después de pulsarla —y ni
+     eso si el ejercicio siguiente era otro bloque. En un circuito metabólico el descanso entre
+     bloques es parte de la prescripción, así que ahora se muestra y corre solo. */
+  const rest=(+ex.descanso_seg>0)?Math.round(+ex.descanso_seg):60;
+  document.getElementById('player-body').innerHTML=`
+    <div style="text-align:center;padding:22px 18px">
+      <div style="font-size:38px;margin-bottom:6px">⏱️</div>
+      <div style="font-size:calc(18px*var(--fs));font-weight:700;margin-bottom:6px">Bloque terminado</div>
+      <div style="color:rgba(255,255,255,.85);font-size:calc(15px*var(--fs));margin-bottom:16px">${esc(label)}</div>
+      <div class="pl-phase c-stand">DESCANSO</div>
+      <div class="pl-timer" id="pl-timer">${fmtSec(rest)}</div>
+      <div class="pl-cue mt-6">Descanso previsto tras el bloque: ${rest}s${(+ex.descanso_seg>0)?'':' (no venía indicado en la sesión)'}</div>
+      <button class="btn btn-primary btn-block mt-16" onclick="blockContinue()">Saltar descanso →</button>
+    </div>`;
+  startCountdown(rest,
+    left=>{const el=document.getElementById('pl-timer');if(el)el.textContent=fmtSec(left);},
+    ()=>{if(navigator.vibrate)navigator.vibrate([100,50,100]);blockContinue();});
 }
-function blockContinue(){const ex=P._afterBlock;P._afterBlock=null;P.blk=null;advanceAfter(ex);}
-function advanceAfter(ex){
+function blockContinue(){
+  _pararCuenta();                       // v76: el descanso del bloque ya se ha consumido aquí
+  const ex=P._afterBlock;P._afterBlock=null;P.blk=null;
+  advanceAfter(ex,true);
+}
+function advanceAfter(ex,yaDescansado){
   if(P.exi<P.sess.exercises.length-1){
     P.exi++;P.set=1;
     const rest=+ex.descanso_seg||0;const next=P.sess.exercises[P.exi];
-    if(rest>0&&!isBlock(next)){P.phase='rest';P.sec=rest;P.tot=rest;renderPlayer();runRest();}
+    if(rest>0&&!yaDescansado&&!isBlock(next)){P.phase='rest';P.sec=rest;P.tot=rest;renderPlayer();runRest();}
     else{P.phase='ready';renderPlayer();}
   } else { finishSession(); }
 }
