@@ -1315,3 +1315,127 @@ Playwright disponible desde v57, ya era abordable con garantías.
 - PENDIENTE (auditoría): rendimiento del historial y del import XML de Salud, división de
   Perfil/Ajustes, accesibilidad de los elementos pulsables y controles de retroceso en el
   reproductor (v73).
+
+## v73: los datos dejan de depender solo de Safari, y rendimiento y accesibilidad
+- ORIGEN: petición explícita (evitar perder datos si se reinicia el móvil o se borra el historial de
+  Safari) más los puntos de rendimiento y accesibilidad que quedaban de la auditoría de la v70.
+
+### Durabilidad: tres capas, y decir la verdad sobre cada una
+- CAPA 1 · Espejo en IndexedDB. Cada guardado replica el estado completo en IndexedDB con 1,5 s de
+  retardo (guardar una serie no debe costar dos escrituras). Sobrevive a reiniciar el móvil, a
+  cerrar la app y a que Safari descarte localStorage por falta de espacio. Al arrancar, si el
+  almacenamiento está vacío o ilegible, la app busca el espejo y OFRECE restaurarlo indicando fecha,
+  número de sesiones y de días planificados; no restaura por su cuenta, porque escribir encima de
+  datos buenos sería peor que no hacer nada.
+  LÍMITE HONESTO: «Borrar historial y datos de sitios web» de Safari borra localStorage E IndexedDB.
+  Esta capa no protege de eso, y la interfaz lo dice con esas palabras.
+- CAPA 2 · Copia a archivo por la hoja de compartir. `exportData()` usa ahora `navigator.share` con
+  el archivo adjunto: en iOS aparece «Guardar en Archivos» → iCloud Drive, en vez de una descarga
+  que acaba escondida en Descargas de Safari. Si el navegador no admite compartir archivos, se cae a
+  la descarga de siempre. Es la única capa que sobrevive a formatear o cambiar de móvil.
+  Se registra la fecha de la última copia y la tarjeta «Mis datos» avisa: nunca / hace N días /
+  aviso en ámbar a partir de 14 días.
+- CAPA 3 · Gist SECRETO de GitHub, opcional y apagada por defecto. Sube `fitcoach-backup.json` a un
+  gist de la cuenta del usuario; permite recuperar todo en un móvil nuevo sin manejar archivos.
+  POR QUÉ UN GIST Y NO EL REPOSITORIO DE LA APP: el repositorio de GitHub Pages es público, así que
+  subir ahí el historial dejaría peso, marcadores de salud y lesiones a la vista de cualquiera. Se
+  descartó por eso, no por dificultad.
+  Advertencias que se muestran en la propia pantalla: secreto no es privado (quien tenga la URL lee
+  el gist); el token vive solo en este dispositivo y debe crearse con el permiso «gist» y nada más;
+  si no se activa, la app no hace NINGUNA conexión a internet con los datos.
+  Detalles: el gist se crea con `public:false` (comprobado en las pruebas); si el gist se borró en
+  GitHub (404) se crea otro automáticamente; restaurar desde la nube conserva la conexión y pasa lo
+  descargado por `initState()`; la subida automática opcional se dispara al registrar una sesión con
+  un freno de una subida cada 10 minutos como mucho; cualquier fallo de red deja los datos locales
+  intactos y lo dice.
+
+### Rendimiento
+- El historial se pintaba ENTERO en cada `renderProg()`, y renderProg se llama al registrar, al
+  marcar como no realizada, al deshacer… Ahora se pintan las 50 últimas con un botón para ampliar
+  de 50 en 50.
+- Pintar la pestaña Progreso escribía en localStorage cada vez (los logros se guardaban en cada
+  render). Ahora solo escribe si la lista de logros ha cambiado de verdad.
+- Import de Salud: si el XML pesa más de 25 MB se avisa antes de intentarlo, porque Safari lo lee
+  entero en memoria y lo más probable es que la app se cierre; se recomienda el JSON. Además el
+  lector de archivos ya informa si falla en vez de quedarse callado.
+
+### Accesibilidad
+- Se recupera el zoom con dos dedos: fuera `maximum-scale=1, user-scalable=no`. Los campos ya usan
+  16 px como mínimo, así que iOS no hará zoom automático al enfocarlos.
+- Los elementos pulsables que no son botones (chips, días del calendario, botones de esfuerzo,
+  fatiga y dolor) reciben `role="button"` y `tabindex`, y se activan con Enter o Espacio. Como se
+  generan en decenas de plantillas, se marcan al vuelo con un MutationObserver; incluye los que
+  reciben el manejador por propiedad (`el.onclick=…`) y no como atributo, que era el caso de los
+  días del calendario.
+
+- VALIDACIÓN: 159 comprobaciones en verde, 0 fallos. Sobre las 118 de la v72 se añaden: escritura y
+  lectura del espejo (con IndexedDB real de pruebas), rescate completo tras perder localStorage,
+  exportación por hoja de compartir con nombre de archivo y registro de fecha, los tres estados del
+  aviso de copia, ausencia total de tráfico de red con la nube desactivada, creación del gist como
+  secreto y con el token correcto, reutilización del mismo gist en subidas sucesivas, token
+  inválido, caída de red, restauración desde la nube conservando la conexión, tope de 50 sesiones
+  del historial y su ampliación, ausencia de escrituras al pintar Progreso, viewport sin bloqueo de
+  zoom y activación por teclado de un elemento pulsable. Ejecutado en Madrid, UTC, Nueva York y
+  Sídney.
+- FALLO DETECTADO POR EL ARNÉS DURANTE EL DESARROLLO: la comprobación de arranque vacío leía
+  `S.history.length` ANTES de `initState()`, lo que rompía la app en una instalación nueva. Estaba
+  en el código entregado hasta que el arnés lo cazó.
+- PENDIENTE: división de Perfil en dos pestañas, controles de retroceso/salto de ejercicio en el
+  reproductor y revisión de los 214 estilos en línea.
+
+## v74: se cierra la auditoría — Perfil/Ajustes, navegación en la sesión guiada y restos
+- ORIGEN: los puntos que quedaban abiertos de la auditoría de la v70.
+- DIVISIÓN PERFIL / AJUSTES. Perfil era un scroll de 15 tarjetas que mezclaba lo que se toca cada
+  semana (datos, objetivos, limitaciones, estructura, material, instrucciones, generar, mesociclo)
+  con lo que se toca una vez al año (base científica, importar Salud, tipografía, sonido, copias,
+  versión). Se parte en dos pantallas: **Perfil** describe al usuario y su plan; **Ajustes**
+  configura la app. Los identificadores de los campos NO cambian, así que todo el JavaScript que
+  los usa sigue funcionando; se comprueba en el arnés. La barra pasa a seis pestañas, con las
+  etiquetas a 9,5 px y sin partirse en dos líneas. `tab('set')` existe por fin (era el destino roto
+  que se corrigió en la v70) y al entrar refresca el aviso de copia de seguridad. Corregidos dos
+  textos que ahora mentían: el enlace del material y el aviso de limitaciones decían «en Ajustes» y
+  ambas cosas viven en Perfil.
+- NAVEGACIÓN EN LA SESIÓN GUIADA. La sesión solo iba hacia delante: si te equivocabas de ejercicio o
+  querías saltarte uno (una molestia, el material ocupado), la única salida era cerrar el
+  reproductor. Ahora hay «◀ Anterior» y «Saltar ▶» en la pantalla de preparado y durante el
+  descanso. Retroceder es seguro: las series anotadas se conservan y se siguen guardando en la
+  agenda. Saltar pide confirmación —avisando si no se ha anotado ninguna serie— y saltar el último
+  ejercicio termina la sesión. Cualquier cuenta atrás en curso se detiene al navegar.
+- CERRAR A MEDIA SESIÓN. Desde la v71 no se pierde nada al salir, pero el usuario no lo sabía: ahora
+  se avisa de cuántas series quedan guardadas antes de salir. La pantalla de fin no pregunta nada.
+- CARGAS QUE SE PERDÍAN AL REGENERAR UN DÍA. Aplicar un plan nuevo sobre un día que ya tenía cargas
+  anotadas construía la entrada desde cero y esas cargas desaparecían sin avisar. Ahora se arrastran
+  (`conservarRegistro`) en los cuatro sitios que sustituyen una sesión: puente, generador offline,
+  modificar y generar día. Son un dato del usuario, no del plan.
+- UNA SOLA DEFINICIÓN DE ADHERENCIA. El anillo de la portada contaba SESIONES y la pestaña Progreso
+  contaba DÍAS: para la misma semana podían verse dos porcentajes distintos sin que nada estuviera
+  roto. Se unifica en `weekStats()` con el criterio por sesiones, que es el más fino. AVISO: el
+  porcentaje de Progreso puede cambiar respecto a la v73; el nuevo es el coherente con el anillo.
+  También se unifica la regla para deduplicar las sesiones de un día (`sesionesDelDia`), que estaba
+  escrita literalmente dos veces.
+- CÓDIGO MUERTO Y RESTOS: eliminadas `appendInsight()` (huérfana desde la v67) y `patternOf()`
+  (sustituida por `patFromName()` en la v58); fuera el `DAYS.indexOf(DAYS[x])` que solo se devolvía
+  a sí mismo; anotados los `catch` vacíos que quedaban explicando por qué se ignora el error;
+  unificada la cabecera «Utilidades de refactor», que estaba repetida tres veces en el CSS.
+- ESTILOS EN LÍNEA: las cinco declaraciones que se repetían 3 o más veces pasan a clase, con el
+  texto de la declaración idéntico y verificado en el arnés. **El resto NO se toca, y es una
+  decisión, no un olvido:** son estilos irrepetibles (posiciones, anchos y colores de un solo uso) y
+  convertirlos en masa exige regresión visual con Playwright, que la convención del proyecto pide y
+  que no puede ejecutarse en este entorno. Cambiar riesgo por estética sería mal negocio.
+- CONTEXTO-DESARROLLO.md REGENERADO: decía «versión actual: v54», citaba `icon-192.png` como error
+  cuando es el nombre correcto y remitía a un changelog «v17 → v40». Ahora está al día e incluye las
+  reglas nuevas (fechas con `daysBetween`, escapado al pintar, la excepción de red de la v73) y dos
+  trampas del proceso.
+- VALIDACIÓN: 201 comprobaciones en verde, 0 fallos, en Madrid, UTC, Santiago y Sídney. Sobre las
+  159 de la v73 se añaden: existencia y contenido de las dos pantallas sin tarjetas duplicadas,
+  navegación entre pestañas y refresco del aviso de copia, que ningún render pierde su hueco tras
+  mover las tarjetas, «Anterior» desactivado en el primer ejercicio, salto que conserva lo anotado y
+  detiene la cuenta atrás, retroceso, fin de sesión al saltar el último, conservación de cargas al
+  aplicar un plan nuevo sobre un día con registro, coincidencia entre el anillo y Progreso,
+  deduplicación de sesiones, ausencia de las funciones muertas y equivalencia exacta de las cinco
+  clases nuevas con el estilo en línea que sustituyen.
+- FALLOS PROPIOS DETECTADOS POR EL ARNÉS ANTES DE ENTREGAR: (1) al unificar el cálculo de adherencia
+  quedaron referencias a variables que ya no existían dentro de `renderTodayHero`, que rompía el
+  calendario entero; (2) dos scripts de parcheo abortaron a mitad y dejaron llamadas a funciones que
+  no llegaron a escribirse (`navEjercicios`, `conservarRegistro`). Ambos casos se cazaron en la
+  validación, no en el móvil.

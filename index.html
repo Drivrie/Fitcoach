@@ -2,7 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<!-- v73: se recupera el zoom con dos dedos (accesibilidad). Los campos ya usan 16px como
+     mínimo, así que iOS no hará zoom automático al enfocarlos. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="FitCoach">
@@ -116,7 +118,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
 .meal-m{font-size:12px;color:var(--text2)}
 .tabbar{position:fixed;bottom:0;left:0;right:0;background:rgba(26,32,41,.96);backdrop-filter:blur(14px);
   border-top:1px solid var(--border);display:flex;padding-bottom:var(--safe-bot);z-index:30;max-width:480px;margin:0 auto}
-.tabbar .t{flex:1;padding:9px 0 8px;text-align:center;color:var(--text3);font-size:10px;font-weight:600;cursor:pointer}
+.tabbar .t{flex:1;min-width:0;padding:9px 2px 8px;text-align:center;color:var(--text3);font-size:9.5px;font-weight:600;cursor:pointer;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tabbar .t.active{color:var(--accent)}
 .tabbar .t .ic{font-size:21px;display:block;margin-bottom:2px;line-height:1}
 .sheet-bg{display:none;position:fixed;top:0;left:0;right:0;height:var(--vvh,100%);background:rgba(0,0,0,.55);z-index:50;align-items:flex-end;animation:fade .2s}
@@ -167,6 +170,9 @@ textarea.bridge-out{font-family:'SF Mono',ui-monospace,monospace;font-size:11px;
 .player.show{display:flex}
 .pl-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)}
 .pl-top h3{font-size:14px;font-weight:600}
+.pl-nav{display:flex;gap:8px;margin-top:14px}
+.pl-nav .btn{background:rgba(255,255,255,.12);border-color:transparent;color:#fff}
+.pl-nav .btn[disabled]{opacity:.35}
 #player-body{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:18px 18px 8px;display:flex;flex-direction:column}
 .pl-prog{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-bottom:14px}
 .pl-prog-i{height:100%;background:var(--accent);border-radius:3px;transition:width .4s}
@@ -213,7 +219,17 @@ body{font-size:calc(15px*var(--fs))}
   .stat-l{font-size:calc(10px*var(--fs))!important}
 }
 .chip{font-size:calc(13px*var(--fs))!important}
-/* Utilidades de refactor (v63) — al final para conservar la precedencia que tenía el estilo inline */
+/* Utilidades (v63-v74) — al final del CSS para conservar la precedencia que tenía el estilo
+   en línea del que salieron. Un solo bloque: hasta la v73 esta cabecera estaba repetida 3 veces. */
+/* v74: las cinco declaraciones en línea que se repetían 3 o más veces, ya como clase.
+   El resto de estilos en línea son irrepetibles (posiciones, anchos y colores de un solo
+   uso) y NO se tocan: convertirlos en masa sin poder pasar una regresión visual real en
+   este entorno sería cambiar riesgo por estética. */
+.u-t20{font-size:calc(20px*var(--fs));font-weight:700}
+.u-t12b{font-size:calc(12px*var(--fs));font-weight:600;margin-bottom:8px}
+.u-cap10{font-size:calc(10px*var(--fs));color:rgba(255,255,255,.6);text-transform:uppercase}
+.u-fw6t{font-weight:600;color:var(--text)}
+.u-mh60{min-height:60px}
 .mt-4{margin-top:4px}
 .mb-8{margin-bottom:8px}
 .mb-9{margin-bottom:9px}
@@ -222,13 +238,11 @@ body{font-size:calc(15px*var(--fs))}
 .mb-12{margin-bottom:12px}
 .my-8{margin:8px 0}
 .flexrow{display:flex}
-/* Utilidades de refactor (v63) — al final para conservar la precedencia que tenía el estilo inline */
 .pad-exsec{padding:0 13px 12px}
 .box-sub{background:var(--surface2);border-radius:12px;padding:11px 12px;margin-bottom:8px}
 .nodec{text-decoration:none}
 .gap8{gap:8px}
 .ul-tight{margin:5px 0 0;padding-left:18px}
-/* Utilidades de refactor (v63) — al final para conservar la precedencia que tenía el estilo inline */
 .c-free{color:var(--free)}
 .c-stand{color:var(--ring-stand)}
 .fw6{font-weight:600}
@@ -320,6 +334,87 @@ body{font-size:calc(15px*var(--fs))}
     <div class="install-banner" id="install-tip">
       <strong>📲 Instalar en iPhone:</strong> abre esta página en Safari → botón Compartir → "Añadir a pantalla de inicio". Se abrirá como app a pantalla completa y funcionará sin conexión.
     </div>
+    <div class="card">
+      <div class="card-t">Datos personales</div>
+      <div class="row2">
+        <div class="field"><label>Peso (kg)</label><input type="text" id="peso" placeholder="75" inputmode="decimal"></div>
+        <div class="field"><label>Altura (cm)</label><input type="number" id="altura" placeholder="175" inputmode="numeric"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Edad</label><input type="number" id="edad" placeholder="35" inputmode="numeric"></div>
+        <div class="field"><label>Sexo</label><select id="sexo"><option value="hombre">Hombre</option><option value="mujer">Mujer</option></select></div>
+      </div>
+      <div id="bio" class="stat-grid" style="display:none;margin-top:4px">
+        <div class="stat"><div class="stat-v" id="b-imc">—</div><div class="stat-l">IMC</div></div>
+        <div class="stat"><div class="stat-v" id="b-tmb">—</div><div class="stat-l">TMB kcal</div></div>
+        <div class="stat"><div class="stat-v" id="b-tdee">—</div><div class="stat-l">Gasto kcal</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-t">Estructura semanal</div>
+      <label style="font-size:11px;font-weight:600;color:#a99af9;text-transform:uppercase;letter-spacing:.5px">Días con sesión IA</label>
+      <div id="ai-days" style="margin:6px 0 4px"></div>
+      <p class="note" style="margin:0 0 12px;font-size:calc(11px*var(--fs))">Toca un día para alternar: <b>completo</b> (fuerza de ~50 min) → <b>·breve</b> (fuerza corta de 15-20 min para días con carrera, p. ej. martes y jueves) → quitar.</p>
+      <label style="font-size:11px;font-weight:600;color:#5ee0b0;text-transform:uppercase;letter-spacing:.5px">Días de entrenamiento libre</label>
+      <div id="free-days" style="margin-top:6px"></div>
+    </div>
+    <div class="card">
+      <div class="card-t">Objetivo (puedes elegir varios)</div>
+      <div id="obj-chips" style="margin-bottom:4px"></div>
+      <div id="obj-note" style="font-size:12px;color:var(--text2);margin-top:6px"></div>
+    </div>
+    <div class="card">
+      <div class="card-t">🩹 Limitaciones y lesiones</div>
+      <p class="note mb-9">Si marcas una zona, el generador offline evita los ejercicios de mayor carga o impacto para esa zona, y se lo indicamos también a Claude en el mensaje semanal. Orientativo, no sustituye la valoración de un profesional; si hay dolor persistente o agudo, consúltalo antes de seguir entrenando esa zona.</p>
+      <div id="limit-chips" style="margin-bottom:8px"></div>
+      <div class="field"><label>Nota (opcional)</label><textarea id="limit-nota" placeholder="Ej: molestia en el hombro derecho al elevar por encima de la cabeza" class="u-mh60"></textarea></div>
+    </div>
+    <div class="card">
+      <div class="card-t">Configuración</div>
+      <div class="field"><label>Nivel</label><select id="nivel">
+        <option value="principiante">Principiante</option><option value="intermedio" selected>Intermedio</option><option value="avanzado">Avanzado</option>
+      </select></div>
+      <div class="field">
+        <label>Minutos por sesión: <span id="min-out" class="u-fw6t">45</span> min</label>
+        <input type="range" id="minutos" min="15" max="120" step="5" value="45" style="width:100%">
+        <div class="mt-6">
+          <span class="chip" onclick="setMin(30)">30</span><span class="chip" onclick="setMin(40)">40</span>
+          <span class="chip" onclick="setMin(45)">45</span><span class="chip" onclick="setMin(60)">60</span>
+          <span class="chip" onclick="setMin(90)">90</span>
+        </div>
+      </div>
+      <div class="field"><label>Equipo disponible (puedes elegir varios)</label>
+        <div id="equip-chips"></div>
+        <div id="equip-detail" style="margin-top:10px"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-t">💬 Instrucciones adicionales (opcional)</div>
+      <p class="note mb-9">Cualquier cosa que no encaje en los ajustes de arriba, dicha con tus palabras. Ej: "el jueves solo tengo 25 minutos", "añade un día de carrera suave", "esta semana evita saltos", "quiero centrarme en espalda".</p>
+      <textarea id="week-note" placeholder="Escribe aquí lo que quieras pedirle a tu entrenador para esta semana…" style="min-height:70px"></textarea>
+      <div id="week-note-hint" class="note mt-6"></div>
+    </div>
+    <button class="btn btn-primary btn-block" onclick="buildWeekOffline()">⚡ Generar semana (offline)</button>
+    <button class="btn btn-block mt-8" onclick="openBridge('new')">✨ Generar con Claude (más detallado)</button>
+    <div class="card">
+      <div class="card-t">🗓️ Mesociclo</div>
+      <p class="note mb-9">Tu entrenador (Claude) decide la fase del bloque según tu objetivo global y tu progreso, y la propone en cada adaptación semanal. La semana del programa se cuenta desde tu primer registro. Sin descarga programada.</p>
+      <div id="meso-info" style="font-size:calc(13px*var(--fs));font-weight:600;margin-bottom:6px"></div>
+      <div id="meso-focus-view" style="font-size:calc(13px*var(--fs));color:var(--text2);margin-bottom:10px"></div>
+      <details>
+        <summary style="cursor:pointer;font-size:calc(12px*var(--fs));color:var(--accent)">Ajuste avanzado (opcional)</summary>
+        <div class="field mt-8"><label>Semanas por bloque (orientativo; Claude puede ajustarlo)</label><select id="meso-len" onchange="saveMeso()">
+          <option value="3">3</option><option value="4" selected>4</option><option value="5">5</option><option value="6">6</option></select></div>
+      </details>
+    </div>
+  </div>
+
+  <!-- v74 · AJUSTES. Perfil se había convertido en un scroll de 15 tarjetas que mezclaba lo que se
+       toca cada semana (datos, objetivos, material, generar) con lo que se toca una vez al año
+       (tipografía, sonido, copias, versión). Se parte en dos pantallas: aquí queda lo que configura
+       la APP; en Perfil, lo que describe al USUARIO y su plan. Los identificadores no cambian, así
+       que todo el JavaScript que los usa sigue funcionando igual. -->
+  <div id="s-set" class="screen">
     <details class="card" style="padding:0">
       <summary style="padding:14px;font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;cursor:pointer;list-style:none">📚 Base científica del plan</summary>
       <div style="padding:0 14px 14px;font-size:12.5px;color:var(--text2);line-height:1.6">
@@ -393,79 +488,6 @@ body{font-size:calc(15px*var(--fs))}
       <p class="note mt-10">Claude usa estos marcadores para valorar tu recuperación y ajustar el plan (p. ej. HRV baja o pulso en reposo alto → semana más suave). Las flechas muestran la tendencia frente a tu actualización anterior. Orientativo, no diagnóstico médico.</p>
     </div>
     <div class="card">
-      <div class="card-t">Datos personales</div>
-      <div class="row2">
-        <div class="field"><label>Peso (kg)</label><input type="text" id="peso" placeholder="75" inputmode="decimal"></div>
-        <div class="field"><label>Altura (cm)</label><input type="number" id="altura" placeholder="175" inputmode="numeric"></div>
-      </div>
-      <div class="row2">
-        <div class="field"><label>Edad</label><input type="number" id="edad" placeholder="35" inputmode="numeric"></div>
-        <div class="field"><label>Sexo</label><select id="sexo"><option value="hombre">Hombre</option><option value="mujer">Mujer</option></select></div>
-      </div>
-      <div id="bio" class="stat-grid" style="display:none;margin-top:4px">
-        <div class="stat"><div class="stat-v" id="b-imc">—</div><div class="stat-l">IMC</div></div>
-        <div class="stat"><div class="stat-v" id="b-tmb">—</div><div class="stat-l">TMB kcal</div></div>
-        <div class="stat"><div class="stat-v" id="b-tdee">—</div><div class="stat-l">Gasto kcal</div></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-t">Estructura semanal</div>
-      <label style="font-size:11px;font-weight:600;color:#a99af9;text-transform:uppercase;letter-spacing:.5px">Días con sesión IA</label>
-      <div id="ai-days" style="margin:6px 0 4px"></div>
-      <p class="note" style="margin:0 0 12px;font-size:calc(11px*var(--fs))">Toca un día para alternar: <b>completo</b> (fuerza de ~50 min) → <b>·breve</b> (fuerza corta de 15-20 min para días con carrera, p. ej. martes y jueves) → quitar.</p>
-      <label style="font-size:11px;font-weight:600;color:#5ee0b0;text-transform:uppercase;letter-spacing:.5px">Días de entrenamiento libre</label>
-      <div id="free-days" style="margin-top:6px"></div>
-    </div>
-    <div class="card">
-      <div class="card-t">Objetivo (puedes elegir varios)</div>
-      <div id="obj-chips" style="margin-bottom:4px"></div>
-      <div id="obj-note" style="font-size:12px;color:var(--text2);margin-top:6px"></div>
-    </div>
-    <div class="card">
-      <div class="card-t">🩹 Limitaciones y lesiones</div>
-      <p class="note mb-9">Si marcas una zona, el generador offline evita los ejercicios de mayor carga o impacto para esa zona, y se lo indicamos también a Claude en el mensaje semanal. Orientativo, no sustituye la valoración de un profesional; si hay dolor persistente o agudo, consúltalo antes de seguir entrenando esa zona.</p>
-      <div id="limit-chips" style="margin-bottom:8px"></div>
-      <div class="field"><label>Nota (opcional)</label><textarea id="limit-nota" placeholder="Ej: molestia en el hombro derecho al elevar por encima de la cabeza" style="min-height:60px"></textarea></div>
-    </div>
-    <div class="card">
-      <div class="card-t">Configuración</div>
-      <div class="field"><label>Nivel</label><select id="nivel">
-        <option value="principiante">Principiante</option><option value="intermedio" selected>Intermedio</option><option value="avanzado">Avanzado</option>
-      </select></div>
-      <div class="field">
-        <label>Minutos por sesión: <span id="min-out" style="font-weight:600;color:var(--text)">45</span> min</label>
-        <input type="range" id="minutos" min="15" max="120" step="5" value="45" style="width:100%">
-        <div class="mt-6">
-          <span class="chip" onclick="setMin(30)">30</span><span class="chip" onclick="setMin(40)">40</span>
-          <span class="chip" onclick="setMin(45)">45</span><span class="chip" onclick="setMin(60)">60</span>
-          <span class="chip" onclick="setMin(90)">90</span>
-        </div>
-      </div>
-      <div class="field"><label>Equipo disponible (puedes elegir varios)</label>
-        <div id="equip-chips"></div>
-        <div id="equip-detail" style="margin-top:10px"></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-t">💬 Instrucciones adicionales (opcional)</div>
-      <p class="note mb-9">Cualquier cosa que no encaje en los ajustes de arriba, dicha con tus palabras. Ej: "el jueves solo tengo 25 minutos", "añade un día de carrera suave", "esta semana evita saltos", "quiero centrarme en espalda".</p>
-      <textarea id="week-note" placeholder="Escribe aquí lo que quieras pedirle a tu entrenador para esta semana…" style="min-height:70px"></textarea>
-      <div id="week-note-hint" class="note mt-6"></div>
-    </div>
-    <button class="btn btn-primary btn-block" onclick="buildWeekOffline()">⚡ Generar semana (offline)</button>
-    <button class="btn btn-block mt-8" onclick="openBridge('new')">✨ Generar con Claude (más detallado)</button>
-    <div class="card">
-      <div class="card-t">🗓️ Mesociclo</div>
-      <p class="note mb-9">Tu entrenador (Claude) decide la fase del bloque según tu objetivo global y tu progreso, y la propone en cada adaptación semanal. La semana del programa se cuenta desde tu primer registro. Sin descarga programada.</p>
-      <div id="meso-info" style="font-size:calc(13px*var(--fs));font-weight:600;margin-bottom:6px"></div>
-      <div id="meso-focus-view" style="font-size:calc(13px*var(--fs));color:var(--text2);margin-bottom:10px"></div>
-      <details>
-        <summary style="cursor:pointer;font-size:calc(12px*var(--fs));color:var(--accent)">Ajuste avanzado (opcional)</summary>
-        <div class="field mt-8"><label>Semanas por bloque (orientativo; Claude puede ajustarlo)</label><select id="meso-len" onchange="saveMeso()">
-          <option value="3">3</option><option value="4" selected>4</option><option value="5">5</option><option value="6">6</option></select></div>
-      </details>
-    </div>
-    <div class="card">
       <div class="card-t">🔠 Tamaño de texto</div>
       <p class="note mb-9">Ajusta el tamaño de letra de toda la app a tu gusto y visión.</p>
       <div id="fs-chips"></div>
@@ -477,14 +499,38 @@ body{font-size:calc(15px*var(--fs))}
     </div>
     <div class="card">
       <div class="card-t">💾 Mis datos</div>
-      <p class="note mb-9">Todo vive solo en este iPhone (no hay servidor). Si cambias de móvil, reinstalas la app borrando el icono, o el navegador pierde el almacenamiento, <b>sin una copia exportada no hay forma de recuperar tus datos</b>. Exporta una copia de vez en cuando.</p>
-      <button class="btn btn-block" onclick="exportData()">⬇️ Exportar mis datos</button>
+      <p class="note mb-9">Tus datos viven en este iPhone (no hay servidor). La app guarda además una copia interna que sobrevive a reiniciar el móvil, pero <b>«Borrar historial y datos de sitios web» de Safari se lleva por delante las dos</b>. La única copia que sobrevive a eso —y a cambiar de móvil— es la que exportes tú.</p>
+      <div id="backup-age" class="note mb-9"></div>
+      <button class="btn btn-block btn-primary" onclick="exportData()">⬇️ Exportar copia (Archivos / iCloud)</button>
       <input type="file" id="restore-file" accept="application/json,.json" style="display:none" onchange="restoreData(event)">
       <button class="btn btn-block mt-8" onclick="document.getElementById('restore-file').click()">⬆️ Restaurar copia de seguridad</button>
       <button class="btn btn-block" style="margin-top:8px;border-color:var(--danger);color:var(--danger)" onclick="confirmDeleteAll()">🗑️ Eliminar todos mis datos</button>
       <div id="data-status" style="margin-top:7px;font-size:12px"></div>
+      <details class="mt-12">
+        <summary style="font-size:calc(13px*var(--fs));font-weight:600;cursor:pointer">☁️ Copia automática en la nube (opcional)</summary>
+        <p class="note mt-8">Sube una copia a un <b>gist secreto</b> de tu cuenta de GitHub. Sirve para recuperar todo en un móvil nuevo sin depender de un archivo. Léelo antes de activarlo:</p>
+        <ul class="ul-tight note">
+          <li>Se usa un gist secreto, <b>no el repositorio de la app</b>: ese es público y ahí tu peso, marcadores de salud y lesiones quedarían a la vista de cualquiera.</li>
+          <li>Secreto no es privado: quien tenga la URL del gist puede leerlo. No se indexa ni aparece en tu perfil.</li>
+          <li>El token se guarda solo en este dispositivo. Crea uno <b>clásico con el permiso «gist» y nada más</b>, y ponle caducidad.</li>
+          <li>Si no lo activas, la app no hace ninguna conexión a internet con tus datos.</li>
+        </ul>
+        <div class="field mt-8"><label>Token de GitHub (permiso «gist»)</label>
+          <input type="password" id="cloud-token" autocomplete="off" spellcheck="false" placeholder="ghp_… (solo se guarda aquí)" onchange="saveCloudToken()"></div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:calc(13px*var(--fs));margin:8px 0">
+          <input type="checkbox" id="cloud-auto" onchange="toggleCloudAuto(this)" style="width:auto">
+          Subir una copia sola al registrar una sesión</label>
+        <div class="note">Estado: <span id="cloud-state">Desactivada</span></div>
+        <button class="btn btn-block mt-8" onclick="cloudPush()">☁️ Subir copia ahora</button>
+        <button class="btn btn-block mt-8" onclick="cloudPull()">⬇️ Restaurar desde la nube</button>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn btn-sm flex1" onclick="setGistId()">Enlazar un gist existente</button>
+          <button class="btn btn-sm flex1" onclick="cloudForget()">Desconectar</button>
+        </div>
+        <div id="cloud-status" style="margin-top:7px;font-size:12px"></div>
+      </details>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 72</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 74</div>
     <div id="sw-status" style="text-align:center;font-size:11px;color:var(--warn);margin-top:4px;display:none"></div>
     <div style="text-align:center;margin-top:8px">
       <button class="btn btn-xs" onclick="checkForUpdate()">🔄 Buscar actualización</button>
@@ -519,7 +565,8 @@ body{font-size:calc(15px*var(--fs))}
   <div class="t" data-s="sess" onclick="tab('sess')"><span class="ic">🏋</span>Sesión</div>
   <div class="t" data-s="prog" onclick="tab('prog')"><span class="ic">📈</span>Progreso</div>
   <div class="t" data-s="nutri" onclick="tab('nutri')"><span class="ic">🥗</span>Nutrición</div>
-  <div class="t" data-s="prof" onclick="tab('prof')"><span class="ic">⚙️</span>Perfil</div>
+  <div class="t" data-s="prof" onclick="tab('prof')"><span class="ic">👤</span>Perfil</div>
+  <div class="t" data-s="set" onclick="tab('set')"><span class="ic">⚙️</span>Ajustes</div>
 </div>
 
 <!-- LOG SHEET -->
@@ -553,10 +600,10 @@ body{font-size:calc(15px*var(--fs))}
     <p class="note mb-11">Ajusta el material o el tiempo disponible solo para esta sesión, sin cambiar tu perfil. Se mantienen los mismos ejercicios adaptando la variante al nuevo material siempre que sea posible; solo se sustituyen los que no se puedan hacer con lo que tengas hoy.</p>
     <div class="field"><label>Material disponible para hoy</label><div id="mod-equip"></div></div>
     <div id="mod-equip-sum"></div>
-    <div class="field"><label>Tiempo disponible: <span id="mod-min-out" style="font-weight:600;color:var(--text)">45</span> min</label>
+    <div class="field"><label>Tiempo disponible: <span id="mod-min-out" class="u-fw6t">45</span> min</label>
       <input type="range" id="mod-min" min="15" max="120" step="5" value="45" style="width:100%"></div>
     <div class="field"><label>💬 Instrucciones adicionales (opcional)</label>
-      <textarea id="mod-note" placeholder='Ej: "hoy me molesta el hombro, cambia los press", "hazla más corta", "sin saltos"…' style="min-height:60px"></textarea>
+      <textarea id="mod-note" placeholder='Ej: "hoy me molesta el hombro, cambia los press", "hazla más corta", "sin saltos"…' class="u-mh60"></textarea>
       <div id="mod-note-hint" class="note mt-6"></div></div>
     <button class="btn btn-primary btn-block" onclick="regenerateDayOffline()">⚡ Adaptar a mi material (offline)</button>
     <button class="btn btn-block mt-8" onclick="modifyWithClaude()">✨ Pedir a Claude (más detallado)</button>
@@ -580,12 +627,12 @@ body{font-size:calc(15px*var(--fs))}
     <div class="field"><label>Nivel</label><div id="gen-niv"></div></div>
     <div class="field"><label>Material disponible</label><div id="gen-equip"></div></div>
     <div id="gen-equip-sum"></div>
-    <div class="field"><label>Tiempo disponible: <span id="gen-min-out" style="font-weight:600;color:var(--text)">45</span> min</label>
+    <div class="field"><label>Tiempo disponible: <span id="gen-min-out" class="u-fw6t">45</span> min</label>
       <input type="range" id="gen-min" min="15" max="120" step="5" value="45" style="width:100%"></div>
     <div class="field"><label>¿Qué hacer con esta sesión?</label><div id="gen-mode"></div></div>
     <label style="display:flex;align-items:center;gap:8px;margin:2px 0 12px;font-size:13px;color:var(--text2)"><input type="checkbox" id="gen-hist" checked style="width:auto"> Complementar mi entrenamiento reciente (priorizar grupos menos trabajados)</label>
     <div class="field"><label>💬 Instrucciones adicionales (opcional)</label>
-      <textarea id="gen-note" placeholder='Ej: "algo suave de movilidad", "solo tren superior", "que incluya core al final"…' style="min-height:60px"></textarea>
+      <textarea id="gen-note" placeholder='Ej: "algo suave de movilidad", "solo tren superior", "que incluya core al final"…' class="u-mh60"></textarea>
       <div id="gen-note-hint" class="note mt-6"></div></div>
     <button class="btn btn-primary btn-block" onclick="generateDayOffline()">⚡ Generar (offline)</button>
     <button class="btn btn-block mt-8" onclick="generateWithClaude()">✨ Pedir a Claude (más detallado)</button>
@@ -793,10 +840,61 @@ function load(){
     return {};
   }
 }
+/* ============================================================
+   v73 · DURABILIDAD DE LOS DATOS
+   localStorage es almacenamiento del NAVEGADOR, no del dispositivo: Safari lo borra al "Borrar
+   historial y datos de sitios web" y puede descartarlo si el iPhone va muy justo de espacio. Tres
+   capas, de menos a más resistente:
+     1. Espejo en IndexedDB. Sobrevive a reinicios y a que Safari descarte localStorage por espacio.
+        NO sobrevive a "Borrar datos de sitios web": eso arrasa con todo lo del sitio.
+     2. Copia a archivo (Archivos/iCloud Drive) desde la hoja de compartir de iOS. Es la única que
+        sobrevive a formatear el móvil, y por eso la app avisa si hace más de 14 días de la última.
+     3. Copia en la nube en un Gist secreto de GitHub, opcional y desactivada por defecto.
+   ============================================================ */
+let _idbP=null;
+function idbReady(){
+  if(_idbP)return _idbP;
+  _idbP=new Promise(res=>{
+    try{
+      if(typeof indexedDB==='undefined'||!indexedDB)return res(null);
+      const r=indexedDB.open('fitcoach-db',1);
+      r.onupgradeneeded=()=>{try{r.result.createObjectStore('kv');}catch(e){/* ya existía: nada que hacer */}};
+      r.onsuccess=()=>res(r.result);
+      r.onerror=()=>res(null);
+    }catch(e){res(null);}
+  });
+  return _idbP;
+}
+function idbSet(k,v){
+  return idbReady().then(db=>new Promise(res=>{
+    if(!db)return res(false);
+    try{const tx=db.transaction('kv','readwrite');tx.objectStore('kv').put(v,k);
+      tx.oncomplete=()=>res(true);tx.onerror=()=>res(false);tx.onabort=()=>res(false);
+    }catch(e){res(false);}
+  }));
+}
+function idbGet(k){
+  return idbReady().then(db=>new Promise(res=>{
+    if(!db)return res(null);
+    try{const rq=db.transaction('kv','readonly').objectStore('kv').get(k);
+      rq.onsuccess=()=>res(rq.result||null);rq.onerror=()=>res(null);
+    }catch(e){res(null);}
+  }));
+}
+// el espejo se escribe con retardo: guardar una serie no debe costar una escritura de disco extra
+let _mirrorT=null;
+function mirrorSoon(){
+  clearTimeout(_mirrorT);
+  _mirrorT=setTimeout(()=>{
+    // el espejo es una red de seguridad: si falla, la app debe seguir funcionando con localStorage
+    try{idbSet('estado',{at:new Date().toISOString(),data:JSON.parse(JSON.stringify(S))});}catch(e){}
+  },1500);
+}
 function save(){
-  try{localStorage.setItem('fitcoach',JSON.stringify(S));return true;}
+  try{localStorage.setItem('fitcoach',JSON.stringify(S));mirrorSoon();return true;}
   catch(e){
     console.warn('No se pudo guardar en localStorage',e);
+    mirrorSoon(); // aunque falle localStorage, el espejo puede salvar la sesión
     alert('⚠️ No se ha podido guardar. El almacenamiento del navegador puede estar lleno o bloqueado (modo privado). Tus últimos cambios podrían no conservarse: exporta una copia desde Ajustes → Mis datos en cuanto puedas.');
     return false;
   }
@@ -833,6 +931,8 @@ function initState(){
   if(S.baseline==null)S.baseline='';
   if(S.fontScale==null)S.fontScale=1;
   if(!S.spotifyRecents)S.spotifyRecents=[];
+  if(!S.cloud)S.cloud={token:'',gistId:'',auto:false,lastAt:''}; // v73: copia en la nube (opcional)
+  if(S.lastBackup===undefined)S.lastBackup=''; // v73: fecha de la última copia exportada
   if(!S.healthLog)S.healthLog=[];
   if(S.musicMuted==null)S.musicMuted=false;
   // mesociclo: fecha de inicio del programa y duración de bloque (sin deload forzado)
@@ -887,18 +987,33 @@ function mesoInfo(weekNum){
   const wInBlock=((weekNum-1)%len)+1;
   return {weekNum,block,wInBlock,len,focus:S.mesoFocus};
 }
+const _arrancoVacio=!(S.history||[]).length&&!Object.keys(S.schedule||{}).length; // antes de initState()
 initState();
+/* v73: si el navegador ha perdido localStorage (borrado de datos de sitios web, falta de espacio,
+   o un fallo de lectura), el espejo de IndexedDB puede seguir ahí. No se restaura por las bravas:
+   se pregunta, mostrando fecha y volumen de lo encontrado, porque restaurar sobre datos buenos
+   sería peor que no hacer nada. */
+function ofrecerRescate(){
+  if(!_arrancoVacio&&!_loadFailed)return;
+  idbGet('estado').then(m=>{
+    if(!m||!m.data)return;
+    const d=m.data;
+    const nSes=(d.history||[]).length;
+    const nDias=Object.keys(d.schedule||{}).length;
+    if(!nSes&&!nDias)return;
+    const cuando=m.at?new Date(m.at).toLocaleString('es-ES',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'}):'fecha desconocida';
+    if(!confirm('Este dispositivo no tiene datos, pero la app guarda una copia interna de seguridad.\n\nCopia del '+cuando+': '+nSes+' sesiones registradas y '+nDias+' días planificados.\n\n¿Restaurarla?'))return;
+    S=d;initState();save();
+    renderCal();renderProg();renderNutri();renderMeso();renderHealth();loadProfile();renderDayChips();renderEquipChips();renderEquipDetail();renderDataStatus();
+    alert('✓ Datos restaurados desde la copia interna. Exporta una copia a Archivos para no depender solo del navegador.');
+  }).catch(()=>{});
+}
+setTimeout(ofrecerRescate,600);
 if(_loadFailed){
   alert('⚠️ No se pudieron leer tus datos guardados (almacenamiento dañado). La app ha arrancado con un perfil nuevo para no bloquearse.'+(_corruptKey?' Los datos ilegibles NO se han borrado: se han apartado bajo la clave "'+_corruptKey+'" por si se pueden rescatar.':'')+' Si tienes una copia exportada, restáurala desde Ajustes → Mis datos.');
 }
-// Añade una entrada al análisis del entrenador sin dejar que crezca sin límite (localStorage tiene cuota).
-function appendInsight(text){
-  if(!text)return;
-  const blocks=(S.insight?S.insight.split('\n\n'):[]).filter(Boolean);
-  blocks.push(text);
-  while(blocks.join('\n\n').length>4000&&blocks.length>1)blocks.shift();
-  S.insight=blocks.join('\n\n');
-}
+/* v74: aquí vivía appendInsight(), huérfana desde que el análisis del entrenador dejó de
+   acumularse entre semanas (v67). Eliminada: código muerto que confunde al leer. */
 function applyFontScale(){document.documentElement.style.setProperty('--fs',S.fontScale||1);}
 applyFontScale();
 
@@ -1276,6 +1391,7 @@ function buildWeekOffline(){
     if(isBrief)sess.titulo='Fuerza breve · complemento de carrera';
     const ex=S.schedule[key].findIndex(x=>x.type==='ai');
     const entry={type:'ai',title:sess.titulo,meta:sess.meta,warmup:sess.calentamiento,cooldown:sess.vuelta_calma,exercises:sess.ejercicios,done:false,brief:isBrief};
+    conservarRegistro(key,entry); // v74
     if(weekNote)entry.userNote=weekNote; // v64: nota del usuario, visible al entrenar
     if(ex>=0)S.schedule[key][ex]=entry;else S.schedule[key].push(entry);
   });
@@ -1305,32 +1421,43 @@ function tab(t){
   if(t==='prog')renderProg();
   if(t==='cal')renderCal();
   if(t==='nutri')renderNutri();
+  if(t==='set')renderDataStatus(); // v74: el aviso de copia debe estar al día al entrar
 }
 
 function changeWeek(d){S.currentWeek+=d;save();renderCal();renderProg();setWeekHeader();}
 
+/* v74: la regla para deduplicar las sesiones de un día estaba escrita LITERALMENTE dos veces
+   (anillo de hoy y calendario). Dos copias de la misma regla es una divergencia esperando a pasar:
+   ahora hay una sola. */
+function sesionesDelDia(key){
+  const list=(S.schedule[key]||[]).filter(s=>!s.skipped);
+  const seen={},uniq=[];
+  list.forEach(s=>{const sig=s.type+'|'+(s.done?'1':'0')+'|'+(s.title||'');if(!seen[sig]){seen[sig]=1;uniq.push(s);}});
+  return uniq;
+}
+/* v74: y la adherencia de la semana se calculaba de DOS maneras distintas: el anillo contaba
+   SESIONES y la pestaña Progreso contaba DÍAS, así que para la misma semana podían verse dos
+   porcentajes distintos sin que nada estuviera roto. Se unifica en el criterio por sesiones, que
+   es el más fino (un día con dos sesiones cuenta como dos). */
+function weekStats(week){
+  const dates=weekDates(week===undefined?S.currentWeek:week).map(fmt);
+  const wp=planForWeek(week===undefined?S.currentWeek:week);
+  let done=0,planned=0;
+  dates.forEach((k,i)=>{
+    const code=DAYS[i];
+    const uniq=sesionesDelDia(k);
+    uniq.forEach(s=>{planned++;if(s.done)done++;});
+    if(wp&&wp.ai.includes(code)&&!uniq.some(s=>s.type==='ai'))planned++;
+    if(wp&&wp.free.includes(code)&&!uniq.some(s=>s.type==='free'))planned++;
+  });
+  return {planned,done,pct:planned?Math.min(100,Math.round(done/planned*100)):0};
+}
 function renderTodayHero(){
   const hero=document.getElementById('today-hero');if(!hero)return;
   // anillo: cumplimiento de la semana mostrada (sesiones hechas / planificadas, ignorando saltadas)
   const dates=weekDates(S.currentWeek).map(fmt);
-  // Conteo coherente con el calendario: por cada día, las sesiones reales de la agenda
-  // MÁS las previstas implícitas (día marcado IA/libre sin sesión aún en agenda).
-  let done=0,plan=0;
-  const hPlan=planForWeek(S.currentWeek); // v67: previsión de la semana mostrada
-  dates.forEach((k,i)=>{
-    const code=DAYS[i];
-    const list=(S.schedule[k]||[]).filter(s=>!s.skipped);
-    // dedupe por firma para evitar duplicados accidentales
-    const seen={};const uniq=[];
-    list.forEach(s=>{const sig=s.type+'|'+(s.done?'1':'0')+'|'+(s.title||'');if(!seen[sig]){seen[sig]=1;uniq.push(s);}});
-    const hasAI=uniq.some(s=>s.type==='ai');
-    const hasFree=uniq.some(s=>s.type==='free');
-    uniq.forEach(s=>{plan++;if(s.done)done++;});
-    // previstas implícitas no materializadas todavía en agenda
-    if(hPlan&&hPlan.ai.includes(code)&&!hasAI)plan++;
-    if(hPlan&&hPlan.free.includes(code)&&!hasFree)plan++;
-  });
-  const pct=plan?Math.min(100,Math.round(done/plan*100)):0;
+  const hPlan=planForWeek(S.currentWeek);
+  const {pct,planned:plan,done}=weekStats();
   const R=34,C=2*Math.PI*R,off=C*(1-pct/100);
   // sesión de hoy
   const todayKey=fmt(new Date());
@@ -1363,8 +1490,8 @@ function renderTodayHero(){
       <div class="hero-meta">${meta}</div>
       <div style="font-size:calc(11px*var(--fs));color:var(--text3);margin-top:6px">${(()=>{
         let ai=0,aiDone=0,fr=0,frDone=0;
-        dates.forEach((k,i)=>{const code=DAYS[i];const list=(S.schedule[k]||[]).filter(s=>!s.skipped);
-          const seen={};const uniq=[];list.forEach(s=>{const sig=s.type+'|'+(s.done?'1':'0')+'|'+(s.title||'');if(!seen[sig]){seen[sig]=1;uniq.push(s);}});
+        dates.forEach((k,i)=>{const code=DAYS[i];
+          const uniq=sesionesDelDia(k); // v74: regla única
           const hasAI=uniq.some(s=>s.type==='ai'),hasFree=uniq.some(s=>s.type==='free');
           uniq.forEach(s=>{if(s.type==='ai'){ai++;if(s.done)aiDone++;}else{fr++;if(s.done)frDone++;}});
           if(hPlan&&hPlan.ai.includes(code)&&!hasAI)ai++;
@@ -1486,17 +1613,9 @@ function undoDone(key,si){
 
 function tapSess(key,si){const s=S.schedule[key][si];if(s.type==='ai')showSess(key);else openLog(key);}
 
-function patternOf(ex){
-  if(ex.pat)return ex.pat;
-  const f=EXDB.find(e=>e.n===ex.nombre);if(f)return f.p;
-  const nm=(ex.nombre||'').toLowerCase();
-  if(/sentadilla|zancada|prensa|pierna|gemelo|hip|peso muerto|split/.test(nm))return 'pierna';
-  if(/press|flexion|flexión|fondo|empuje|hombro|lateral|militar/.test(nm))return 'empuje';
-  if(/remo|domina|jalón|jalon|curl|tirón|tiron|face pull/.test(nm))return 'tiron';
-  if(/plancha|crunch|abdomin|core|oblicuo|elevación de pierna|elevacion de pierna/.test(nm))return 'core';
-  if(/burpee|salto|jumping|swing|mountain|cardio|sprint|comba/.test(nm))return 'cardio';
-  return 'pierna';
-}
+/* v74: aquí vivía patternOf(), sustituida por patFromName()/EXDB en la v58 y sin una sola
+   llamada desde entonces. Eliminada. */
+
 
 /* Ilustraciones SVG por patrón de movimiento — claras, offline, nunca se rompen */
 /* --- Errores comunes a evitar por ejercicio (técnica) --- */
@@ -1957,7 +2076,7 @@ function openLog(key,mode){
       </div></div>
     <div class="field"><label>Dolor o molestias durante la sesión (opcional)</label>
       <div class="feel">${PAIN_AREAS.filter(a=>a[0]!=='otra').map(([k,lab])=>`<div class="pain-b" onclick="togglePain(this)" data-a="${k}">${lab}</div>`).join('')}</div>
-      <p class="note mt-6">Si marcas una zona aquí, el generador offline evitará ejercicios de riesgo para esa zona durante los próximos 14 días, además de lo que hayas fijado como limitación fija en Ajustes.</p></div>
+      <p class="note mt-6">Si marcas una zona aquí, el generador offline evitará ejercicios de riesgo para esa zona durante los próximos 14 días, además de lo que hayas fijado como limitación fija en Perfil.</p></div>
     <div class="field"><label style="display:flex;justify-content:space-between;align-items:center">Notas (pesos, series reales, sensaciones)${isAdd?'':`<button class="btn btn-xs" onclick="insertLoadTemplate('${key}')">${(()=>{const s=mainAISess(key);return (s&&s.sets&&s.sets.length)?'＋ Cargas reales':'＋ Plantilla cargas';})()}</button>`}</label>
       <textarea id="l-notes" placeholder="${isAdd?'Ej: 7,1 km, 5:30/km, 412 kcal, FC media 152...':'Ej: goblet 16kg llegué a 12, press 16kg 3×10 justo...'}"></textarea></div>`;
   openSheet('log-bg');
@@ -2045,6 +2164,7 @@ function saveLog(){
   // registro atrasado podía desplazar fuera sesiones recientes de verdad. El orden es estable, así
   // que varias sesiones del mismo día conservan el orden en que se anotaron.
   S.history.sort((a,b)=>String(b.key).localeCompare(String(a.key)));
+  cloudAutoPush(); // v73
   S.logMode='log';
   save();closeSheet('log-bg');renderCal();renderProg();selDay(key,weekDates(S.currentWeek).map(fmt).indexOf(key),true);
 }
@@ -2060,15 +2180,8 @@ function openAdd(){
 }
 
 /* --- PROGRESO --- */
-function weekAdherencePct(){
-  const dates=weekDates(S.currentWeek);
-  const aPlan=planForWeek(S.currentWeek); // v67: no proyectar la distribución actual hacia atrás
-  let planned=0,done=0;
-  dates.forEach((d,i)=>{const key=fmt(d),code=DAYS[i];
-    if((aPlan&&(aPlan.ai.includes(code)||aPlan.free.includes(code)))||(S.schedule[key]&&S.schedule[key].length))planned++;
-    if(S.schedule[key]&&S.schedule[key].some(s=>s.done))done++;});
-  return {planned,done,pct:planned?Math.round(done/planned*100):0};
-}
+// v74: se conserva el nombre porque lo usan Progreso y Nutrición, pero delega en weekStats()
+function weekAdherencePct(){return weekStats();}
 function renderProg(){
   const dates=weekDates(S.currentWeek);
   const {planned,done,pct}=weekAdherencePct();
@@ -2082,16 +2195,24 @@ function renderProg(){
   document.getElementById('insight').textContent=S.insight||'Registra sesiones para recibir análisis adaptativo.';
   const bi=document.getElementById('baseline-in');if(bi&&document.activeElement!==bi)bi.value=S.baseline||'';
   const hl=document.getElementById('history');
+  /* v73: se pintaban TODAS las sesiones en cada renderProg(), y renderProg se llama al registrar,
+     al marcar como no realizada, al deshacer… Con cientos de sesiones eso es reconstruir un DOM
+     enorme en cada toque. Se pintan las últimas 50 y el resto bajo demanda. */
+  const _tope=S._histShown||50;
+  const _lista=S.history.slice(0,_tope);
   if(!S.history.length){hl.innerHTML='<p style="font-size:13px;color:var(--text2)">Sin sesiones registradas.</p>';}
-  else hl.innerHTML=S.history.map(h=>`
+  else hl.innerHTML=_lista.map(h=>`
     <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border)">
       <div class="flex1"><div style="font-size:13px;font-weight:600">${esc(h.title)}</div>
         <div style="font-size:11px;color:var(--text2)">${esc(h.key)} · ${esc(h.duration)}min${h.distance?' · '+esc(h.distance)+'km':''}</div>
         ${h.notes?`<div style="font-size:11px;color:var(--text3);margin-top:2px">${esc(h.notes.slice(0,70))}${h.notes.length>70?'…':''}</div>`:''}
         ${h.sets&&h.sets.length?(()=>{const t=h.sets.map(e=>e.nombre+' '+fmtSets(e.series)).join(' · ');return `<div style="font-size:11px;color:var(--ai);margin-top:2px">🏋 ${esc(t.slice(0,90))}${t.length>90?'…':''}</div>`;})():''}</div>
-      <span style="font-size:19px;margin-left:8px">${esc(h.feeling)||'💪'}</span></div>`).join('');
+      <span style="font-size:19px;margin-left:8px">${esc(h.feeling)||'💪'}</span></div>`).join('')
+    +(S.history.length>_tope?`<button class="btn btn-block mt-8" onclick="verMasHistorial()">Ver ${Math.min(50,S.history.length-_tope)} sesiones más (quedan ${S.history.length-_tope})</button>`:'');
   renderBadges();renderMarkerCharts();renderLoadProgression();
 }
+
+function verMasHistorial(){S._histShown=(S._histShown||50)+50;renderProg();}
 
 /* --- Trofeos / Logros --- */
 function renderBadges(){
@@ -2099,8 +2220,11 @@ function renderBadges(){
   const st=computeStats();
   const earned=earnedBadges();
   const ids=new Set(earned.map(b=>b.id));
-  // persistir desbloqueados (para detectar "nuevo logro" al acabar sesión)
-  S.earnedBadges=[...ids];save();
+  /* v73: antes esto guardaba en localStorage CADA VEZ que se pintaba la pestaña Progreso, aunque
+     no hubiera cambiado nada. Ahora solo se escribe si la lista de logros ha cambiado de verdad. */
+  const antes=(S.earnedBadges||[]).slice().sort().join(',');
+  const ahora=[...ids].sort().join(',');
+  if(antes!==ahora){S.earnedBadges=[...ids];save();}
   c.innerHTML=`
     <div style="display:flex;gap:14px;margin-bottom:12px">
       <div class="stat flex1"><div class="stat-v">🔥 ${st.streak}</div><div class="stat-l">racha (sem. con ≥3 ses.)</div></div>
@@ -2597,6 +2721,7 @@ function applyBridgePlan(plan){
     const key=fmt(dates[idx]);if(!S.schedule[key])S.schedule[key]=[];
     cleanSession(s); // v72
     const entry={type:'ai',title:s.titulo,meta:s.meta,warmup:s.calentamiento,cooldown:s.vuelta_calma,exercises:s.ejercicios,done:false};
+    conservarRegistro(key,entry); // v74
     if(_wNote)entry.userNote=_wNote; // v64: la instrucción libre queda visible al entrenar
     const ex=S.schedule[key].findIndex(x=>x.type==='ai');
     if(ex>=0)S.schedule[key][ex]=entry;else S.schedule[key].push(entry);
@@ -2700,6 +2825,16 @@ function cleanSession(s){
   s.ejercicios=(Array.isArray(s.ejercicios)?s.ejercicios:[]).slice(0,25).map(cleanEx).map(matchYT);
   return s;
 }
+/* v74: al aplicar un plan nuevo sobre un día que YA tenía cargas anotadas (por ejemplo, se empezó
+   la sesión y luego se regeneró el día), la entrada nueva se construía desde cero y esas cargas
+   desaparecían sin decir nada. Se arrastran: son un dato del usuario, no del plan. */
+function conservarRegistro(key,entry){
+  const prev=(S.schedule[key]||[]).find(x=>x.type==='ai');
+  if(!prev)return entry;
+  if(prev.sets&&prev.sets.length)entry.sets=prev.sets;
+  if(prev.blockResults&&prev.blockResults.length)entry.blockResults=prev.blockResults;
+  return entry;
+}
 function matchYT(ex){
   if(ex.yt)return ex;
   const nm=(ex.nombre||'').toLowerCase();
@@ -2718,7 +2853,7 @@ function equipSummaryHTML(equipos){
   if(eq.includes('bandas')){const b=S.bands||{};const r=['baja','media','alta'].filter(x=>b[x]);parts.push(r.length?`Bandas: ${r.join(', ')}`:'Bandas: sin resistencias definidas');}
   if(eq.includes('kettlebell')){const kl=kettlebellList();parts.push(kl.length?`Kettlebell: ${kl.join(', ')} kg`:'Kettlebell: sin pesos definidos');}
   if(!parts.length)return '';
-  return `<div class="note" style="margin:-4px 0 10px">${parts.join(' · ')} — <a href="#" onclick="tab('prof');closeSheet('mod-bg');closeSheet('gen-bg');return false;" style="color:var(--ai)">editar en Ajustes</a></div>`;
+  return `<div class="note" style="margin:-4px 0 10px">${parts.join(' · ')} — <a href="#" onclick="tab('prof');closeSheet('mod-bg');closeSheet('gen-bg');return false;" style="color:var(--ai)">editar en Perfil</a></div>`;
 }
 function openModify(key){
   MOD={key,equipos:[...(S.profile.equipos||['ninguno'])]};
@@ -2755,7 +2890,8 @@ function regenerateDayOffline(){
   const mins=parseInt(document.getElementById('mod-min').value)||45;
   const g=GOALS[objetivo];
   const week=realWeekNum();
-  const seed=week*7+DAYS.indexOf(DAYS[weekDates(S.currentWeek).map(fmt).indexOf(key)])+Math.floor(Math.random()*7);
+  // v74: aquí había un DAYS.indexOf(DAYS[x]) que solo se devolvía a sí mismo
+  const seed=week*7+weekDates(S.currentWeek).map(fmt).indexOf(key)+Math.floor(Math.random()*7);
   const current=mainAISess(key);
   let entry, summaryLines=[];
   // Si ya hay una sesión IA, la ADAPTAMOS al nuevo material conservando lo que se pueda,
@@ -2845,6 +2981,7 @@ function applyModify(){
   if(issues.warns.length&&!confirm('Avisos:\n- '+issues.warns.join('\n- ')+'\n\n¿Aplicar de todos modos?')){window._fixMsg=fixMsgFor(issues);copyFixMsg();return;}
   const key=MOD.key;cleanSession(s); // v72
   const entry={type:'ai',title:s.titulo||'Sesión modificada',meta:(s.meta||'')+' · modificada',warmup:s.calentamiento,cooldown:s.vuelta_calma,exercises:s.ejercicios,done:false};
+  conservarRegistro(key,entry); // v74
   const modNoteApplied=userNoteFrom('mod-note');
   if(modNoteApplied)entry.userNote=modNoteApplied; // v64: queda constancia de lo que se pidió
   if(!S.schedule[key])S.schedule[key]=[];
@@ -3121,9 +3258,21 @@ function woLabelTxt(t){
 
 function parseHealth(e){
   const file=e.target.files[0];if(!file)return;
-  const st=document.getElementById('h-status');st.textContent='Leyendo… (puede tardar si el archivo es grande)';
+  const st=document.getElementById('h-status');
   const isJson=/\.json$/i.test(file.name);
+  /* v73: el export.xml de Salud suele pesar cientos de MB. Se lee entero en memoria y se analiza
+     con DOMParser en el hilo principal: por encima de cierto tamaño Safari en iPhone se queda
+     colgado o mata la pestaña, y el usuario no entiende por qué. Mejor decirlo antes. */
+  const MB=(file.size||0)/1048576;
+  if(!isJson&&MB>25){
+    if(!confirm('Ese archivo pesa '+Math.round(MB)+' MB. Safari tiene que leerlo entero en memoria y es probable que la app se quede bloqueada o se cierre.\n\nLo recomendable es el export en JSON (bastante más pequeño), o filtrar el XML antes.\n\n¿Intentarlo de todos modos?')){
+      st.textContent='Importación cancelada. Prueba con el archivo JSON.';st.style.color='var(--text2)';
+      e.target.value='';return;
+    }
+  }
+  st.textContent='Leyendo… (puede tardar si el archivo es grande)';st.style.color='var(--text2)';
   const r=new FileReader();
+  r.onerror=()=>{st.textContent='No se pudo leer el archivo (puede ser demasiado grande para Safari).';st.style.color='var(--danger)';};
   r.onload=ev=>{
     const text=ev.target.result;
     if(isJson||/^\s*[{\[]/.test(text)){ // formato JSON
@@ -3560,9 +3709,10 @@ function isBlock(ex){return !!blockType(ex)&&Array.isArray(ex&&ex.movimientos)&&
 
 let WL=null;
 async function acquireWakeLock(){
+  // iOS puede denegar el bloqueo de pantalla (batería baja, permisos): la sesión sigue igual
   try{if('wakeLock' in navigator){WL=await navigator.wakeLock.request('screen');}}catch(e){}
 }
-function releaseWakeLock(){try{if(WL){WL.release();WL=null;}}catch(e){}}
+function releaseWakeLock(){try{if(WL){WL.release();WL=null;}}catch(e){/* ya liberado por el sistema */}}
 document.addEventListener('visibilitychange',()=>{
   if(!P.active)return;
   if(document.visibilityState==='visible')acquireWakeLock();
@@ -3596,6 +3746,12 @@ function startPlayer(key){
   renderPlayer();
 }
 function closePlayer(){
+  /* v74: salir a medias ya no pierde nada (desde la v71 cada serie se guarda al anotarla), pero
+     conviene decirlo: hasta ahora el usuario no sabía si al cerrar perdía lo registrado. */
+  if(P.active&&P.setLog&&P.setLog.length&&!P._terminando){
+    const n=P.setLog.reduce((a,e)=>a+(e.series?e.series.length:0),0);
+    if(!confirm('Vas a salir de la sesión guiada.\n\nLas '+n+' series que has anotado quedan guardadas en el día; podrás verlas y registrarlas después. ¿Salir?'))return;
+  }
   persistSetLog(); // v71: salir a medias no puede costar lo ya registrado
   P.active=false;clearInterval(P.int);
   releaseWakeLock();
@@ -3675,7 +3831,8 @@ function renderPlayer(){
       <div class="pl-timer" id="pl-timer">${fmtSec(P.sec)}</div>
       <div class="pl-next">${nuevoEj?'Prepárate para el siguiente ejercicio':'Siguiente: serie '+P.set+' de '+ex.series}</div>
       ${preview}
-      <button class="btn btn-block" style="margin-top:14px;background:rgba(255,255,255,.15);border-color:transparent;color:#fff" onclick="skipRest()">Saltar descanso →</button>`;
+      <button class="btn btn-block" style="margin-top:14px;background:rgba(255,255,255,.15);border-color:transparent;color:#fff" onclick="skipRest()">Saltar descanso →</button>
+      ${navEjercicios()}`;
   } else if(P.phase==='work'&&repSecs){
     const side=isPerSide(ex)?` · <b class="c-stand">lado ${P.side||1} de 2</b>`:'';
     mid=`<div class="pl-phase c-free">TRABAJO</div>
@@ -3711,7 +3868,8 @@ function renderPlayer(){
       <div class="pl-cue mt-8">${esc(ex.descripcion||'')}</div>
       ${errs.length?`<div class="pl-cue" style="margin-top:8px;color:var(--danger)">⚠ Evita: ${errs[0].toLowerCase()}</div>`:''}
       ${recHTML}
-      <button class="btn btn-primary btn-block mt-16" onclick="finishSet()">${repSecs?'Iniciar ('+repSecs+'s)':'✓ Serie completada'}</button>`;
+      <button class="btn btn-primary btn-block mt-16" onclick="finishSet()">${repSecs?'Iniciar ('+repSecs+'s)':'✓ Serie completada'}</button>
+      ${navEjercicios()}`;
   }
   document.getElementById('player-body').innerHTML=`
     <div class="pl-prog"><div class="pl-prog-i" style="width:${pct}%"></div></div>
@@ -3820,6 +3978,40 @@ function runRest(){
     ()=>{if(navigator.vibrate)navigator.vibrate([100,50,100]);P.phase='ready';renderPlayer();});
 }
 function skipRest(){clearInterval(P.int);P.phase='ready';renderPlayer();}
+/* v74: hasta ahora la sesión guiada solo iba hacia delante. Si te equivocabas de ejercicio o
+   querías saltarte uno (una molestia, el material ocupado), la única salida era cerrar el
+   reproductor. Lo ya anotado NO se pierde al moverse: P.setLog conserva las series registradas y
+   se sigue volcando en la agenda, así que retroceder es seguro. */
+function navEjercicios(){
+  if(!P.sess||!P.sess.exercises)return '';
+  const total=P.sess.exercises.length;
+  return `<div class="pl-nav">
+    <button class="btn btn-sm flex1"${P.exi>0?'':' disabled'} onclick="prevExercise()">◀ Anterior</button>
+    <button class="btn btn-sm flex1" onclick="skipExercise()">${P.exi>=total-1?'Terminar ▶':'Saltar ▶'}</button>
+  </div>`;
+}
+function _pararCuenta(){clearInterval(P.int);P.int=null;}
+function prevExercise(){
+  if(!P.active||!P.sess||P.exi<=0)return;
+  _pararCuenta();
+  P.exi--;P.set=1;P.side=0;P.phase='ready';P.rec=null;
+  renderPlayer();
+}
+function skipExercise(){
+  if(!P.active||!P.sess)return;
+  const total=P.sess.exercises.length;
+  if(P.exi>=total-1){
+    if(!confirm('Es el último ejercicio. ¿Terminar la sesión aquí?'))return;
+    _pararCuenta();finishSession();return;
+  }
+  const ex=P.sess.exercises[P.exi];
+  const anotadas=(P.setLog||[]).some(e=>e.nombre===(ex&&ex.nombre));
+  const aviso=anotadas?'':'No has anotado ninguna serie de este ejercicio. ';
+  if(!confirm(aviso+'¿Saltar a "'+((P.sess.exercises[P.exi+1]||{}).nombre||'el siguiente')+'"?'))return;
+  _pararCuenta();
+  P.exi++;P.set=1;P.side=0;P.phase='ready';P.rec=null;
+  renderPlayer();
+}
 
 /* ============================================================
    BLOQUES: AMRAP / EMOM / CIRCUITO
@@ -3991,6 +4183,7 @@ const BADGES=[
 function earnedBadges(){const st=computeStats();return BADGES.filter(b=>b.test(st));}
 function finishSession(){
   clearInterval(P.int);
+  P._terminando=true; // v74: al llegar a la pantalla de fin, cerrar ya no debe preguntar nada
   // Persistir el registro por serie en la sesión del calendario (aunque no se registre después)
   if(P.setLog&&P.setLog.length){
     const si=mainAIIdx(P.key);
@@ -4011,9 +4204,9 @@ function finishSession(){
     <div style="font-size:54px;margin-bottom:10px">🎉</div>
     <div style="font-size:calc(22px*var(--fs));font-weight:700;margin-bottom:14px">¡Sesión completada!</div>
     <div style="display:flex;justify-content:center;gap:18px;margin-bottom:18px">
-      ${mins?`<div><div style="font-size:calc(20px*var(--fs));font-weight:700">${mins}'</div><div style="font-size:calc(10px*var(--fs));color:rgba(255,255,255,.6);text-transform:uppercase">duración</div></div>`:''}
-      <div><div style="font-size:calc(20px*var(--fs));font-weight:700">${totalSets}</div><div style="font-size:calc(10px*var(--fs));color:rgba(255,255,255,.6);text-transform:uppercase">series</div></div>
-      <div><div style="font-size:calc(20px*var(--fs));font-weight:700">🔥 ${st.streak}</div><div style="font-size:calc(10px*var(--fs));color:rgba(255,255,255,.6);text-transform:uppercase">racha sem.</div></div>
+      ${mins?`<div><div class="u-t20">${mins}'</div><div class="u-cap10">duración</div></div>`:''}
+      <div><div class="u-t20">${totalSets}</div><div class="u-cap10">series</div></div>
+      <div><div class="u-t20">🔥 ${st.streak}</div><div class="u-cap10">racha sem.</div></div>
     </div>
     ${(P.setLog&&P.setLog.length)?`<div style="background:rgba(255,255,255,.1);border-radius:14px;padding:12px;margin-bottom:16px;text-align:left">
       <div style="font-size:calc(11px*var(--fs));text-transform:uppercase;letter-spacing:.6px;color:var(--ring-ex);margin-bottom:6px">Cargas registradas</div>
@@ -4071,6 +4264,40 @@ function stopTimer(){clearInterval(tInt);tRun=false;document.getElementById('tim
 function openSheet(id){const el=document.getElementById(id);if(el)el.classList.add('show');}
 function closeSheet(id){const el=document.getElementById(id);if(el)el.classList.remove('show');}
 document.querySelectorAll('.sheet-bg').forEach(bg=>bg.addEventListener('click',e=>{if(e.target===bg)bg.classList.remove('show');}));
+
+/* ============================================================
+   v73 · ACCESIBILIDAD DE LO PULSABLE
+   Media interfaz son div y span con onclick (chips, días del calendario, botones de esfuerzo,
+   fatiga y dolor). VoiceOver no los anuncia como botones y no hay forma de activarlos con teclado.
+   Como se generan en decenas de plantillas distintas, en vez de tocar una por una se marcan al
+   vuelo: un observador ve lo que se añade al DOM y le pone role y tabindex.
+   ============================================================ */
+// Ojo: algunos elementos (los días del calendario, por ejemplo) reciben el manejador por
+// propiedad (el.onclick=...) y no como atributo, así que no bastaría con buscar [onclick].
+const SEL_PULSABLE=['[onclick]','.cal-day','.chip','.feel-b','.fatiga-b','.pain-b','.sess-h','.ex-h']
+  .map(x=>x+':not([data-a11y])').join(',');
+function marcarPulsables(raiz){
+  const nodos=(raiz||document).querySelectorAll(SEL_PULSABLE);
+  nodos.forEach(el=>{
+    el.setAttribute('data-a11y','1');
+    const t=el.tagName;
+    if(t==='BUTTON'||t==='A'||t==='INPUT'||t==='SELECT'||t==='TEXTAREA'||t==='OPTION')return;
+    if(!el.hasAttribute('role'))el.setAttribute('role','button');
+    if(!el.hasAttribute('tabindex'))el.setAttribute('tabindex','0');
+  });
+}
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Enter'&&e.key!==' ')return;
+  const el=e.target;
+  if(!el||el.getAttribute('role')!=='button')return;
+  e.preventDefault();el.click();
+});
+let _a11yT=null;
+try{
+  new MutationObserver(()=>{clearTimeout(_a11yT);_a11yT=setTimeout(()=>marcarPulsables(),120);})
+    .observe(document.body,{childList:true,subtree:true});
+}catch(e){}
+marcarPulsables();
 
 function renderDayChips(){
   const ai=document.getElementById('ai-days'),fr=document.getElementById('free-days');
@@ -4143,7 +4370,7 @@ function renderEquipDetail(){
   if(eq.includes('mancuernas')){
     const db=S.dumbbells||{min:8,max:24,step:2};
     h+=`<div class="box-sub">
-      <div style="font-size:calc(12px*var(--fs));font-weight:600;margin-bottom:8px">🏋 Mancuernas disponibles (kg por mancuerna)</div>
+      <div class="u-t12b">🏋 Mancuernas disponibles (kg por mancuerna)</div>
       <div class="row2">
         <div class="field"><label>Desde</label><input type="text" id="db-min" value="${db.min}" inputmode="decimal" onchange="saveDumbbells()"></div>
         <div class="field"><label>Hasta</label><input type="text" id="db-max" value="${db.max}" inputmode="decimal" onchange="saveDumbbells()"></div>
@@ -4156,7 +4383,7 @@ function renderEquipDetail(){
   if(eq.includes('bandas')){
     const b=S.bands||{baja:true,media:true,alta:true};
     h+=`<div class="box-sub">
-      <div style="font-size:calc(12px*var(--fs));font-weight:600;margin-bottom:8px">🎗 Bandas elásticas disponibles</div>
+      <div class="u-t12b">🎗 Bandas elásticas disponibles</div>
       <div class="flexrow gap8">
         ${['baja','media','alta'].map(r=>`<span class="chip${b[r]?' sel':''}" onclick="toggleBand('${r}')" style="text-transform:capitalize">${r}</span>`).join('')}
       </div>
@@ -4171,7 +4398,7 @@ function renderEquipDetail(){
   if(eq.includes('kettlebell')){
     const kb=S.kettlebells||{list:'8, 12, 16'};
     h+=`<div class="box-sub">
-      <div style="font-size:calc(12px*var(--fs));font-weight:600;margin-bottom:8px">🔔 Kettlebells disponibles (kg)</div>
+      <div class="u-t12b">🔔 Kettlebells disponibles (kg)</div>
       <input type="text" id="kb-list" value="${kb.list}" placeholder="p. ej. 8, 12, 16, 20" inputmode="text" onchange="saveKettlebells()" style="width:100%">
       <div style="font-size:calc(11px*var(--fs));color:var(--text3);margin-top:5px">Escribe los pesos que tengas, separados por comas.</div>
     </div>`;
@@ -4274,6 +4501,9 @@ function weightTrend(){
   return{dir:diff>0?'subiendo':'bajando',diff};
 }
 function loadProfile(){
+  const ct=document.getElementById('cloud-token');
+  if(ct&&S.cloud&&S.cloud.token&&!ct.value)ct.placeholder='•••••• (guardado en este dispositivo)';
+  renderDataStatus();
   const p=S.profile;
   peso.value=p.peso;altura.value=p.altura;edad.value=p.edad;sexo.value=p.sexo;nivel.value=p.nivel;
   document.getElementById('minutos').value=p.minutos;document.getElementById('min-out').textContent=p.minutos;
@@ -4322,20 +4552,161 @@ function checkForUpdate(){
 }
 
 /* --- Mis datos: exportar / restaurar / eliminar (v54) --- */
-function exportData(){
+function dataStatus(msg,color){
   const st=document.getElementById('data-status');
+  if(st){st.style.color=color||'var(--text2)';st.textContent=msg;}
+}
+// deja constancia de cuándo se hizo la última copia, para poder avisar cuando envejece
+function marcarCopia(){S.lastBackup=todayKey();save();renderDataStatus();}
+/* v73: en iOS, descargar un .json desde una app instalada en la pantalla de inicio es confuso
+   (acaba en Descargas de Safari, fuera de la vista). Con la hoja de compartir el usuario elige
+   "Guardar en Archivos" → iCloud Drive, que es lo único que sobrevive a formatear el móvil. */
+async function exportData(){
+  const json=JSON.stringify(S,null,2);
+  const nombre=`fitcoach-backup-${todayKey()}.json`;
   try{
-    const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
-    const url=URL.createObjectURL(blob);
+    if(typeof File!=='undefined'&&navigator.canShare){
+      const f=new File([json],nombre,{type:'application/json'});
+      if(navigator.canShare({files:[f]})){
+        try{
+          await navigator.share({files:[f],title:'Copia de seguridad de FitCoach'});
+          marcarCopia();
+          dataStatus('✓ Copia compartida. Si has elegido "Guardar en Archivos", ya está a salvo fuera del navegador.','var(--free)');
+          return;
+        }catch(e){
+          if(e&&e.name==='AbortError'){dataStatus('Copia cancelada. No se ha guardado nada.');return;}
+          // cualquier otro fallo: se sigue con la descarga de siempre
+        }
+      }
+    }
+    const url=URL.createObjectURL(new Blob([json],{type:'application/json'}));
     const a=document.createElement('a');
-    const stamp=todayKey();
-    a.href=url;a.download=`fitcoach-backup-${stamp}.json`;
+    a.href=url;a.download=nombre;
     document.body.appendChild(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),2000);
-    if(st){st.style.color='var(--free)';st.textContent='✓ Copia descargada. Guárdala en Archivos, iCloud o envíatela por email/mensaje.';}
+    marcarCopia();
+    dataStatus('✓ Copia descargada. Guárdala en Archivos, iCloud o envíatela por email/mensaje.','var(--free)');
   }catch(e){
-    if(st){st.style.color='var(--danger)';st.textContent='No se pudo generar la copia. Inténtalo de nuevo.';}
+    dataStatus('No se pudo generar la copia. Inténtalo de nuevo.','var(--danger)');
   }
+}
+// Estado de las copias: cuánto hace de la última y aviso cuando envejece
+function renderDataStatus(){
+  const el=document.getElementById('backup-age');
+  if(el){
+    const d=S.lastBackup?daysSince(S.lastBackup):null;
+    if(d==null){
+      el.innerHTML='<b style="color:var(--danger)">Nunca has exportado una copia.</b> Si este iPhone pierde el almacenamiento del navegador, no habría forma de recuperar nada.';
+    }else if(d>=14){
+      el.innerHTML=`<b style="color:var(--warn)">Última copia hace ${d} días</b> (${esc(S.lastBackup)}). Conviene exportar una nueva.`;
+    }else{
+      el.innerHTML=`Última copia: ${d===0?'hoy':d===1?'ayer':'hace '+d+' días'} (${esc(S.lastBackup)}).`;
+    }
+  }
+  const cs=document.getElementById('cloud-state');
+  if(cs){
+    const c=S.cloud||{};
+    cs.textContent=c.token&&c.gistId
+      ? 'Conectada'+(c.lastAt?' · última subida '+new Date(c.lastAt).toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'')
+      : (c.token?'Token guardado, aún sin subir ninguna copia':'Desactivada');
+  }
+  const at=document.getElementById('cloud-auto');if(at)at.checked=!!(S.cloud&&S.cloud.auto);
+}
+/* ---- Copia en la nube: Gist SECRETO de GitHub (opcional, desactivada por defecto) ----
+   Por qué un gist y no el repositorio de la app: el repositorio de GitHub Pages es PÚBLICO, así
+   que subir ahí el historial expondría peso, marcadores de salud y lesiones a cualquiera. Un gist
+   secreto no aparece en búsquedas ni en el perfil; aun así, quien tenga la URL puede leerlo, y eso
+   se advierte en la propia pantalla. El token vive solo en este dispositivo. */
+function cloudStatus(msg,color){
+  const el=document.getElementById('cloud-status');
+  if(el){el.style.color=color||'var(--text2)';el.textContent=msg;}
+}
+function saveCloudToken(){
+  const inp=document.getElementById('cloud-token');
+  const t=(inp&&inp.value||'').trim();
+  S.cloud=S.cloud||{token:'',gistId:'',auto:false,lastAt:''};
+  S.cloud.token=t;save();renderDataStatus();
+  cloudStatus(t?'Token guardado en este dispositivo. Pulsa "Subir copia ahora" para crear la copia.':'Token borrado.','var(--text2)');
+}
+function toggleCloudAuto(el){
+  S.cloud=S.cloud||{token:'',gistId:'',auto:false,lastAt:''};
+  S.cloud.auto=!!el.checked;save();
+  cloudStatus(S.cloud.auto?'Se subirá una copia automáticamente al terminar o registrar una sesión (como mucho una cada 10 minutos).':'Subida automática desactivada.','var(--text2)');
+}
+function ghHeaders(){
+  return {'Authorization':'Bearer '+S.cloud.token,'Accept':'application/vnd.github+json','Content-Type':'application/json'};
+}
+async function cloudPush(silencioso){
+  const c=S.cloud||{};
+  if(!c.token){if(!silencioso)cloudStatus('Falta el token de GitHub.','var(--danger)');return false;}
+  const cuerpo={files:{'fitcoach-backup.json':{content:JSON.stringify(S,null,2)}}};
+  try{
+    let r;
+    if(c.gistId){
+      r=await fetch('https://api.github.com/gists/'+encodeURIComponent(c.gistId),{method:'PATCH',headers:ghHeaders(),body:JSON.stringify(cuerpo)});
+      if(r.status===404){c.gistId='';r=null;} // el gist ya no existe: se crea otro
+    }
+    if(!r){
+      r=await fetch('https://api.github.com/gists',{method:'POST',headers:ghHeaders(),
+        body:JSON.stringify({...cuerpo,description:'Copia de seguridad de FitCoach IA',public:false})});
+    }
+    if(!r.ok){
+      const txt=r.status===401?'Token inválido o sin permiso "gist".':r.status===403?'GitHub ha rechazado la petición (límite o permisos).':'Error '+r.status+'.';
+      if(!silencioso)cloudStatus('No se pudo subir. '+txt,'var(--danger)');
+      return false;
+    }
+    const j=await r.json();
+    S.cloud.gistId=j.id||c.gistId;S.cloud.lastAt=new Date().toISOString();
+    S.lastBackup=todayKey();save();renderDataStatus();
+    if(!silencioso)cloudStatus('✓ Copia subida al gist secreto.','var(--free)');
+    return true;
+  }catch(e){
+    if(!silencioso)cloudStatus('Sin conexión o GitHub no responde. La copia no se ha subido; tus datos siguen intactos en el móvil.','var(--danger)');
+    return false;
+  }
+}
+async function cloudPull(){
+  const c=S.cloud||{};
+  if(!c.token||!c.gistId){cloudStatus('No hay ninguna copia en la nube asociada a este dispositivo. Pega el token y pulsa "Subir copia ahora", o introduce el ID del gist.','var(--danger)');return;}
+  try{
+    const r=await fetch('https://api.github.com/gists/'+encodeURIComponent(c.gistId),{headers:ghHeaders(),cache:'no-store'});
+    if(!r.ok){cloudStatus('No se pudo leer la copia (error '+r.status+').','var(--danger)');return;}
+    const j=await r.json();
+    const f=j.files&&j.files['fitcoach-backup.json'];
+    if(!f||!f.content){cloudStatus('La copia de la nube está vacía.','var(--danger)');return;}
+    const d=JSON.parse(f.content);
+    if(!d||typeof d!=='object'||Array.isArray(d)){cloudStatus('La copia de la nube no tiene el formato esperado.','var(--danger)');return;}
+    const nSes=(d.history||[]).length,nDias=Object.keys(d.schedule||{}).length;
+    if(!confirm('La copia de la nube tiene '+nSes+' sesiones y '+nDias+' días planificados.\n\nSUSTITUIRÁ todo lo que hay ahora en este móvil ('+(S.history||[]).length+' sesiones). ¿Continuar?'))return;
+    const tokenActual=S.cloud;      // no se pierde la conexión al restaurar
+    S=d;S.cloud=tokenActual;initState();save();
+    renderCal();renderProg();renderNutri();renderMeso();renderHealth();loadProfile();renderDayChips();renderEquipChips();renderEquipDetail();renderDataStatus();
+    cloudStatus('✓ Datos restaurados desde la nube.','var(--free)');
+  }catch(e){
+    cloudStatus('Sin conexión o GitHub no responde.','var(--danger)');
+  }
+}
+function cloudForget(){
+  if(!confirm('Se borrará el token y el enlace al gist DE ESTE MÓVIL. El gist seguirá existiendo en tu cuenta de GitHub; bórralo desde gist.github.com si ya no lo quieres. ¿Continuar?'))return;
+  S.cloud={token:'',gistId:'',auto:false,lastAt:''};save();
+  const inp=document.getElementById('cloud-token');if(inp)inp.value='';
+  renderDataStatus();cloudStatus('Desconectado de la nube.','var(--text2)');
+}
+function setGistId(){
+  const v=(prompt('ID del gist que ya contiene tu copia (lo ves en la URL: gist.github.com/usuario/ID):','')||'').trim();
+  if(!v)return;
+  S.cloud=S.cloud||{token:'',gistId:'',auto:false,lastAt:''};
+  S.cloud.gistId=v;save();renderDataStatus();cloudStatus('Gist enlazado. Pulsa "Restaurar desde la nube".','var(--text2)');
+}
+// subida automática con freno: como mucho una cada 10 minutos, y nunca bloquea la interfaz
+let _lastAutoPush=0;
+function cloudAutoPush(){
+  const c=S.cloud||{};
+  if(!c.auto||!c.token)return;
+  const ahora=Date.now();
+  if(ahora-_lastAutoPush<600000)return;
+  _lastAutoPush=ahora;
+  cloudPush(true);
 }
 function restoreData(e){
   const file=e.target.files[0];if(!file)return;
