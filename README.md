@@ -1439,3 +1439,103 @@ Playwright disponible desde v57, ya era abordable con garantías.
   calendario entero; (2) dos scripts de parcheo abortaron a mitad y dejaron llamadas a funciones que
   no llegaron a escribirse (`navEjercicios`, `conservarRegistro`). Ambos casos se cazaron en la
   validación, no en el móvil.
+
+## v75: de generador de ejercicios a entrenador — comparar, contar, estimar y recordar
+- ORIGEN: auditoría de CONTENIDO (no de código). Diagnóstico: la app MEDÍA bien y PRESCRIBÍA bien,
+  pero no COMPARABA. Faltaba el eslabón central del oficio: prescribir → medir → contrastar →
+  ajustar → explicar.
+
+### 1 · Prescrito frente a realizado (el eslabón que faltaba)
+Se guardaba lo pautado en `schedule[dia].exercises` y lo hecho en `.sets`, y no se cruzaban nunca:
+Claude recibía «16 kg × 10» sin saber si el encargo eran 3×8-12 a 16 kg o 4×6 a 20, así que su
+propia regla estrella («si alcanzó el tope del rango, sube un escalón») era inaplicable. Ahora el
+prompt lleva, ejercicio a ejercicio y de las últimas 3 semanas, lo pautado, lo realizado y un
+veredicto: *tope del rango en todas las series → subir*, *series incompletas*, *por debajo del
+rango → mantener o bajar*, *sin registrar*.
+
+### 2 · Volumen semanal por grupo muscular
+La magnitud que gobierna la hipertrofia no se contaba en ningún sitio: el prompt afirmaba «~10+
+series por grupo» sin que nadie contase una serie. Nuevo cálculo (`weeklyVolumeByGroup`) que usa las
+series REALIZADAS cuando existen y las pautadas cuando no, con tarjeta propia en Progreso —los
+grupos por debajo de 10 salen en ámbar— y dos semanas de volumen en el prompt. Los grupos se
+deducen de la ficha de EXDB y, para lo que devuelve Claude, del campo `musculos`; si no hay nada
+reconocible se cae al patrón. **Es una estimación con recuento total** (cada serie cuenta para todos
+los grupos implicados) y así se declara en la propia tarjeta.
+
+### 3 · Fuerza estimada (1RM de Epley)
+El prompt hablaba de «≥80% 1RM» sin que existiera ningún 1RM: decorativo. Ahora se estima con Epley
+sobre las series reales (solo hasta 12 repeticiones, porque por encima el error crece), con gráfica
+propia bajo la de carga y resumen en el prompt. Es la métrica que de verdad refleja progreso: 20 kg
+× 10 es más fuerza que 22 kg × 4, y el «kg máximo» no lo distingue.
+
+### 4 · Progresión de carga REAL en el motor offline
+`pesoHintFor()` devolvía siempre «elige la mancuerna que te deje RIR 1-3», ignorando el historial:
+una semana generada offline en el mes 6 era, en carga, idéntica a la del mes 1. Ahora aplica doble
+progresión sobre lo último registrado y propone kilos concretos: «18 kg por mancuerna — subes desde
+16: la última vez completaste el tope del rango en todas las series», o mantiene y explica por qué.
+Avisa además cuando ya se ha llegado a la mancuerna más pesada disponible.
+
+### 5 · Cardio de verdad (adelantado desde la v77)
+- **Zonas de pulso** por reserva de frecuencia cardiaca (Karvonen) con FCmáx estimada por la fórmula
+  de Tanaka (208 − 0,7 × edad, más precisa en adultos que 220 − edad). Tarjeta en Progreso y cifras
+  concretas en el prompt, para que «Z2» deje de ser una etiqueta y sea un rango de pulsaciones.
+  Se declara como ESTIMACIÓN: sin prueba de esfuerzo la FCmáx real puede desviarse ±10 lpm.
+- **Volumen semanal**: km, minutos y ritmo medio, comparados con la semana anterior, con aviso
+  cuando la subida supera el 10% semanal. El ritmo se calcula solo con las sesiones que tienen
+  distancia, para que un paseo sin km no falsee el min/km de la semana.
+
+### 6 · Memoria y matices del entrenador (adelantado desde la v76)
+- **Memoria**: cada plan aplicado guarda enfoque, justificación y análisis (`coachLog`, últimas 10,
+  una por semana). Las cuatro últimas van en el prompt para que haya continuidad de criterio y para
+  que Claude tenga que justificarse si se desvía de lo que él mismo decidió.
+- **Fatiga**: `recentFatigueTrend()` miraba las 3 últimas sesiones SIN ventana temporal —podían ser
+  de hace un mes— y devolvía sí/no. Sustituida por `fatigueLevel()`: ventana de 14 días, puntuación
+  proporcional al número de sesiones y tres niveles con respuestas distintas (normal / moderada:
+  mantener volumen sin apretar / alta: una serie menos y más margen al fallo).
+- **Agujetas frente a molestia articular**: el registro ahora pregunta el tipo. Las agujetas se
+  anotan como contexto y NO retiran ejercicios; solo lo articular o punzante activa la protección de
+  14 días. Los registros anteriores a la v75, que no traen tipo, se tratan como articulares (lado
+  prudente). El prompt distingue ambos casos.
+- **Días de fuerza breve**: el prompt pedía a Claude priorizar tren superior el día que hay carrera,
+  y el motor offline hacía justo lo contrario, porque su orden de patrones empieza por «pierna» en
+  todas las sesiones. Corregido usando el parámetro `lead`, que estaba implementado desde la v50 y
+  no usaba nadie, más exclusión de la pierna pesada esos días.
+- **Volumen que progresa dentro del bloque**: `mesoInfo()` sabía en qué semana del mesociclo estás y
+  el motor offline no lo miraba. En la última semana del bloque añade una serie.
+
+### 7 · Citas verificadas una a una contra su DOI
+Se comprobaron las tres que quedaban pendientes. **Las cuatro existen y los datos son correctos**;
+se añaden volumen, páginas y DOI tanto al prompt como a la ficha de Ajustes:
+- ACSM 2026 Position Stand — Med Sci Sports Exerc 58(4):851-872, DOI 10.1249/MSS.0000000000003897.
+- Robinson et al. 2024 — Sports Med 54(9):2209-2231, DOI 10.1007/s40279-024-02069-2.
+- Pelland et al. — Sports Med 56(2):481-505, en línea 4-12-2025, DOI 10.1007/s40279-025-02344-w.
+- Morton et al. 2018 — Br J Sports Med 52(6):376-384, DOI 10.1136/bjsports-2017-097608.
+
+Tres afirmaciones se corrigen a la luz de lo que dicen de verdad esas fuentes:
+- Robinson: la hipertrofia mejora cuanto más cerca del fallo, pero **la fuerza apenas se ve afectada
+  por la proximidad al fallo**. El prompt lo aprovecha: en trabajo de fuerza se puede dejar más
+  margen (RIR 3-4) sin perder resultado y ahorrando fatiga.
+- Pelland: **manda el volumen**; la frecuencia importa sobre todo como forma de repartirlo. Se retira
+  el «cada grupo ≥2 veces por semana» como regla rígida.
+- Morton: el punto donde deja de aumentar la masa magra es **~1,62 g/kg/día** (IC 1,03-2,20); el
+  1,6-2,2 se explica como lo que es, un rango con margen, no como una horquilla arbitraria.
+- Y «≥80% 1RM» pasa a presentarse como referencia orientativa, no como umbral, que es lo que
+  sostiene el propio ACSM 2026.
+
+- VALIDACIÓN: 265 comprobaciones en verde, 0 fallos, en Madrid, UTC, Santiago y Sídney. Las 64
+  nuevas cubren: reconocimiento de grupos musculares (ficha, texto libre de Claude y caída al
+  patrón), volumen con series reales frente a pautadas, Epley y sus límites, detección de tope de
+  rango / series incompletas / por debajo de rango / sin dato, km-minutos-ritmo, Karvonen y Tanaka
+  con y sin FC en reposo, los tres niveles de fatiga y su ventana de 14 días, registro y sustitución
+  de la memoria del entrenador, presencia de todas las secciones y de los cuatro DOI en el prompt,
+  progresión offline en sus cuatro casos, días breves sin pierna pesada, agujetas frente a molestia
+  articular (incluidos registros antiguos) y pintado de las dos tarjetas nuevas.
+- FALLOS PROPIOS QUE CAZÓ EL ARNÉS: el press no sumaba volumen al tríceps porque la ficha solo
+  nombra el músculo principal; el ritmo medio salía a 15:00/km porque incluía los minutos de un
+  paseo sin distancia; y el umbral de fatiga era absoluto, de modo que dos sesiones duras de dos no
+  puntuaban igual que dos de seis.
+- TAMAÑO DEL PROMPT: ~13-15.000 caracteres con datos reales (unos 3.500-3.800 tokens). Sigue siendo
+  cómodo de pegar.
+- PENDIENTE: nutrición (factor de actividad derivado de datos reales en vez de 1,55 fijo, alergias e
+  intolerancias, revisión de 2-3 semanas con ajuste concreto de calorías) y redistribución de la
+  semana cuando se pierden sesiones.

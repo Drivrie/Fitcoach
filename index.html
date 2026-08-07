@@ -312,6 +312,14 @@ body{font-size:calc(15px*var(--fs))}
       <div class="card-t">📈 Evolución de marcadores (mes a mes)</div>
       <div id="marker-charts"></div>
     </div>
+    <div class="card" id="vol-card">
+      <div class="card-t">🧱 Volumen por grupo muscular</div>
+      <div id="vol-body"></div>
+    </div>
+    <div class="card" id="cardio-card">
+      <div class="card-t">🏃 Cardio y zonas de pulso</div>
+      <div id="cardio-body"></div>
+    </div>
     <div class="card" id="prog-ex-card" style="display:none">
       <div class="card-t">📊 Progresión de carga</div>
       <select id="prog-ex-select" onchange="renderLoadProgression()" style="width:100%;padding:9px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;margin-bottom:8px"></select>
@@ -421,13 +429,19 @@ body{font-size:calc(15px*var(--fs))}
         Los parámetros siguen evidencia actual:
         <ul style="padding-left:16px;margin:7px 0">
           <li><b>Fuerza:</b> cargas ≥80% 1RM, 2-3 series/ejercicio, descansos 2-3 min.</li>
-          <li><b>Hipertrofia:</b> ~10+ series por grupo muscular/semana, cerca del fallo (1-3 RIR), no al fallo absoluto.</li>
-          <li><b>Frecuencia:</b> cada músculo ≥2 veces/semana. Peso corporal y bandas son eficaces.</li>
-          <li><b>Proteína:</b> 1,6-2,2 g/kg/día (extremo alto en déficit calórico).</li>
+          <li><b>Hipertrofia:</b> ~10+ series por grupo muscular/semana, cerca del fallo (1-3 RIR), no al fallo absoluto. En fuerza no hace falta acercarse tanto: con más margen (RIR 3-4) el resultado es similar y la fatiga menor.</li>
+          <li><b>Frecuencia:</b> lo que más manda es el volumen semanal; repartirlo en 2 o más días por grupo lo facilita, pero no es una regla rígida. Peso corporal y bandas son eficaces.</li>
+          <li><b>Proteína:</b> ~1,6 g/kg/día es donde deja de aumentar la ganancia de masa magra; hasta 2,2 g/kg cubre el margen del intervalo y el déficit calórico.</li>
           <li><b>Progresión:</b> sobrecarga progresiva con doble progresión; el volumen y la intensidad se autorregulan cada semana según tu registro real (sin descargas forzadas).</li>
           <li><b>Lo que más pesa (ACSM 2026):</b> la constancia y el esfuerzo por encima del plan "perfecto". Bandas, peso corporal y rutinas en casa son plenamente eficaces; llegar al fallo, el tipo de material o la periodización compleja no son imprescindibles en el adulto sano.</li>
         </ul>
-        Fuentes verificables: <b>ACSM 2026 Position Stand</b> «Resistance Training Prescription for Muscle Function, Hypertrophy, and Physical Performance in Healthy Adults» (Med Sci Sports Exerc, abril 2026; síntesis de 137 revisiones, &gt;30.000 participantes; actualiza el de 2009); Robinson et al. 2024 (proximidad al fallo/RIR, Sports Med); Pelland et al. 2025 (dosis-respuesta de volumen y frecuencia, Sports Med); Morton et al. 2018 (proteína, Br J Sports Med).
+        Fuentes (comprobadas contra su DOI en agosto de 2026):
+        <ul style="padding-left:16px;margin:7px 0">
+          <li><b>ACSM 2026 Position Stand</b>, «Resistance Training Prescription for Muscle Function, Hypertrophy, and Physical Performance in Healthy Adults». Med Sci Sports Exerc 58(4):851-872, abril 2026. DOI 10.1249/MSS.0000000000003897. 137 revisiones sistemáticas, &gt;30.000 participantes; actualiza el Position Stand de 2009.</li>
+          <li><b>Robinson et al. 2024</b>, Sports Med 54(9):2209-2231. DOI 10.1007/s40279-024-02069-2. Proximidad al fallo: la hipertrofia mejora al acercarse al fallo; la fuerza apenas se ve afectada.</li>
+          <li><b>Pelland et al.</b>, Sports Med 56(2):481-505 (en línea 4-12-2025). DOI 10.1007/s40279-025-02344-w. 67 estudios, 2.058 participantes: volumen y frecuencia siguen curvas distintas.</li>
+          <li><b>Morton et al. 2018</b>, Br J Sports Med 52(6):376-384. DOI 10.1136/bjsports-2017-097608. La masa magra deja de aumentar por encima de ~1,62 g/kg/día (IC 1,03-2,20).</li>
+        </ul>
         <div style="margin-top:8px;color:var(--text3)">Información orientativa, no sustituye consejo médico. Ante dudas de técnica con cargas altas, revisa con un profesional.</div>
       </div>
     </details>
@@ -530,7 +544,7 @@ body{font-size:calc(15px*var(--fs))}
         <div id="cloud-status" style="margin-top:7px;font-size:12px"></div>
       </details>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 74</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 75</div>
     <div id="sw-status" style="text-align:center;font-size:11px;color:var(--warn);margin-top:4px;display:none"></div>
     <div style="text-align:center;margin-top:8px">
       <button class="btn btn-xs" onclick="checkForUpdate()">🔄 Buscar actualización</button>
@@ -756,6 +770,9 @@ function recentPainAreas(beforeKey,days){
   const start=new Date(cutoff);start.setDate(start.getDate()-(days||14));
   (S.history||[]).forEach(h=>{
     if(!h.pain||!h.pain.length)return;
+    // v75: las agujetas no son motivo para retirar un patrón de movimiento. Los registros
+    // anteriores a la v75 no traen tipo: se tratan como articulares, que es el lado prudente.
+    if(h.painKind==='muscular')return;
     let d;try{d=new Date(h.key+'T00:00:00');}catch(e){return;}
     if(isNaN(d)||d<start||d>cutoff)return;
     h.pain.forEach(a=>{if(a!=='otra'&&a!=='ninguna')areas.add(a);});
@@ -1151,9 +1168,33 @@ function pickExercises(equipSet,objetivo,minutos,seed,opts){
 }
 
 // Guía de carga concreta según el material del usuario (para el motor offline).
-function pesoHintFor(ex,eqSet,g){
+/* v75: el motor offline proponía SIEMPRE "elige la mancuerna que te deje RIR 1-3", ignorando el
+   historial. Una semana generada offline en el mes 6 era, en carga, idéntica a la del mes 1: un
+   generador de ejercicios, no una progresión. Ahora aplica doble progresión de verdad sobre lo
+   último registrado: si se completó el tope del rango en todas las series, sube un escalón real de
+   la mancuernería disponible; si se quedó corto, mantiene y lo dice. */
+function progresionOffline(nombre,rangoReps,rir){
+  const last=lastPerformance(nombre);
+  if(!last)return null;
+  const kgs=last.series.map(s=>toNum(s.kg)).filter(v=>!isNaN(v)&&v>0);
+  if(!kgs.length)return null;
+  const kg=Math.max(...kgs);
+  const reps=last.series.map(s=>toNum(String(s.reps))).filter(v=>!isNaN(v));
+  const r=repRange(rangoReps);
+  const tope=r&&reps.length&&reps.every(x=>x>=r[1]);
+  const corto=r&&reps.some(x=>x<r[0]);
+  const lista=dumbbellList();
+  const sig=lista.filter(v=>v>kg)[0];
+  if(tope&&sig)return `${sig} kg por mancuerna — subes desde ${kg} kg: la última vez (${last.date}) completaste el tope del rango en todas las series`;
+  if(tope&&!sig)return `${kg} kg por mancuerna (ya es tu mancuerna más pesada): añade una repetición, una serie o baja más lento`;
+  if(corto)return `${kg} kg por mancuerna — mantén la carga de ${last.date}: te quedaste por debajo del rango, consolida antes de subir`;
+  return `${kg} kg por mancuerna — misma carga que el ${last.date}; sube cuando llegues al tope del rango en todas las series (RIR ${rir})`;
+}
+function pesoHintFor(ex,eqSet,g,repsUsadas){
   const eq=ex.eq||[];
   if(eqSet.has('mancuernas')&&eq.includes('mancuernas')){
+    const prog=progresionOffline(ex.n,repsUsadas||g.reps,g.rir);
+    if(prog)return prog;
     const l=dumbbellList();
     return l.length?`elige de tus mancuernas (${l[0]}–${l[l.length-1]} kg) la que te deje RIR ${g.rir}; cuando completes todas las series con buena técnica, sube un escalón`:`peso que te deje RIR ${g.rir}`;
   }
@@ -1243,12 +1284,8 @@ function adaptSessionToEquip(sess,eqSet,g){
   return {exercises:kept,changes,replacedCount};
 }
 // Fatiga acumulada: true si ≥2 de las últimas 3 sesiones registradas se marcaron "cansado"/"agotado".
-function recentFatigueTrend(){
-  const recent=(S.history||[]).slice(0,3);
-  if(recent.length<2)return false;
-  const tired=recent.filter(h=>h.fatiga==='cansado'||h.fatiga==='agotado').length;
-  return tired>=2;
-}
+/* v75: recentFatigueTrend() miraba las 3 últimas sesiones SIN ventana temporal (podían ser de hace
+   un mes) y devolvía un sí/no. Sustituida por fatigueLevel(), con ventana de 14 días y tres niveles. */
 // Ejercicios usados en los últimos N días (para rotar y evitar monotonía).
 function recentExerciseNames(beforeKey,days){
   const names=new Set();
@@ -1270,10 +1307,19 @@ function recentExerciseNames(beforeKey,days){
 function buildSessionOffline(equip,objetivo,nivel,minutos,dayCode,seed,isDeload,opts){
   const g=GOALS[objetivo];
   const mult=LEVEL_MULT[nivel];
-  const fatigued=!isDeload&&recentFatigueTrend(); // fatiga acumulada reciente → descarga suave automática (no forzada por calendario)
+  // v75: la fatiga se mide en una ventana de 14 días y la respuesta es graduada, no un "menos una
+  // serie a todo" indiscriminado que además podía dispararse con sesiones de hace un mes.
+  const fatLvl=isDeload?0:fatigueLevel();
+  const fatigued=fatLvl>0;
   const exs=pickExercises(equip,objetivo,+minutos,seed,opts);
   const setBase=Math.round((g.sets[0]+g.sets[1])/2*mult);
-  const sets=(isDeload||fatigued)?Math.max(2,setBase-1):setBase;
+  // v75: y el volumen progresa dentro del bloque en vez de repetirse igual cada semana
+  const mi=mesoInfo(programWeekFor(todayKey()));
+  const rampa=(mi&&mi.len>1&&mi.wInBlock>=Math.ceil(mi.len*0.75))?1:0;
+  const sets=isDeload?Math.max(2,setBase-1)
+    :fatLvl===2?Math.max(2,setBase-1)
+    :fatLvl===1?setBase
+    :Math.min(5,setBase+rampa);
   const rest=Math.round((g.rest[0]+g.rest[1])/2);
   const ejercicios=exs.map(ex=>{
     const esBanda=(ex.eq||[]).includes('bandas')&&equip.has('bandas')&&!(ex.eq||[]).includes('mancuernas');
@@ -1282,9 +1328,9 @@ function buildSessionOffline(equip,objetivo,nivel,minutos,dayCode,seed,isDeload,
       series:ex.comp?sets:Math.max(2,sets-1),
       reps: ex.p==='cardio'? (objetivo==='fuerza'?'30s':'40s') : (esBanda?'12-20':g.reps),
       descanso_seg: ex.p==='cardio'?Math.round(rest*0.6):rest,
-      rir: isDeload?'4-5 (descarga)':(fatigued?'3-4 (fatiga acumulada: prioriza técnica)':g.rir),
+      rir: isDeload?'4-5 (descarga)':(fatLvl===2?'3-4 (fatiga alta: prioriza técnica)':fatLvl===1?'2-3 (fatiga moderada: no fuerces el fallo)':g.rir),
       tempo: esBanda?'2-1-3 (vuelta lenta)':g.tempo,
-      peso: pesoHintFor(ex,equip,g),
+      peso: pesoHintFor(ex,equip,g,ex.p==='cardio'?null:(esBanda?'12-20':g.reps)),
       descripcion: ex.d||descFor(ex),
       musculos:ex.m,
       errores: ERRORS[figKey(ex.n)]||[],
@@ -1297,7 +1343,7 @@ function buildSessionOffline(equip,objetivo,nivel,minutos,dayCode,seed,isDeload,
   return {
     dia_codigo:dayCode,
     titulo:isDeload?'Sesión de descarga':(`Full body · ${focus}`),
-    meta:`${exs.length} ejercicios · ${minutos}min · RIR ${g.rir} · orientada a ${objLbl}; básicos primero y accesorios después${fatigued?' · fatiga acumulada detectada: 1 serie menos por ejercicio':''}${riskNote}`,
+    meta:`${exs.length} ejercicios · ${minutos}min · RIR ${g.rir} · orientada a ${objLbl}; básicos primero y accesorios después${fatLvl===2?' · fatiga alta (14 días): 1 serie menos y más margen al fallo':fatLvl===1?' · fatiga moderada: se mantiene el volumen, sin apretar':(rampa?' · última semana del bloque: 1 serie más':'')}${riskNote}`,
     calentamiento:'5-8 min: movilidad de tobillo, cadera y hombro + 1 serie ligera del primer ejercicio (al 50%) para engrasar el gesto.',
     vuelta_calma:'5 min: estira los grupos trabajados (30s por grupo) y termina con 1 min de respiración nasal lenta para bajar pulsaciones.',
     ejercicios
@@ -1386,7 +1432,15 @@ function buildWeekOffline(){
     if(!S.schedule[key])S.schedule[key]=[];
     const isBrief=S.briefDays.includes(code);
     const mins=isBrief?18:p.minutos;
-    const sess=buildSessionOffline(eq,objetivo,p.nivel,mins,code,(S.currentWeek+1)*7+i,isDeload,{avoid});
+    /* v75: en los días de fuerza BREVE el prompt lleva versiones pidiendo a Claude que priorice
+       tren superior o core porque ese día también hay carrera. El motor offline hacía justo lo
+       contrario: su orden de patrones empieza por "pierna" en todas las sesiones. Ahora los días
+       breves arrancan por empuje y excluyen el trabajo de pierna de alto impacto o carga alta.
+       El parámetro "lead" ya existía desde la v50 y no lo usaba nadie. */
+    const opts=isBrief
+      ? {avoid,lead:'empuje',exclude:EXDB.filter(e=>e.p==='pierna'&&e.comp).map(e=>e.n)}
+      : {avoid};
+    const sess=buildSessionOffline(eq,objetivo,p.nivel,mins,code,(S.currentWeek+1)*7+i,isDeload,opts);
     sess.ejercicios.forEach(e=>avoid.add(e.nombre));
     if(isBrief)sess.titulo='Fuerza breve · complemento de carrera';
     const ex=S.schedule[key].findIndex(x=>x.type==='ai');
@@ -2076,7 +2130,11 @@ function openLog(key,mode){
       </div></div>
     <div class="field"><label>Dolor o molestias durante la sesión (opcional)</label>
       <div class="feel">${PAIN_AREAS.filter(a=>a[0]!=='otra').map(([k,lab])=>`<div class="pain-b" onclick="togglePain(this)" data-a="${k}">${lab}</div>`).join('')}</div>
-      <p class="note mt-6">Si marcas una zona aquí, el generador offline evitará ejercicios de riesgo para esa zona durante los próximos 14 días, además de lo que hayas fijado como limitación fija en Perfil.</p></div>
+      <div class="feel mt-8" id="pain-kind">
+        <div class="pain-b sel" onclick="selPainKind(this)" data-k="muscular">💪 Muscular / agujetas</div>
+        <div class="pain-b" onclick="selPainKind(this)" data-k="articular">⚠️ Articular o punzante</div>
+      </div>
+      <p class="note mt-6">La distinción importa: las agujetas son parte normal del entrenamiento y solo se anotan como contexto. Una molestia <b>articular o punzante</b> sí hace que el generador evite durante 14 días los ejercicios de más carga o impacto para esa zona, y se le señala a Claude para que adapte en vez de suprimir el movimiento.</p></div>
     <div class="field"><label style="display:flex;justify-content:space-between;align-items:center">Notas (pesos, series reales, sensaciones)${isAdd?'':`<button class="btn btn-xs" onclick="insertLoadTemplate('${key}')">${(()=>{const s=mainAISess(key);return (s&&s.sets&&s.sets.length)?'＋ Cargas reales':'＋ Plantilla cargas';})()}</button>`}</label>
       <textarea id="l-notes" placeholder="${isAdd?'Ej: 7,1 km, 5:30/km, 412 kcal, FC media 152...':'Ej: goblet 16kg llegué a 12, press 16kg 3×10 justo...'}"></textarea></div>`;
   openSheet('log-bg');
@@ -2091,6 +2149,7 @@ function openLog(key,mode){
 }
 function selFatiga(el){document.querySelectorAll('.fatiga-b').forEach(b=>b.classList.remove('sel'));el.classList.add('sel');}
 function togglePain(el){el.classList.toggle('sel');}
+function selPainKind(el){document.querySelectorAll('#pain-kind .pain-b').forEach(b=>b.classList.remove('sel'));el.classList.add('sel');}
 /* Inserta en notas el esqueleto de cargas con los ejercicios de la sesión IA del día */
 function insertLoadTemplate(key){
   const ta=document.getElementById('l-notes');if(!ta)return;
@@ -2145,10 +2204,12 @@ function saveLog(){
   const feel=document.querySelector('.feel-b.sel').dataset.f;
   const fatigaEl=document.querySelector('.fatiga-b.sel');
   const fatiga=fatigaEl?fatigaEl.dataset.v:'normal';
-  const pain=Array.from(document.querySelectorAll('.pain-b.sel')).map(el=>el.dataset.a);
+  const pain=Array.from(document.querySelectorAll('.pain-b.sel')).map(el=>el.dataset.a).filter(Boolean);
+  const painKindEl=document.querySelector('#pain-kind .pain-b.sel');
+  const painKind=pain.length?((painKindEl&&painKindEl.dataset.k)||'muscular'):null; // v75
   const notes=document.getElementById('l-notes').value;
   if(!S.schedule[key])S.schedule[key]=[];
-  const log={type,duration:dur,distance:dist,kcal,hr,feeling:feel,fatiga,pain,notes,date:key};
+  const log={type,duration:dur,distance:dist,kcal,hr,feeling:feel,fatiga,pain,painKind,notes,date:key};
   const aiIdx=mainAIIdx(key);
   // v52: si el reproductor registró cargas serie a serie, viajan con el registro y el historial
   if(type.includes('IA')&&aiIdx>=0&&S.schedule[key][aiIdx].sets)log.sets=S.schedule[key][aiIdx].sets;
@@ -2209,9 +2270,55 @@ function renderProg(){
         ${h.sets&&h.sets.length?(()=>{const t=h.sets.map(e=>e.nombre+' '+fmtSets(e.series)).join(' · ');return `<div style="font-size:11px;color:var(--ai);margin-top:2px">🏋 ${esc(t.slice(0,90))}${t.length>90?'…':''}</div>`;})():''}</div>
       <span style="font-size:19px;margin-left:8px">${esc(h.feeling)||'💪'}</span></div>`).join('')
     +(S.history.length>_tope?`<button class="btn btn-block mt-8" onclick="verMasHistorial()">Ver ${Math.min(50,S.history.length-_tope)} sesiones más (quedan ${S.history.length-_tope})</button>`:'');
-  renderBadges();renderMarkerCharts();renderLoadProgression();
+  renderBadges();renderMarkerCharts();renderLoadProgression();renderVolume();renderCardio();
 }
 
+/* v75: el volumen semanal por grupo es la magnitud que gobierna la hipertrofia y hasta ahora no se
+   medía en ningún sitio: el prompt afirmaba el principio de "~10+ series por grupo" sin que nadie
+   contase una sola serie. Aquí se ve, con su margen de error declarado. */
+function renderVolume(){
+  const b=document.getElementById('vol-body');if(!b)return;
+  const act=weeklyVolumeByGroup(S.currentWeek,false);
+  const real=weeklyVolumeByGroup(S.currentWeek-1,true);
+  const max=Math.max(10,...MG_ORDER.map(g=>Math.max(act.vol[g],real.vol[g])));
+  const filas=MG_ORDER.filter(g=>act.vol[g]||real.vol[g]).map(g=>{
+    const p=Math.round(act.vol[g]/max*100),pr=Math.round(real.vol[g]/max*100);
+    const flojo=act.vol[g]>0&&act.vol[g]<10;
+    return `<div style="margin-bottom:9px">
+      <div style="display:flex;justify-content:space-between;font-size:calc(12px*var(--fs))">
+        <span>${MG_LABEL[g]}</span>
+        <span class="fw6"${flojo?' style="color:var(--warn)"':''}>${act.vol[g]} series</span></div>
+      <div class="prog-bar" style="margin-top:3px"><div class="prog-fill" style="width:${p}%"></div></div>
+      <div style="font-size:calc(10px*var(--fs));color:var(--text3);margin-top:2px">semana pasada, realizadas: ${real.vol[g]}</div>
+      <div class="prog-bar" style="height:3px;margin-top:2px"><div class="prog-fill" style="width:${pr}%;background:var(--text3)"></div></div>
+    </div>`;
+  }).join('');
+  b.innerHTML=filas
+    ? filas+`<p class="note mt-8">Series de esta semana (planificadas o ya hechas) frente a las realizadas la semana pasada. La referencia habitual para crecer es del orden de <b>10 series semanales por grupo</b>; por debajo aparece en ámbar. Es una <b>estimación</b>: cada serie se cuenta para todos los grupos que participan, así que los básicos suman en varios a la vez, y los grupos se deducen del nombre y de los músculos declarados de cada ejercicio.</p>`
+    : '<p class="note">Genera o registra sesiones de fuerza para ver el reparto de volumen por grupo muscular.</p>';
+}
+function renderCardio(){
+  const b=document.getElementById('cardio-body');if(!b)return;
+  const a=cardioWeek(S.currentWeek),pr=cardioWeek(S.currentWeek-1);
+  const hz=hrZones();
+  const linea=(t,c)=>`<div class="prog-r"><span style="color:var(--text2)">${t}</span><span class="fw6">${c.n?`${c.km} km · ${c.min} min${c.ritmo?' · '+c.ritmo:''}`:'sin sesiones'}</span></div>`;
+  let h=linea('Esta semana',a)+linea('Semana pasada',pr);
+  if(a.km&&pr.km){
+    const d=Math.round((a.km-pr.km)*10)/10;
+    const sube=d/pr.km;
+    h+=`<div class="note mt-6">${d>=0?'+':''}${d} km respecto a la semana pasada${sube>0.10?' — <b style="color:var(--warn)">es más de un 10% de subida</b>: es el tramo donde más lesiones por sobreuso aparecen, considera moderarlo':''}.</div>`;
+  }
+  if(hz&&hz.zonas){
+    h+=`<div class="mt-12"><div class="fw6" style="font-size:calc(13px*var(--fs));margin-bottom:6px">Tus zonas de pulso</div>`+
+      Object.entries(hz.zonas).map(([z,r])=>`<div class="prog-r"><span style="color:var(--text2)">${z}${z==='Z2'?' · base aeróbica':z==='Z4'?' · umbral':''}</span><span class="fw6">${r} lpm</span></div>`).join('')+
+      `</div><p class="note mt-8">Calculadas por reserva de frecuencia cardiaca (Karvonen) con tu FC en reposo de ${hz.fcRep} lpm y una FCmáx <b>estimada</b> de ${hz.fcMax} (fórmula de Tanaka, 208−0,7×edad). Sin una prueba de esfuerzo, tu FCmáx real puede desviarse fácilmente 10 lpm arriba o abajo: usa las zonas como guía y contrástalas con tu sensación.</p>`;
+  }else if(hz){
+    h+=`<p class="note mt-8">FCmáx estimada: ${hz.fcMax} lpm. Importa tu FC en reposo desde Salud (en Ajustes) para calcular las zonas por reserva de frecuencia cardiaca.</p>`;
+  }else{
+    h+=`<p class="note mt-8">Completa tu edad en Perfil para estimar tus zonas de pulso.</p>`;
+  }
+  b.innerHTML=h;
+}
 function verMasHistorial(){S._histShown=(S._histShown||50)+50;renderProg();}
 
 /* --- Trofeos / Logros --- */
@@ -2384,6 +2491,239 @@ function showNoteHint(hintId,txt){
     ? '📌 Nota guardada y visible al entrenar. El generador <b>offline</b> no interpreta texto libre: para que se aplique de verdad, usa el botón de <b>Claude</b>.'
     : '';
 }
+/* ============================================================
+   v75 · MOTOR DE ANÁLISIS DEL ENTRENADOR
+   Hasta la v74 la app MEDÍA (cargas, dolor, fatiga, salud) y PRESCRIBÍA, pero no COMPARABA: nadie
+   contrastaba lo pautado con lo hecho, nadie contaba el volumen por grupo muscular y nadie estimaba
+   la fuerza. Sin eso, Claude planificaba a ciegas y el motor offline repetía cargas para siempre.
+   Aquí vive todo el cálculo; el prompt y la pestaña Progreso solo lo presentan.
+   ============================================================ */
+
+/* --- Grupos musculares -------------------------------------------------------------------
+   Aproximación deliberada: se parte de la ficha de EXDB cuando el ejercicio es conocido y, si no,
+   del texto libre "musculos" que devuelve Claude. Cuando no hay nada reconocible se cae al patrón
+   (pierna/empuje/tirón/core). Es una estimación y así se etiqueta allí donde se muestra. */
+const MG_LABEL={cuadriceps:'Cuádriceps',isquios:'Isquios',gluteos:'Glúteos',gemelos:'Gemelos',
+  pecho:'Pecho',espalda:'Espalda',hombro:'Hombro',biceps:'Bíceps',triceps:'Tríceps',core:'Core'};
+const MG_ORDER=['cuadriceps','isquios','gluteos','gemelos','pecho','espalda','hombro','biceps','triceps','core'];
+const MG_RULES=[
+  ['cuadriceps',/cu[aá]dric|prensa|sentadilla|zancada|subida al caj|split|b[uú]lgara/],
+  ['isquios',/isquio|femoral|peso muerto|rumano|bisagra/],
+  ['gluteos',/gl[uú]teo|hip thrust|puente|cadera|aductor|sumo/],
+  ['gemelos',/gemelo|s[oó]leo|talones|pantorrilla/],
+  ['pecho',/pecho|pectoral|press de banca|flexion|flexión|apertura/],
+  ['espalda',/espalda|dorsal|trapecio|romboide|remo|jal[oó]n|domina|pull-?apart|face pull/],
+  ['hombro',/hombro|deltoid|press militar|arnold|elevaci[oó]n (lateral|frontal)|lateral/],
+  ['biceps',/b[ií]ceps|braquial|curl/],
+  ['triceps',/tr[ií]ceps|fondo|diamante|extensi[oó]n de tr|press (de banca|con mancuernas|militar|arnold|de pecho|banda|arriba|por encima)|flexion|flexión/],
+  ['core',/core|abdomin|obliuo|oblicuo|plancha|crunch|lumbar|pallof|le[nñ]ador|bicho muerto|superman|giro ruso|elevaci[oó]n de piernas/],
+];
+const MG_BY_PATTERN={pierna:['cuadriceps','gluteos'],empuje:['pecho','hombro','triceps'],
+  tiron:['espalda','biceps'],core:['core'],cardio:[]};
+function muscleGroupsOf(ex){
+  if(!ex)return [];
+  const nm=_norm(ex.nombre||'');
+  const ficha=EXDB.find(e=>_norm(e.n)===nm);
+  const txt=_norm([ficha?ficha.m:'',ex.musculos||'',ex.nombre||''].join(' '));
+  const out=new Set();
+  MG_RULES.forEach(([g,re])=>{if(re.test(txt))out.add(g);});
+  if(!out.size){
+    const pat=(ficha&&ficha.p)||ex.p||patFromName(ex.nombre);
+    (MG_BY_PATTERN[pat]||[]).forEach(g=>out.add(g));
+  }
+  return [...out];
+}
+/* Series por grupo y semana. Se cuenta cada serie para CADA grupo implicado (recuento "total", no
+   fraccionado): un press cuenta serie para pecho, hombro y tríceps. Es el criterio más común en las
+   recomendaciones divulgadas, y por eso las cifras salen algo generosas en los básicos. */
+function weeklyVolumeByGroup(weekOffset,soloRealizadas){
+  const vol={};MG_ORDER.forEach(g=>vol[g]=0);
+  let sesiones=0;
+  weekDates(weekOffset).map(fmt).forEach(k=>{
+    (S.schedule[k]||[]).forEach(s=>{
+      if(s.type!=='ai'||!s.exercises||s.skipped)return;
+      if(soloRealizadas&&!s.done)return;
+      sesiones++;
+      s.exercises.forEach(ex=>{
+        if(isBlock(ex)){
+          (ex.movimientos||[]).forEach(m=>{
+            const rondas=Math.max(1,Math.min(10,+(ex.rondas||ex.duracion_min||3)));
+            muscleGroupsOf(m).forEach(g=>{if(vol[g]!=null)vol[g]+=Math.round(rondas/3);});
+          });
+          return;
+        }
+        const hechas=(s.sets||[]).find(e=>_norm(e.nombre)===_norm(ex.nombre));
+        const n=(s.done&&hechas&&hechas.series&&hechas.series.length)?hechas.series.length:(+ex.series||0);
+        if(!n)return;
+        muscleGroupsOf(ex).forEach(g=>{if(vol[g]!=null)vol[g]+=n;});
+      });
+    });
+  });
+  return {vol,sesiones};
+}
+function volumeSummaryText(weekOffset,soloRealizadas){
+  const {vol}=weeklyVolumeByGroup(weekOffset,soloRealizadas);
+  return MG_ORDER.filter(g=>vol[g]>0).map(g=>`${MG_LABEL[g]} ${vol[g]}`).join(', ')||'sin datos';
+}
+
+/* --- Fuerza estimada (e1RM) --------------------------------------------------------------
+   Fórmula de Epley: 1RM ≈ kg × (1 + reps/30). Solo se aplica hasta 12 repeticiones, porque por
+   encima el error crece mucho. Es la métrica que de verdad refleja progreso: 20 kg × 10 reps es
+   más fuerza que 22 kg × 4, y el "kg máximo" no lo distingue. */
+function e1rm(kg,reps){
+  const k=toNum(kg),r=toNum(String(reps).replace(/[^\d].*$/,''));
+  if(!k||!r||r<1||r>12)return null;
+  return Math.round(k*(1+r/30)*10)/10;
+}
+function e1rmProgressionFor(nombre){
+  const nm=_norm(nombre||'');const pts=[];
+  (S.history||[]).forEach(h=>{
+    if(!h.sets)return;
+    const f=h.sets.find(e=>_norm(e.nombre)===nm);
+    if(!f||!f.series)return;
+    const vals=f.series.map(x=>e1rm(x.kg,x.reps)).filter(v=>v!=null);
+    if(vals.length)pts.push({date:h.key,v:Math.max(...vals)});
+  });
+  pts.sort((a,b)=>a.date<b.date?-1:1);
+  return {dates:pts.map(p=>p.date),values:pts.map(p=>p.v)};
+}
+function e1rmTopSummary(n){
+  return exercisesWithLoggedSets().slice(0,n||5).map(nom=>{
+    const {dates,values}=e1rmProgressionFor(nom);
+    if(!values.length)return null;
+    const ini=values[0],fin=values[values.length-1];
+    const dif=values.length>1?Math.round((fin-ini)*10)/10:0;
+    return `${nom}: 1RM estimado ${fin} kg${values.length>1?` (${ini}→${fin}, ${dif>=0?'+':''}${dif} kg en ${values.length} sesiones desde ${dates[0]})`:' (primer registro)'}`;
+  }).filter(Boolean);
+}
+
+/* --- Prescrito vs realizado --------------------------------------------------------------
+   El eslabón que faltaba. La app guardaba lo pautado en schedule[dia].exercises y lo hecho en
+   .sets, pero nunca los cruzaba: Claude recibía "16 kg × 10" sin saber si el encargo eran 3×8-12
+   a 16 kg o 4×6 a 20, así que no podía decidir si tocaba subir, mantener o bajar. */
+function repRange(reps){
+  const m=String(reps||'').match(/(\d+)\s*[-–a]\s*(\d+)/);
+  if(m)return [+m[1],+m[2]];
+  const one=String(reps||'').match(/(\d+)/);
+  return one?[+one[1],+one[1]]:null;
+}
+function complianceFor(key){
+  const sess=mainAISess(key);
+  if(!sess||!sess.done||!sess.exercises)return null;
+  const filas=[];
+  sess.exercises.forEach(ex=>{
+    if(isBlock(ex))return;
+    const plan=`${ex.series||'?'}×${ex.reps||'?'}${ex.peso?' @ '+ex.peso:''}`;
+    const hecho=(sess.sets||[]).find(e=>_norm(e.nombre)===_norm(ex.nombre));
+    if(!hecho||!hecho.series||!hecho.series.length){
+      filas.push({nombre:ex.nombre,plan,real:'sin registrar',estado:'sin dato'});
+      return;
+    }
+    const ser=hecho.series;
+    const real=ser.map(x=>`${x.kg!=null&&x.kg!==''?x.kg+'kg':(x.banda?'banda '+x.banda:'pc')}×${x.reps}`).join(', ');
+    const rango=repRange(ex.reps);
+    const reps=ser.map(x=>toNum(String(x.reps))).filter(v=>!isNaN(v));
+    let estado='completado';
+    if(ser.length<(+ex.series||ser.length))estado=`series incompletas (${ser.length}/${ex.series})`;
+    else if(rango&&reps.length){
+      if(reps.every(r=>r>=rango[1]))estado='tope del rango en todas las series → toca subir carga';
+      else if(reps.some(r=>r<rango[0]))estado='por debajo del rango en alguna serie → mantener o bajar';
+    }
+    filas.push({nombre:ex.nombre,plan,real,estado});
+  });
+  return filas.length?{key,titulo:sess.title,filas}:null;
+}
+function complianceLines(dias){
+  const lim=dias||21;
+  const hoy=todayKey();
+  const out=[];
+  Object.keys(S.schedule||{}).sort().reverse().forEach(k=>{
+    const d=daysBetween(k,hoy);
+    if(d==null||d<0||d>lim)return;
+    const c=complianceFor(k);
+    if(!c)return;
+    out.push(`- ${k} · ${c.titulo}\n`+c.filas.map(f=>`    · ${f.nombre}: pautado ${f.plan} → realizado ${f.real} [${f.estado}]`).join('\n'));
+  });
+  return out.slice(0,12).join('\n');
+}
+
+/* --- Cardio ------------------------------------------------------------------------------ */
+function esCardio(h){
+  return (parseFloat(h.distance)>0)||/carrera|correr|paseo|caminata|andar|bici|ciclis|nataci|nadar|remo erg|el[ií]ptica|cardio|trote|running/i.test(h.title||'');
+}
+function cardioWeek(weekOffset){
+  const dates=weekDates(weekOffset).map(fmt);
+  let km=0,min=0,n=0,minConKm=0;const fcs=[];
+  (S.history||[]).forEach(h=>{
+    if(!dates.includes(h.key)||!esCardio(h))return;
+    const dkm=parseFloat(h.distance)||0,dmin=parseFloat(h.duration)||0;
+    n++;km+=dkm;min+=dmin;
+    if(dkm>0)minConKm+=dmin; // el ritmo solo puede salir de lo que tiene distancia: un paseo de
+                             // 60 min sin km registrados falsearía el min/km de toda la semana
+    if(h.hr)fcs.push(parseFloat(h.hr));
+  });
+  const ritmo=(km>0&&minConKm>0)?minConKm/km:null;
+  return {n,km:Math.round(km*10)/10,min:Math.round(min),
+    ritmo:ritmo?`${Math.floor(ritmo)}:${String(Math.round((ritmo%1)*60)).padStart(2,'0')}/km`:null,
+    fcMedia:fcs.length?Math.round(fcs.reduce((a,b)=>a+b,0)/fcs.length):null};
+}
+/* Zonas por reserva de frecuencia cardiaca (Karvonen), con FCmáx estimada por la fórmula de Tanaka
+   (208 − 0,7 × edad), más precisa en adultos que la clásica 220 − edad. Es una ESTIMACIÓN: sin
+   prueba de esfuerzo la FCmáx individual puede desviarse fácilmente ±10-12 lpm, y así se dice. */
+function hrZones(){
+  const edad=toNum((S.profile||{}).edad);
+  const rep=toNum((S.health||{}).restingHR);
+  if(!edad)return null;
+  const fcMax=Math.round(208-0.7*edad);
+  if(!rep)return {fcMax,zonas:null};
+  const hrr=fcMax-rep;
+  const z=(a,b)=>`${Math.round(rep+hrr*a)}-${Math.round(rep+hrr*b)}`;
+  return {fcMax,fcRep:rep,zonas:{Z1:z(.5,.6),Z2:z(.6,.7),Z3:z(.7,.8),Z4:z(.8,.9),Z5:z(.9,1)}};
+}
+
+/* --- Memoria del entrenador --------------------------------------------------------------
+   Sin esto, cada semana Claude decidía casi desde cero: se le enviaba el enfoque vigente pero no
+   qué decidió antes ni por qué. Se guardan las últimas decisiones para que haya continuidad de
+   criterio y para poder detectar contradicciones. */
+function logCoachDecision(plan,weekKeyStr){
+  if(!plan)return;
+  const meso=plan.mesociclo||{};
+  const entrada={
+    fecha:todayKey(),
+    semana:weekKeyStr||weekKeyOf(todayKey()),
+    enfoque:cleanStr(meso.enfoque,120),
+    justificacion:cleanStr(meso.justificacion,300),
+    analisis:cleanStr(plan.analisis_progreso,400),
+    sesiones:(plan.sesiones_ia||[]).length
+  };
+  if(!entrada.enfoque&&!entrada.analisis)return;
+  S.coachLog=(S.coachLog||[]).filter(e=>e.semana!==entrada.semana);
+  S.coachLog.push(entrada);
+  if(S.coachLog.length>10)S.coachLog=S.coachLog.slice(-10);
+}
+function coachLogLines(n){
+  const l=(S.coachLog||[]).slice(-(n||4));
+  if(!l.length)return '';
+  return l.map(e=>`- Semana ${e.semana} (${e.fecha}) · enfoque "${e.enfoque||'sin definir'}"${e.justificacion?': '+e.justificacion:''}${e.analisis?'\n    Análisis que diste: '+e.analisis:''}`).join('\n');
+}
+
+/* --- Fatiga con ventana temporal y respuesta graduada -------------------------------------
+   Antes se miraban "las 3 últimas sesiones" sin mirar la fecha (podían ser de hace un mes) y la
+   respuesta era siempre la misma: una serie menos a todo. */
+function fatigueLevel(){
+  const hoy=todayKey();
+  const rec=(S.history||[]).filter(h=>{const d=daysBetween(h.key,hoy);return d!=null&&d>=0&&d<=14;}).slice(0,6);
+  if(rec.length<2)return 0;
+  const cansado=rec.filter(h=>h.fatiga==='cansado').length;
+  const agotado=rec.filter(h=>h.fatiga==='agotado').length;
+  const duras=rec.filter(h=>h.feeling==='😓'||h.feeling==='😴').length;
+  // proporción, no cuenta absoluta: dos sesiones duras de dos no es lo mismo que dos de seis
+  const ratio=(agotado*2+cansado+duras)/rec.length;
+  if(ratio>=1.5)return 2;     // fatiga alta
+  if(ratio>=0.75)return 1;    // fatiga moderada
+  return 0;
+}
+function fatigueLabel(l){return l===2?'alta':l===1?'moderada':'normal';}
 function coachExtrasFor(equipos,beforeKey){
   let t=`\n- ACTÚA COMO ENTRENADOR PROFESIONAL: en "descripcion" de cada ejercicio explica en 1-2 frases la técnica clave Y por qué está en esta sesión (qué aporta al objetivo). En "meta" resume en una frase el propósito de la sesión.`;
   if((equipos||[]).includes('bandas')){
@@ -2440,9 +2780,42 @@ Si se combinan varios objetivos, prioriza un esquema de fuerza/hipertrofia para 
     if(S.baseline&&S.baseline.trim()){
       histTxt+='\n\nPUNTO DE PARTIDA (entrenamiento previo que ya venía haciendo):\n'+S.baseline.trim();
     }
+    // v75: lo pautado frente a lo realizado, ejercicio a ejercicio. Es el dato que permite decidir
+    // si toca subir, mantener o bajar; sin él, las cargas sueltas no dicen nada.
+    const cmp=complianceLines(21);
+    if(cmp)histTxt+='\n\nCUMPLIMIENTO REAL (lo que te pauté frente a lo que hice, últimas 3 semanas). Úsalo como base de la progresión: "tope del rango en todas las series" = subir carga; "series incompletas" o "por debajo del rango" = mantener o bajar y revisar por qué:\n'+cmp;
     const h=S.history.slice(0,38); // ~4 semanas completas con margen, a tu ritmo (hasta 9 ses./sem)
     histTxt+='\n\nHISTORIAL DE SESIONES COMPLETADAS (hasta ~4 semanas, más reciente primero; da más peso a la última semana para decidir la carga inmediata, y usa el conjunto para ver la trayectoria del mesociclo: si progreso, me estanco o acumulo fatiga):\n'+
-      (h.length?h.map(x=>`- ${x.key}: ${x.title}, ${x.duration}min${x.distance?' '+x.distance+'km':''}${x.kcal?' · '+x.kcal+' kcal':''}${x.hr?' · FC media '+x.hr:''}, esfuerzo ${x.feeling}${x.fatiga&&x.fatiga!=='normal'?' · llegaba '+x.fatiga:''}${x.pain&&x.pain.length?' · dolor/molestias en '+x.pain.map(areaLabel).join('/'):''}. ${x.notes||''}${x.sets&&x.sets.length?' CARGAS REALES serie a serie: '+x.sets.map(e=>e.nombre+' '+fmtSets(e.series)).join('; ')+'.':''}`).join('\n'):'(ninguna registrada)');
+      (h.length?h.map(x=>`- ${x.key}: ${x.title}, ${x.duration}min${x.distance?' '+x.distance+'km':''}${x.kcal?' · '+x.kcal+' kcal':''}${x.hr?' · FC media '+x.hr:''}, esfuerzo ${x.feeling}${x.fatiga&&x.fatiga!=='normal'?' · llegaba '+x.fatiga:''}${x.pain&&x.pain.length?' · '+(x.painKind==='muscular'?'agujetas/molestia muscular en ':'molestia ARTICULAR en ')+x.pain.map(areaLabel).join('/'):''}. ${x.notes||''}${x.sets&&x.sets.length?' CARGAS REALES serie a serie: '+x.sets.map(e=>e.nombre+' '+fmtSets(e.series)).join('; ')+'.':''}`).join('\n'):'(ninguna registrada)');
+  }
+  // v75 · volumen semanal por grupo muscular, fuerza estimada, cardio y memoria del entrenador
+  let coachTxt='';
+  const volAct=volumeSummaryText(S.currentWeek-1,true), volPrev=volumeSummaryText(S.currentWeek-2,true);
+  if(volAct!=='sin datos'||volPrev!=='sin datos'){
+    coachTxt+=`\n\nVOLUMEN SEMANAL POR GRUPO MUSCULAR (series realizadas; recuento total: cada serie cuenta para todos los grupos implicados, así que los básicos inflan la cifra. Es una estimación a partir del nombre y los músculos declarados de cada ejercicio):\n- Semana pasada: ${volAct}\n- Semana anterior: ${volPrev}\nAjusta el reparto de la semana que planificas para acercar cada grupo a un volumen suficiente y corregir los que se han quedado cortos. Dime en "analisis_progreso" qué grupo has reforzado y cuál has recortado.`;
+  }
+  const e1=e1rmTopSummary(6);
+  if(e1.length){
+    coachTxt+=`\n\nFUERZA ESTIMADA (1RM calculado con la fórmula de Epley a partir de mis series reales, solo hasta 12 repeticiones; es una estimación, no una marca medida):\n- ${e1.join('\n- ')}\nSi el 1RM estimado sube, la progresión funciona aunque el peso en la barra parezca el mismo. Si lleva 3+ semanas plano en un ejercicio, cambia algo (rango de repeticiones, variante o volumen) y explícalo.`;
+  }
+  const cw=cardioWeek(S.currentWeek-1),cw2=cardioWeek(S.currentWeek-2);
+  const hz=hrZones();
+  if(cw.n||cw2.n||hz){
+    const linea=c=>c.n?`${c.n} ${c.n===1?'sesión':'sesiones'}, ${c.km} km, ${c.min} min${c.ritmo?', ritmo medio '+c.ritmo:''}${c.fcMedia?', FC media '+c.fcMedia:''}`:'sin sesiones registradas';
+    coachTxt+=`\n\nCARDIO REGISTRADO:\n- Semana pasada: ${linea(cw)}\n- Semana anterior: ${linea(cw2)}`;
+    if(hz&&hz.zonas){
+      coachTxt+=`\nMIS ZONAS DE FRECUENCIA CARDIACA (método Karvonen sobre FC en reposo ${hz.fcRep} y FCmáx estimada ${hz.fcMax} por la fórmula de Tanaka 208−0,7×edad; es una ESTIMACIÓN, puede desviarse ±10 lpm): Z1 ${hz.zonas.Z1} · Z2 ${hz.zonas.Z2} · Z3 ${hz.zonas.Z3} · Z4 ${hz.zonas.Z4} · Z5 ${hz.zonas.Z5} lpm.\nUSA ESTAS CIFRAS en "recomendacion_cardio": prescribe tipo de sesión, duración y la zona CON SU RANGO DE PULSACIONES concreto, y progresa el volumen semanal de carrera de forma prudente (no más de ~10% de km por semana) teniendo en cuenta la carga de fuerza.`;
+    }else if(hz){
+      coachTxt+=`\nFCmáx estimada ${hz.fcMax} lpm (Tanaka). No tengo FC en reposo importada, así que no puedo dar zonas por reserva: prescribe la intensidad por sensación (conversación) además de por pulso.`;
+    }
+  }
+  const cl=coachLogLines(4);
+  if(cl){
+    coachTxt+=`\n\nTUS DECISIONES ANTERIORES COMO ENTRENADOR (para que haya continuidad de criterio; si te desvías de lo que decidiste, dilo y explica por qué):\n${cl}`;
+  }
+  const fl=fatigueLevel();
+  if(fl){
+    coachTxt+=`\n\nFATIGA ACUMULADA (últimos 14 días): ${fatigueLabel(fl)}. ${fl===2?'Reduce volumen esta semana y aleja del fallo (RIR 3-4), sin dejar de entrenar.':'Mantén el volumen pero no lo subas, y vigila la proximidad al fallo.'}`;
   }
   let healthTxt='';
   const H=S.health;
@@ -2485,10 +2858,14 @@ REGLAS DE ADAPTACIÓN (basadas en evidencia):
 - En "analisis_progreso" resume en 3-4 frases qué has ajustado y por qué.`:'';
 
   const evidence=`
-PRINCIPIOS BASADOS EN EVIDENCIA (fuentes reales y verificables: ACSM 2026 Position Stand "Resistance Training Prescription for Muscle Function, Hypertrophy, and Physical Performance in Healthy Adults", Med Sci Sports Exerc, abril 2026 —síntesis de 137 revisiones sistemáticas, >30.000 participantes, que actualiza el Position Stand de 2009; Robinson et al. 2024 sobre proximidad al fallo/RIR, Sports Med; Pelland et al. 2025 sobre la dosis-respuesta de volumen y frecuencia, Sports Med; Morton et al. 2018, Br J Sports Med, para proteína. El ACSM 2026 subraya que la constancia y el esfuerzo pesan más que un plan perfecto, que bandas/peso corporal/rutinas en casa son plenamente eficaces, y que llegar al fallo, el tipo de material y la periodización compleja no son imprescindibles en el adulto sano. Si citas evidencia en tus explicaciones, usa SOLO referencias reales que existan; NUNCA inventes ni "actualices" citas):
-- Fuerza: cargas altas (≥80% 1RM), 2-3 series por ejercicio, descansos 2-3 min.
-- Hipertrofia: acumular ~10+ series por grupo muscular a la semana; trabajar cerca del fallo (1-3 repeticiones en reserva), NO al fallo absoluto.
-- Entrenar cada grupo muscular principal al menos 2 veces por semana.
+PRINCIPIOS BASADOS EN EVIDENCIA (referencias comprobadas una a una contra su DOI; si citas evidencia en tus explicaciones usa SOLO referencias reales, y NUNCA inventes ni "actualices" citas):
+  · ACSM 2026 Position Stand, "Resistance Training Prescription for Muscle Function, Hypertrophy, and Physical Performance in Healthy Adults", Med Sci Sports Exerc 58(4):851-872, abril 2026, DOI 10.1249/MSS.0000000000003897. Síntesis de 137 revisiones sistemáticas y >30.000 participantes; actualiza el Position Stand de 2009. Subraya que la constancia y el esfuerzo pesan más que el plan perfecto, que bandas, peso corporal y rutinas en casa son plenamente eficaces, y que llegar al fallo, el material concreto y la periodización compleja no son imprescindibles en el adulto sano.
+  · Robinson et al. 2024, Sports Med 54(9):2209-2231, DOI 10.1007/s40279-024-02069-2. Meta-regresiones sobre proximidad al fallo: la hipertrofia mejora cuanto más cerca del fallo se termina la serie, mientras que la fuerza apenas se ve afectada por ese factor.
+  · Pelland et al., Sports Med 56(2):481-505 (publicado en línea el 4-12-2025), DOI 10.1007/s40279-025-02344-w. 67 estudios, 2.058 participantes: volumen y frecuencia tienen curvas dosis-respuesta distintas, y la fuerza muestra rendimientos decrecientes más marcados que la hipertrofia.
+  · Morton et al. 2018, Br J Sports Med 52(6):376-384, DOI 10.1136/bjsports-2017-097608. 49 estudios, 1.863 participantes: la ganancia de masa magra deja de aumentar por encima de ~1,62 g de proteína/kg/día (IC 95% 1,03-2,20).
+- Fuerza: cargas altas (orientativamente ~80% 1RM o más), 2-3 series por ejercicio, descansos 2-3 min. Ojo: es una referencia, no un umbral mágico; el rango útil es amplio y el esfuerzo pesa más que el porcentaje exacto.
+- Hipertrofia: acumular en torno a 10 o más series por grupo muscular a la semana; terminar las series cerca del fallo (1-3 repeticiones en reserva), NO al fallo absoluto. En el trabajo de FUERZA no hace falta acercarse tanto al fallo: puedes dejar más margen (RIR 3-4) sin perder resultado, y eso ahorra fatiga.
+- El volumen semanal es la variable que más manda; la frecuencia importa sobre todo como forma de repartir ese volumen, no como objetivo en sí. Repartir cada grupo en 2 o más días suele facilitarlo, pero no lo trates como una regla rígida.
 - El peso corporal y las bandas son medios válidos y eficaces.
 - Indica el esfuerzo como RIR (repeticiones en reserva), no como RPE.
 - En "peso" especifica SIEMPRE la carga propuesta de forma inequívoca: para mancuernas aclara si es "X kg por mancuerna (una en cada mano)" o "una sola mancuerna de X kg" (p. ej. goblet); para barra "X kg en total incluida la barra"; si es sin carga, "solo peso corporal". Nunca dejes un número de kg sin aclarar a qué se refiere.
@@ -2508,7 +2885,7 @@ PRINCIPIOS BASADOS EN EVIDENCIA (fuentes reales y verificables: ACSM 2026 Positi
   return `Actúa como mi entrenador personal profesional y nutricionista, siguiendo evidencia científica actual. ${mode==='adapt'?'Genera la SIGUIENTE semana de entrenamiento adaptada a mi progreso real.':'Genera mi plan de entrenamiento semanal.'}
 
 PERFIL: ${bioTxt}
-${cfg}${mesoTxt}${healthTxt}${histTxt}
+${cfg}${mesoTxt}${healthTxt}${coachTxt}${histTxt}
 ${evidence}${adaptRules}
 
 Responde ÚNICAMENTE con un objeto JSON válido, sin texto antes ni después, sin backticks, con esta estructura exacta:
@@ -2746,6 +3123,7 @@ function applyBridgePlan(plan){
   }
   if(plan.recomendacion_cardio)insightParts.push('🏃 Cardio recomendado: '+cleanStr(plan.recomendacion_cardio,300));
   if(insightParts.length)S.insight=insightParts.join('\n\n');
+  logCoachDecision(plan,weekKeyOf(fmt(dates[0]))); // v75: continuidad de criterio entre semanas
   save();closeSheet('bridge-bg');renderCal();renderNutri();renderProg();tab('cal');
 }
 /* ============================================================
@@ -3672,16 +4050,29 @@ function renderLoadProgression(){
   const prevVal=sel.value;
   sel.innerHTML=names.map(n=>{const c=loggedSessionCount(n);return `<option value="${esc(n)}">${esc(n)} (${c} ${c===1?'sesión':'sesiones'})</option>`;}).join('');
   if(names.includes(prevVal))sel.value=prevVal;
+  /* v75: el kg máximo no distingue 20×5 de 20×10. El 1RM estimado sí, y es la métrica con la que
+     de verdad se sigue la fuerza. Se muestran las dos: la carga y lo que implica. */
   const {dates,values}=loadProgressionFor(sel.value);
+  const est=e1rmProgressionFor(sel.value);
   if(values.length<2){
     const one=values.length===1?`<div style="font-size:calc(13px*var(--fs));margin-bottom:4px">Carga registrada hasta ahora: <b>${values[0]} kg</b></div>`:'';
     chart.innerHTML=one+'<p class="note" style="padding:2px 0">📈 La gráfica de progresión aparece cuando tengas este ejercicio registrado con carga en 2 sesiones o más. Sigue registrando tus series en el reproductor guiado.</p>';
     return;
   }
   const labels=dates.map(d=>{const dt=new Date(d+'T00:00:00');return isNaN(dt)?d:dt.toLocaleDateString('es-ES',{day:'numeric',month:'short'});});
-  chart.innerHTML=sparkline(values,labels,false)+
+  let h=sparkline(values,labels,false)+
     `<div style="display:flex;justify-content:space-between;margin-top:4px;font-size:calc(12px*var(--fs));color:var(--text2)">
-      <span>Primera: ${values[0]} kg</span><span>Última: ${values[values.length-1]} kg</span></div>`;
+      <span>Carga máxima · primera: ${values[0]} kg</span><span>última: ${values[values.length-1]} kg</span></div>`;
+  if(est.values.length>=2){
+    const ini=est.values[0],fin=est.values[est.values.length-1],dif=Math.round((fin-ini)*10)/10;
+    const lab2=est.dates.map(d=>{const dt=new Date(d+'T00:00:00');return isNaN(dt)?d:dt.toLocaleDateString('es-ES',{day:'numeric',month:'short'});});
+    h+=`<div class="mt-12"><div class="fw6" style="font-size:calc(13px*var(--fs));margin-bottom:4px">1RM estimado</div>`+
+      sparkline(est.values,lab2,false)+
+      `<div style="display:flex;justify-content:space-between;margin-top:4px;font-size:calc(12px*var(--fs));color:var(--text2)">
+        <span>${ini} kg</span><span class="fw6" style="color:${dif>=0?'var(--free)':'var(--warn)'}">${dif>=0?'+':''}${dif} kg</span><span>${fin} kg</span></div>
+      <p class="note mt-6">Estimado con la fórmula de Epley (kg × [1 + reps/30]) sobre tus series reales, solo hasta 12 repeticiones porque por encima el error crece. <b>No es una marca medida</b>, pero sirve para ver si progresas aunque el peso no cambie: más repeticiones con el mismo peso también es más fuerza.</p></div>`;
+  }
+  chart.innerHTML=h;
 }
 // Convierte a número aceptando coma decimal española (41,4 → 41.4). NaN si no es número.
 function toNum(v){if(v==null)return NaN;return parseFloat(String(v).trim().replace(/\s/g,'').replace(/,/g,'.'));}
