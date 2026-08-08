@@ -1586,3 +1586,52 @@ ARREGLO:
   automático sin descanso doble, y caída a 60 s avisada cuando el JSON no trae descanso.
 - CONTRASTE CON v75: el mismo arnés sobre la v75 falla en cuanto busca los botones ± (no existen) y
   se detiene ahí.
+
+## v77: el fondo deja de moverse detrás de los paneles, y una sola puerta para generar la semana
+- ORIGEN: uso real en el iPhone (el fondo que se desplaza detrás del panel de registro) y una
+  pregunta del usuario que destapó un problema de diseño: nadie podía saber en qué se diferenciaban
+  los dos botones de generar semana.
+
+### 1 · El fondo se movía detrás del panel
+SÍNTOMA: al abrir «Añadir actividad» y tocar un campo, el panel se encoge para dejar sitio al
+teclado y hay que desplazarse dentro de él; pero la pantalla de debajo TAMBIÉN se movía, el panel
+parecía flotar y se perdía la referencia de qué se estaba tocando.
+CAUSA: no había bloqueo del fondo. En iOS, cuando el desplazamiento dentro de un panel llega a su
+tope, el gesto «se escapa» al documento de debajo y lo arrastra.
+ARREGLO: mientras haya un panel o el reproductor abiertos, `<body>` se fija en su posición actual
+(`body.modal-abierto`) y se restituye el desplazamiento exacto al cerrar —fijarlo sin guardar la
+posición habría devuelto al usuario al principio de la página—. El bloqueo se levanta solo cuando
+se cierra el ÚLTIMO panel, no el primero. Además: `touch-action` acotado (el fondo no acepta
+gestos, el panel solo vertical), `overscroll-behavior:contain` también en el fondo, y el velo pasa
+de 55% a 72% con desenfoque, para que se vea de un vistazo qué capa está activa.
+
+### 2 · Dos botones que hacían casi lo mismo
+DIAGNÓSTICO: «Adaptar próxima semana» (Progreso) enviaba historial, cumplimiento, cargas reales y
+reglas de progresión. «Generar con Claude» (Perfil) enviaba el MISMO prompt sin nada de eso: era el
+plan inicial para quien todavía no ha registrado nada. Elegir el segundo por error significaba
+pedirle a Claude que planificara a ciegas teniendo los datos delante, y nada en la interfaz lo
+advertía.
+ARREGLO: una sola acción, `openWeekBridge()`, en los tres sitios (Progreso, Perfil y el acceso
+directo de la portada). Decide sola: si hay historial o punto de partida, adapta; si no hay
+absolutamente nada, genera el plan inicial. Y antes de abrir el puente, si estás sobre la semana en
+curso, ofrece saltar a la próxima, que es lo que se quiere casi siempre. El generador sin conexión
+sigue donde estaba, ahora etiquetado como lo que es: el recambio para cuando no puedas usar Claude.
+
+### 3 · Marcadores de Salud: trayectoria en vez de foto fija
+Se enviaba el último valor y la diferencia contra el mes anterior. Un salto aislado dice poco. Ahora
+va la serie completa guardada (hasta 6 medias mensuales) de FC en reposo, HRV, VO2max, % de grasa,
+pasos y sueño —datos que ya estaban en `healthLog` sin usarse—, más la serie de peso corporal con su
+variación total y el intervalo de días. La interpretación se reescribe para encuadrarlos contra la
+línea de base propia y no contra valores absolutos, y **se advierte explícitamente de su límite**:
+son medias mensuales, una señal lenta y de trazo grueso para decidir una semana concreta, que debe
+leerse junto a la fatiga y el esfuerzo registrados, que son información mucho más fresca.
+
+- VALIDACIÓN: 327 comprobaciones en verde, 0 fallos, en Madrid, UTC y Sídney. Las 27 nuevas cubren:
+  congelado y descongelado del fondo con una hoja, con dos encadenadas, con el reproductor y al
+  cerrar tocando fuera; restitución exacta de la posición; presencia de un único botón en Progreso y
+  en Perfil y ausencia de los dos antiguos; elección automática de modo con y sin historial; salto a
+  la semana próxima desde la semana en curso; bloqueo si faltan los datos básicos del perfil; y
+  envío de la trayectoria de marcadores, de la serie de peso con su variación, de la advertencia
+  sobre las medias mensuales, y que una sola medición no fabrique una trayectoria inexistente.
+- CONTRASTE CON v76: el mismo arnés sobre la v76 falla en el congelado del fondo, en el botón único
+  y en la trayectoria de marcadores.

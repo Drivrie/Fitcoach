@@ -122,9 +122,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tabbar .t.active{color:var(--accent)}
 .tabbar .t .ic{font-size:21px;display:block;margin-bottom:2px;line-height:1}
-.sheet-bg{display:none;position:fixed;top:0;left:0;right:0;height:var(--vvh,100%);background:rgba(0,0,0,.55);z-index:50;align-items:flex-end;animation:fade .2s}
+/* v77: mientras hay una hoja abierta se congela el fondo. En iOS, si no se hace, el gesto de
+   scroll dentro del panel "se escapa" a la página de debajo cuando el panel llega a su tope: la
+   pantalla anterior se mueve por detrás, el panel parece flotar y uno pierde la referencia de qué
+   está tocando. Se fija <body> a su posición actual y se restituye el desplazamiento al cerrar. */
+body.modal-abierto{position:fixed;left:0;right:0;width:100%;overflow:hidden}
+.sheet-bg{display:none;position:fixed;top:0;left:0;right:0;height:var(--vvh,100%);background:rgba(0,0,0,.72);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);z-index:50;align-items:flex-end;animation:fade .2s;overscroll-behavior:contain;touch-action:none}
 .sheet-bg.show{display:flex}
-.sheet{background:var(--surface);border-radius:20px 20px 0 0;padding:18px 16px calc(28px + var(--safe-bot));width:100%;max-width:480px;margin:0 auto;max-height:min(88vh, calc(var(--vvh,100vh) - 24px));overflow-y:auto;animation:slideup .28s cubic-bezier(.2,.8,.2,1);overscroll-behavior:contain}
+.sheet{background:var(--surface);border-radius:20px 20px 0 0;padding:18px 16px calc(28px + var(--safe-bot));width:100%;max-width:480px;margin:0 auto;max-height:min(92vh, calc(var(--vvh,100vh) - 12px));overflow-y:auto;-webkit-overflow-scrolling:touch;animation:slideup .28s cubic-bezier(.2,.8,.2,1);overscroll-behavior:contain;touch-action:pan-y;box-shadow:0 -12px 40px rgba(0,0,0,.6)}
 @keyframes slideup{from{transform:translateY(100%)}to{transform:none}}
 .sheet-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px}
 .sheet-h h3{font-size:17px;font-weight:600}
@@ -303,8 +308,8 @@ body{font-size:calc(15px*var(--fs))}
       <div class="card-t">📈 Esta semana</div>
       <div id="wk-prog"></div>
       <div class="divider"></div>
-      <button class="btn btn-primary btn-block" onclick="openBridge('adapt')">✨ Adaptar próxima semana con Claude</button>
-      <p class="note mt-9">Genera la semana siguiente según tu progreso real (incluye tu punto de partida e historial). Gratis con tu plan Pro vía copiar/pegar.</p>
+      <button class="btn btn-primary btn-block" onclick="openWeekBridge()">✨ Generar la semana próxima con Claude</button>
+      <p class="note mt-9">Envía a tu entrenador todo lo que la app sabe de ti: sesiones realizadas, lo pautado frente a lo que hiciste de verdad, cargas serie a serie, volumen por grupo muscular, fuerza estimada, cardio y marcadores de Salud. Es el mismo botón que hay en Perfil. Gratis con tu plan Pro, copiando y pegando.</p>
     </div>
     <div class="card">
       <div class="card-t">🧠 Análisis del entrenador</div>
@@ -409,7 +414,8 @@ body{font-size:calc(15px*var(--fs))}
       <div id="week-note-hint" class="note mt-6"></div>
     </div>
     <button class="btn btn-primary btn-block" onclick="buildWeekOffline()">⚡ Generar semana (offline)</button>
-    <button class="btn btn-block mt-8" onclick="openBridge('new')">✨ Generar con Claude (más detallado)</button>
+    <button class="btn btn-primary btn-block mt-8" onclick="openWeekBridge()">✨ Generar la semana próxima con Claude</button>
+    <p class="note mt-8">El botón de Claude es el mismo que encontrarás en Progreso y es el recomendado: tiene en cuenta tu historial, tus cargas reales y tus marcadores de Salud. El generador sin conexión de arriba es el recambio para cuando no puedas usar Claude: reparte ejercicios y progresa las cargas con lo que tengas registrado, pero no lee tus instrucciones ni interpreta tu estado.</p>
     <div class="card">
       <div class="card-t">🗓️ Mesociclo</div>
       <p class="note mb-9">Tu entrenador (Claude) decide la fase del bloque según tu objetivo global y tu progreso, y la propone en cada adaptación semanal. La semana del programa se cuenta desde tu primer registro. Sin descarga programada.</p>
@@ -550,7 +556,7 @@ body{font-size:calc(15px*var(--fs))}
         <div id="cloud-status" style="margin-top:7px;font-size:12px"></div>
       </details>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 76</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 77</div>
     <div id="sw-status" style="text-align:center;font-size:11px;color:var(--warn);margin-top:4px;display:none"></div>
     <div style="text-align:center;margin-top:8px">
       <button class="btn btn-xs" onclick="checkForUpdate()">🔄 Buscar actualización</button>
@@ -1597,7 +1603,7 @@ function sundayRitualHtml(dates,todayKey){
     <ol style="margin:0;padding-left:18px;font-size:calc(13px*var(--fs));color:var(--text2);line-height:1.7">
       ${steps.map(s=>`<li>${s}</li>`).join('')}
     </ol>
-    ${!nextPlanned?`<button class="btn btn-primary" style="margin-top:10px;border-radius:999px;padding:8px 14px" onclick="openBridge('adapt')">✨ Adaptar semana próxima</button>`:''}
+    ${!nextPlanned?`<button class="btn btn-primary" style="margin-top:10px;border-radius:999px;padding:8px 14px" onclick="openWeekBridge()">✨ Generar semana próxima</button>`:''}
   </div>`;
 }
 
@@ -2846,20 +2852,33 @@ Si se combinan varios objetivos, prioriza un esquema de fuerza/hipertrofia para 
     if(H.avgActiveKcal)parts.push(`media ${H.avgActiveKcal} kcal activas/día`);
     if(H.avgSleepH)parts.push(`sueño medio ${H.avgSleepH} h/noche`);
     if(parts.length){
-      // tendencia frente a la actualización anterior
+      /* v77: antes se enviaba el último valor y la diferencia contra el mes anterior. Un salto
+         aislado dice poco: lo que orienta es la TRAYECTORIA. Se manda la serie guardada (hasta 6
+         puntos), que ya estaba en healthLog sin usarse. */
       let trend='';
       const log=S.healthLog||[];
       if(log.length>=2){
-        const cur=log[log.length-1],prev=log[log.length-2];
-        const tp=[];
-        const cmp=(lab,a,b)=>{if(a!=null&&b!=null&&a!==b)tp.push(`${lab}: ${b}→${a}`);};
-        cmp('FC reposo',cur.restingHR,prev.restingHR);cmp('HRV',cur.hrv,prev.hrv);
-        cmp('VO2max',cur.vo2max,prev.vo2max);cmp('% grasa',cur.bodyFat,prev.bodyFat);
-        cmp('pasos',cur.avgSteps,prev.avgSteps);cmp('sueño',cur.avgSleepH,prev.avgSleepH);
-        if(tp.length)trend=`\nTendencia vs mes anterior (${prev.date}→${cur.date}): ${tp.join('; ')}.`;
+        const ult=log.slice(-6);
+        const serie=(lab,campo,uni)=>{
+          const pts=ult.filter(x=>x[campo]!=null);
+          if(pts.length<2)return null;
+          return `${lab}: ${pts.map(x=>`${x.date} ${x[campo]}${uni||''}`).join(' → ')}`;
+        };
+        const lineas=[serie('FC en reposo','restingHR',' lpm'),serie('HRV','hrv',' ms'),
+          serie('VO2max','vo2max',''),serie('% grasa','bodyFat','%'),
+          serie('Pasos/día','avgSteps',''),serie('Sueño','avgSleepH',' h')].filter(Boolean);
+        if(lineas.length)trend=`\nTRAYECTORIA de los últimos meses (cada punto es la media mensual):\n- ${lineas.join('\n- ')}`;
       }
-      healthTxt=`\n\nMARCADORES DE ESTADO (medias mensuales de Apple Salud, valora mi recuperación y ajusta en consecuencia):\n- ${parts.join('\n- ')}${trend}
-Interpretación orientativa: una FC en reposo elevada o una HRV baja respecto a lo habitual sugieren fatiga/estrés → reduce volumen o intensidad esa semana. Un sueño medio por debajo de ~7 h limita la recuperación y la ganancia de músculo → no subas volumen y prioriza descanso. Un VO2max alto indica buena base aeróbica → tolera más acondicionamiento. Si hay tendencia, coméntala brevemente en el análisis. No hagas diagnósticos médicos; trátalo como contexto.`;
+      // peso corporal: la serie más fina que tenemos, y la que gobierna el ajuste calórico
+      const wl=(S.weightLog||[]).slice(-8);
+      let pesoTxt='';
+      if(wl.length>=2){
+        const dif=Math.round((wl[wl.length-1].kg-wl[0].kg)*10)/10;
+        const sem=daysBetween(wl[0].date,wl[wl.length-1].date);
+        pesoTxt=`\nPESO REGISTRADO: ${wl.map(x=>`${x.date} ${x.kg} kg`).join(' → ')}. Variación total ${dif>=0?'+':''}${dif} kg en ${sem!=null?sem:'?'} días.`;
+      }
+      healthTxt=`\n\nMARCADORES DE ESTADO (medias mensuales de Apple Salud; valora mi recuperación y ajusta en consecuencia):\n- ${parts.join('\n- ')}${trend}${pesoTxt}
+Cómo interpretarlo: lo que informa es el CAMBIO respecto a mi propia línea de base, no el valor absoluto ni compararme con nadie. FC en reposo al alza o HRV a la baja de forma sostenida sugieren fatiga acumulada o estrés → recorta volumen o aleja del fallo esa semana. Un sueño medio por debajo de ~7 h limita la recuperación → no subas volumen. Un VO2max estable o al alza indica que la base aeróbica aguanta más acondicionamiento; si cae mientras el volumen de carrera sube, algo no cuadra. Cautela: son medias MENSUALES, así que son una señal lenta y de trazo grueso para decidir una semana concreta; úsalas junto a lo que yo haya registrado de fatiga y esfuerzo, que es información más fresca. Menciona en el análisis cualquier tendencia que veas. No hagas diagnósticos médicos ni interpretaciones clínicas: trátalo como contexto de entrenamiento.`;
     }
   }
 
@@ -2948,6 +2967,26 @@ function saveBaselineFull(){
   el.textContent='✓ Guardado.';setTimeout(()=>{el.textContent='';},3000);
 }
 
+/* v77 · UNA SOLA PUERTA para generar la semana.
+   Había dos botones que hacían casi lo mismo y nadie podía saber en qué se diferenciaban: el de
+   Progreso ("Adaptar próxima semana") mandaba historial y reglas de progresión; el de Perfil
+   ("Generar con Claude") mandaba el mismo prompt SIN historial, pensado para el primer plan de
+   alguien que aún no ha registrado nada. Elegir mal significaba pedirle a Claude que planificara a
+   ciegas teniendo los datos delante. Ahora se decide solo: si hay historial o punto de partida, se
+   adapta; si no hay absolutamente nada, se genera de cero. Y se ofrece saltar a la semana próxima
+   antes de nada, porque planificar sobre la semana en curso casi nunca es lo que se quiere. */
+function openWeekBridge(){
+  saveProfile();
+  if(!S.profile.peso||!S.profile.altura||!S.profile.edad){alert('Completa tus datos en Perfil primero (peso, altura y edad).');return;}
+  if(S.currentWeek===0){
+    const prox=weekDates(1);
+    const rango=prox[0].toLocaleDateString('es-ES',{day:'numeric',month:'short'})+' – '+prox[6].toLocaleDateString('es-ES',{day:'numeric',month:'short'});
+    if(confirm('Ahora mismo estás sobre la semana EN CURSO.\n\n¿Quieres planificar la semana próxima ('+rango+')?\n\nAceptar = semana próxima · Cancelar = seguir en la actual'))
+      {S.currentWeek=1;save();renderCal();}
+  }
+  const hayDatos=(S.history&&S.history.length)||(S.baseline&&S.baseline.trim());
+  openBridge(hayDatos?'adapt':'new');
+}
 function openBridge(mode){
   saveProfile();
   if(mode==='adapt'&&S.history.length===0&&!(S.baseline&&S.baseline.trim())){
@@ -4148,6 +4187,7 @@ function startPlayer(key){
   initAudio();
   P={active:true,sess,exi:0,set:1,phase:'ready',int:null,sec:0,tot:0,key,startedAt:Date.now(),setsDone:0,setLog:[],rec:null};
   document.getElementById('player').classList.add('show');
+  sincronizarFondo(); // v77: el reproductor también congela el fondo
   document.body.style.overflow='hidden';
   acquireWakeLock();
   if(!S.musicMuted)loadPlayerMusic();
@@ -4164,6 +4204,7 @@ function closePlayer(){
   P.active=false;clearInterval(P.int);
   releaseWakeLock();
   document.getElementById('player').classList.remove('show');
+  sincronizarFondo(); // v77
   document.body.style.overflow='';
 }
 const SP_PLAYLISTS={
@@ -4738,9 +4779,32 @@ function stopTimer(){clearInterval(tInt);tRun=false;document.getElementById('tim
 /* ============================================================
    SHEETS, PERFIL, INIT
    ============================================================ */
-function openSheet(id){const el=document.getElementById(id);if(el)el.classList.add('show');}
-function closeSheet(id){const el=document.getElementById(id);if(el)el.classList.remove('show');}
-document.querySelectorAll('.sheet-bg').forEach(bg=>bg.addEventListener('click',e=>{if(e.target===bg)bg.classList.remove('show');}));
+/* v77 · congelar el fondo mientras hay algo encima.
+   Sin esto, en iOS el desplazamiento dentro de la hoja arrastra también la pantalla de debajo en
+   cuanto la hoja llega a su tope, y cuesta saber qué se está moviendo. Se guarda la posición real
+   del scroll para devolverla exactamente al cerrar: fijar <body> lo pondría si no en lo alto. */
+let _scrollCongelado=0;
+function _fondoCongelado(){return document.body.classList.contains('modal-abierto');}
+function congelarFondo(){
+  if(_fondoCongelado())return;
+  _scrollCongelado=window.scrollY||window.pageYOffset||0;
+  document.body.style.top=(-_scrollCongelado)+'px';
+  document.body.classList.add('modal-abierto');
+}
+function descongelarFondo(){
+  if(!_fondoCongelado())return;
+  document.body.classList.remove('modal-abierto');
+  document.body.style.top='';
+  window.scrollTo(0,_scrollCongelado);
+}
+// queda congelado mientras siga abierta CUALQUIER hoja o el reproductor
+function _hayAlgoEncima(){
+  return !!document.querySelector('.sheet-bg.show')||!!document.querySelector('.player.show');
+}
+function sincronizarFondo(){if(_hayAlgoEncima())congelarFondo();else descongelarFondo();}
+function openSheet(id){const el=document.getElementById(id);if(el)el.classList.add('show');sincronizarFondo();}
+function closeSheet(id){const el=document.getElementById(id);if(el)el.classList.remove('show');sincronizarFondo();}
+document.querySelectorAll('.sheet-bg').forEach(bg=>bg.addEventListener('click',e=>{if(e.target===bg){bg.classList.remove('show');sincronizarFondo();}}));
 
 /* ============================================================
    v73 · ACCESIBILIDAD DE LO PULSABLE
