@@ -127,11 +127,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
    pantalla anterior se mueve por detrás, el panel parece flotar y uno pierde la referencia de qué
    está tocando. Se fija <body> a su posición actual y se restituye el desplazamiento al cerrar. */
 body.modal-abierto{position:fixed;left:0;right:0;width:100%;overflow:hidden}
-.sheet-bg{display:none;position:fixed;top:0;left:0;right:0;height:var(--vvh,100%);background:rgba(0,0,0,.72);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);z-index:50;align-items:flex-end;animation:fade .2s;overscroll-behavior:contain;touch-action:none}
+/* v78: con el teclado abierto el panel deja de ser una "hoja" que enseña lo de detrás y pasa a
+   ocupar toda la ventana visible, con fondo opaco. Mientras se escribe no debe haber dos capas
+   visibles compitiendo: la de arriba es la única que existe. */
+body.teclado-abierto .sheet-bg.show{background:var(--bg);backdrop-filter:none;-webkit-backdrop-filter:none}
+body.teclado-abierto .sheet{max-height:100%;height:100%;border-radius:0;max-width:none;padding-top:10px;animation:none;box-shadow:none}
+.sheet-bg{display:none;position:fixed;top:var(--vvt,0px);left:0;right:0;height:var(--vvh,100%);background:rgba(0,0,0,.72);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);z-index:50;align-items:flex-end;animation:fade .2s;overscroll-behavior:contain;touch-action:none}
 .sheet-bg.show{display:flex}
 .sheet{background:var(--surface);border-radius:20px 20px 0 0;padding:18px 16px calc(28px + var(--safe-bot));width:100%;max-width:480px;margin:0 auto;max-height:min(92vh, calc(var(--vvh,100vh) - 12px));overflow-y:auto;-webkit-overflow-scrolling:touch;animation:slideup .28s cubic-bezier(.2,.8,.2,1);overscroll-behavior:contain;touch-action:pan-y;box-shadow:0 -12px 40px rgba(0,0,0,.6)}
 @keyframes slideup{from{transform:translateY(100%)}to{transform:none}}
-.sheet-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px}
+/* v78: la cabecera se queda pegada arriba al desplazarse dentro del panel. Con el teclado abierto
+   y el contenido largo, era fácil perder de vista dónde estabas y cómo cerrar. */
+.sheet-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px;
+  position:sticky;top:0;z-index:3;background:var(--surface);padding:6px 0 10px}
 .sheet-h h3{font-size:17px;font-weight:600}
 .feel{display:flex;gap:8px;flex-wrap:wrap}
 .feel-b{flex:1;padding:11px 4px;border-radius:11px;border:1px solid var(--border);background:var(--surface2);font-size:22px;text-align:center;cursor:pointer;transition:all .12s}
@@ -171,7 +179,7 @@ textarea.bridge-out{font-family:'SF Mono',ui-monospace,monospace;font-size:11px;
 /* v68: en iOS el teclado NO encoge el viewport de diseño, así que un overlay fijo con inset:0
    deja los campos debajo del teclado. Se usa la altura de la ventana VISIBLE (--vvh, que
    actualiza visualViewport en JS) para que el contenido siempre quepa por encima. */
-.player{display:none;position:fixed;top:0;left:0;right:0;height:var(--vvh,100%);z-index:60;background:var(--bg);flex-direction:column;padding-top:var(--safe-top)}
+.player{display:none;position:fixed;top:var(--vvt,0px);left:0;right:0;height:var(--vvh,100%);z-index:60;background:var(--bg);flex-direction:column;padding-top:var(--safe-top)}
 .player.show{display:flex}
 .pl-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)}
 .pl-top h3{font-size:14px;font-weight:600}
@@ -556,7 +564,7 @@ body{font-size:calc(15px*var(--fs))}
         <div id="cloud-status" style="margin-top:7px;font-size:12px"></div>
       </details>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 77</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 78</div>
     <div id="sw-status" style="text-align:center;font-size:11px;color:var(--warn);margin-top:4px;display:none"></div>
     <div style="text-align:center;margin-top:8px">
       <button class="btn btn-xs" onclick="checkForUpdate()">🔄 Buscar actualización</button>
@@ -1052,10 +1060,19 @@ applyFontScale();
    desplaza a la vista el campo que recibe el foco. */
 (function(){
   const vv=window.visualViewport;
+  /* v78: además del alto visible hace falta el DESPLAZAMIENTO de la ventana visible (offsetTop).
+     Con el teclado abierto, iOS desplaza la ventana visible dentro de la de diseño; un overlay
+     fijo en top:0 se queda anclado arriba y deja una franja de la pantalla anterior asomando justo
+     encima del teclado. Esa franja era lo que se veía y lo que se llevaba los toques. */
   function setVH(){
     const h=vv?vv.height:window.innerHeight;
+    const top=vv?(vv.offsetTop||0):0;
+    const kb=Math.max(0,(window.innerHeight-h-top));
     document.documentElement.style.setProperty('--vvh',h+'px');
-    document.documentElement.style.setProperty('--kb', Math.max(0,(window.innerHeight-h))+'px');
+    document.documentElement.style.setProperty('--vvt',top+'px');
+    document.documentElement.style.setProperty('--kb',kb+'px');
+    // con el teclado desplegado los paneles pasan a ocupar TODA la ventana visible
+    document.body.classList.toggle('teclado-abierto',kb>90);
   }
   setVH();
   if(vv){vv.addEventListener('resize',setVH);vv.addEventListener('scroll',setVH);}
@@ -1068,25 +1085,39 @@ applyFontScale();
      desplazamiento: el resultado era que al tocar las repeticiones acababas viendo la explicación
      del ejercicio y el campo se te iba de la pantalla. Ahora se reintenta varias veces y en cada
      recolocación del viewport mientras el campo siga enfocado. */
-  let _campoActivo=null;
+  /* v78: el recolocado se hacía con desplazamiento SUAVE y se repetía cuatro veces más una vez por
+     cada cambio de la ventana visible. Como el teclado dispara varios de esos cambios seguidos, se
+     encadenaban animaciones que se pisaban entre sí: de ahí los saltos y tirones al escribir.
+     Ahora es instantáneo, con margen de tolerancia, y solo se mueve si de verdad hace falta. */
+  let _campoActivo=null,_ajusteEnCurso=null;
   function _asegurarVisible(){
     const el=_campoActivo;
     if(!el||!document.contains(el)||document.activeElement!==el)return;
     try{
       const r=el.getBoundingClientRect();
       const visH=(vv?vv.height:window.innerHeight);
-      if(r.bottom>visH-12||r.top<8)el.scrollIntoView({block:'center',behavior:'smooth'});
+      // margen holgado: si el campo ya se ve entero, no se toca nada
+      if(r.bottom<=visH-16&&r.top>=12)return;
+      const cont=el.closest('.sheet,#player-body,.screen')||null;
+      if(cont&&cont.scrollHeight>cont.clientHeight){
+        const cr=cont.getBoundingClientRect();
+        // dejar el campo a un tercio de la altura útil: cómodo para la vista y para el pulgar
+        cont.scrollTop+=(r.top-cr.top)-Math.max(12,(visH-cr.top)/3);
+      }else{
+        el.scrollIntoView({block:'center',behavior:'auto'});
+      }
     }catch(_){}
   }
+  function _pedirAjuste(){clearTimeout(_ajusteEnCurso);_ajusteEnCurso=setTimeout(_asegurarVisible,90);}
   document.addEventListener('focusin',e=>{
     const el=e.target;
     if(!el||!/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))return;
     if(el.type==='checkbox'||el.type==='radio'||el.type==='range'||el.type==='file')return;
     _campoActivo=el;
-    [120,320,600,900].forEach(t=>setTimeout(_asegurarVisible,t));
+    [150,420].forEach(t=>setTimeout(_asegurarVisible,t));
   });
-  document.addEventListener('focusout',()=>{_campoActivo=null;});
-  if(vv)vv.addEventListener('resize',()=>setTimeout(_asegurarVisible,60));
+  document.addEventListener('focusout',()=>{_campoActivo=null;clearTimeout(_ajusteEnCurso);});
+  if(vv){vv.addEventListener('resize',_pedirAjuste);}
 })();
 
 /* --- Fechas --- */

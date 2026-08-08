@@ -1635,3 +1635,40 @@ leerse junto a la fatiga y el esfuerzo registrados, que son información mucho m
   sobre las medias mensuales, y que una sola medición no fabrique una trayectoria inexistente.
 - CONTRASTE CON v76: el mismo arnés sobre la v76 falla en el congelado del fondo, en el botón único
   y en la trayectoria de marcadores.
+
+## v78: con el teclado abierto solo existe una capa
+- ORIGEN: seguía sin ser fino. Con el panel de actividad nueva abierto y el teclado desplegado
+  asomaba una franja de la pantalla anterior justo encima del teclado, y al tocar ahí se desplazaba
+  ESA pantalla en vez del panel. Además el desplazamiento dentro del panel daba tirones al escribir.
+- CAUSA 1 (la franja): los overlays se anclaban en `top:0` de la ventana de DISEÑO. En iOS el
+  teclado no encoge esa ventana: encoge y **desplaza hacia abajo** la ventana VISIBLE. El overlay
+  se quedaba pegado arriba, más corto que la pantalla, y por debajo de su borde inferior quedaba a
+  la vista —y al alcance del dedo— la pantalla anterior. El bloqueo de fondo de la v77 impedía que
+  el documento se desplazara, pero no que esa franja existiera ni que capturase los toques.
+  ARREGLO: se publica también el desplazamiento de la ventana visible (`--vvt`, de
+  `visualViewport.offsetTop`) y tanto los paneles como el reproductor se anclan a él. Y `--kb`, el
+  hueco real del teclado, pasa a descontarlo: antes se calculaba solo con la altura y se quedaba
+  corto.
+- CAUSA 2 (dos capas compitiendo): un panel inferior semitransparente tiene sentido para elegir algo
+  de un vistazo, no para escribir. ARREGLO: mientras hay teclado, el panel ocupa **toda** la ventana
+  visible con fondo opaco y sin esquinas redondeadas (`body.teclado-abierto`). Mientras se escribe
+  no hay dos capas visibles: solo la de arriba. Al cerrarse el teclado vuelve a ser una hoja normal.
+  La cabecera del panel se queda además fija arriba al desplazarse, para no perder de vista dónde
+  estás ni cómo cerrar.
+- CAUSA 3 (los tirones): el recolocado del campo enfocado usaba desplazamiento SUAVE y se repetía
+  cuatro veces más una vez por cada cambio de la ventana visible; como el teclado dispara varios
+  seguidos, se encadenaban animaciones que se pisaban entre sí. ARREGLO: reajuste instantáneo,
+  agrupado (una sola vez por ráfaga), con margen de tolerancia —si el campo ya se ve entero no se
+  toca nada— y desplazando el CONTENEDOR del panel en vez de la página, dejando el campo a un tercio
+  de la altura útil.
+- VALIDACIÓN: 348 comprobaciones en verde, 0 fallos, en Madrid, UTC y Sídney. Las 21 nuevas usan una
+  ventana visible SIMULADA (altura y desplazamiento, como hace iOS con el teclado) y comprueban:
+  publicación de `--vvh`, `--vvt` y `--kb` con y sin teclado, activación y desactivación del modo
+  teclado, que el hueco del teclado descuente el desplazamiento, que las reglas de anclaje, fondo
+  opaco, alto completo, cabecera fija y acotación de gestos están donde deben, que el reajuste ya no
+  es suave ni se encadena, y que enfocar un campo con el teclado abierto no da error y deja el fondo
+  congelado.
+- CONTRASTE CON v77: el mismo arnés sobre la v77 falla en todo lo anterior, incluido el cálculo del
+  hueco del teclado (408 px en vez del real).
+- LÍMITE HONESTO: esto es geometría de iOS y aquí no hay navegador. El arnés comprueba la lógica y
+  las reglas, no el tacto. Queda por confirmar en el iPhone.
