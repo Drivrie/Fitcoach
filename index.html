@@ -564,7 +564,7 @@ body{font-size:calc(15px*var(--fs))}
         <div id="cloud-status" style="margin-top:7px;font-size:12px"></div>
       </details>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 78</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 79</div>
     <div id="sw-status" style="text-align:center;font-size:11px;color:var(--warn);margin-top:4px;display:none"></div>
     <div style="text-align:center;margin-top:8px">
       <button class="btn btn-xs" onclick="checkForUpdate()">🔄 Buscar actualización</button>
@@ -2942,6 +2942,7 @@ PRINCIPIOS BASADOS EN EVIDENCIA (referencias comprobadas una a una contra su DOI
   (b) AMRAP / EMOM / circuito (varios movimientos por ronda): usa un objeto de ejercicio CON ESTA FORMA EXACTA, que la app guía con cronómetro y conteo de rondas:
      {"nombre":"AMRAP 12 min","tipo":"amrap","duracion_min":12,"descanso_seg":120,"movimientos":[{"nombre":"Flexiones","reps":"10"},{"nombre":"Sentadilla goblet","reps":"15"},{"nombre":"Burpees","reps":"8"}],"descripcion":"Tantas rondas como puedas en 12 min; anota las rondas.","musculos":"cuerpo completo"}
      - "tipo": "amrap" | "emom" | "circuito". Para amrap/emom usa "duracion_min" (tope de tiempo). Para circuito usa "rondas" (nº fijo). "descanso_seg" es el descanso TRAS el bloque.
+     - En los CIRCUITOS añade "descanso_rondas_seg" con el descanso ENTRE rondas (p. ej. 45-90 s según intensidad). La app lo cronometra al cerrar cada vuelta; si no lo indicas usará 60 s.
      - "movimientos": lista ordenada con "nombre" y "reps" de cada movimiento de la ronda.
   Estos formatos son variación y estímulo metabólico; para hipertrofia la base sigue siendo series×reps cerca del fallo. Como máximo 1 bloque de este tipo por sesión.
 - CARDIO PRESCRITO: en "recomendacion_cardio" da instrucciones concretas y accionables para los días libres y el fin de semana (tipo de actividad, duración, e intensidad orientada por FC o sensación: p. ej. "carrera Z2 cómoda 35-40 min, FC ~125-140" o "paseo ligero 60 min"), coherentes con el objetivo y la fatiga semanal, en lugar de una frase genérica.
@@ -3258,6 +3259,7 @@ function cleanEx(e){
   if(isBlock(o)){ // bloque por tiempo/rondas: no lleva series ni descanso entre series
     if(o.duracion_min!=null)o.duracion_min=cleanInt(o.duracion_min,1,90,10);
     if(o.rondas!=null)o.rondas=cleanInt(o.rondas,1,30,3);
+    if(o.descanso_rondas_seg!=null)o.descanso_rondas_seg=cleanInt(o.descanso_rondas_seg,0,600,60); // v79
   }else{
     o.series=cleanInt(o.series,1,20,3);
     // 60 s cuando no viene o no es un número: es el valor que ya usa la sesión guiada y del que
@@ -4225,6 +4227,7 @@ function startPlayer(key){
   renderPlayer();
 }
 function closePlayer(){
+  clearInterval(P.rInt);P.rInt=null; // v79
   /* v74: salir a medias ya no pierde nada (desde la v71 cada serie se guarda al anotarla), pero
      conviene decirlo: hasta ahora el usuario no sabía si al cerrar perdía lo registrado. */
   if(P.active&&P.setLog&&P.setLog.length&&!P._terminando){
@@ -4286,7 +4289,12 @@ function toggleMusic(){
 
 function renderPlayer(){
   const ex=P.sess.exercises[P.exi];
-  if(isBlock(ex))return renderBlock();
+  /* v79: el descanso ANTERIOR a un bloque no se veía. Al terminar el último ejercicio normal,
+     beginRest() avanzaba el índice, ponía la fase en 'rest' y llamaba a renderPlayer(); pero esta
+     función comprobaba isBlock() ANTES que la fase, así que se pintaba la portada del bloque y la
+     cuenta atrás quedaba corriendo por debajo, invisible: solo se oían los pitidos del final. La
+     fase manda sobre el tipo de ejercicio. */
+  if(isBlock(ex)&&P.phase!=='rest')return renderBlock();
   const total=P.sess.exercises.length;
   const repSecs=parseReps(ex.reps);
   const pct=Math.round(((P.exi)/total)*100);
@@ -4294,8 +4302,17 @@ function renderPlayer(){
   if(P.phase==='rest'){
     // ¿este descanso da paso a un ejercicio NUEVO (serie 1) o a otra serie del mismo?
     const nuevoEj = P.set===1;
+    const proxBloque = isBlock(ex); // v79
     let preview='';
-    if(nuevoEj){
+    if(nuevoEj&&proxBloque){
+      // v79: un bloque no tiene series ni repeticiones; se anuncia por lo que es
+      preview=`<div style="margin-top:14px;padding:12px;background:rgba(255,255,255,.08);border-radius:12px">
+        <div style="font-size:calc(12px*var(--fs));color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">A continuación</div>
+        <div style="font-weight:700;font-size:calc(16px*var(--fs))">${esc(ex.nombre)}</div>
+        <div class="pl-cue mt-4">${_fmtBlock(ex,blockType(ex))}</div>
+        <div class="mt-10">${_movList(ex)}</div>
+      </div>`;
+    } else if(nuevoEj){
       const errs=ex.errores&&ex.errores.length?ex.errores:(ERRORS[figKey(ex.nombre)]||[]);
       preview=`<div style="margin-top:14px;padding:12px;background:rgba(255,255,255,.08);border-radius:12px">
         <div style="font-size:calc(12px*var(--fs));color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">A continuación</div>
@@ -4309,7 +4326,7 @@ function renderPlayer(){
     }
     mid=`<div class="pl-phase c-free">DESCANSO</div>
       <div class="pl-timer" id="pl-timer">${fmtSec(P.sec)}</div>
-      <div class="pl-next">${nuevoEj?'Prepárate para el siguiente ejercicio':'Siguiente: serie '+P.set+' de '+ex.series}</div>
+      <div class="pl-next">${proxBloque?'Prepárate para el bloque':nuevoEj?'Prepárate para el siguiente ejercicio':'Siguiente: serie '+P.set+' de '+ex.series}</div>
       ${preview}
       <button class="btn btn-block" style="margin-top:14px;background:rgba(255,255,255,.15);border-color:transparent;color:#fff" onclick="skipRest()">Saltar descanso →</button>
       ${navEjercicios()}`;
@@ -4502,7 +4519,7 @@ function navEjercicios(){
     <button class="btn btn-sm flex1" onclick="skipExercise()">${P.exi>=total-1?'Terminar ▶':'Saltar ▶'}</button>
   </div>`;
 }
-function _pararCuenta(){clearInterval(P.int);P.int=null;}
+function _pararCuenta(){clearInterval(P.int);P.int=null;clearInterval(P.rInt);P.rInt=null;/* v79 */}
 function prevExercise(){
   if(!P.active||!P.sess||P.exi<=0)return;
   _pararCuenta();
@@ -4556,6 +4573,22 @@ function renderBlock(){
     const counter=t==='circuito'
       ? `<div class="pl-next">Ronda <b class="c-stand">${Math.min(b.rounds+1,b.totalRounds)}</b> de ${b.totalRounds}</div>`
       : `<div class="pl-next">Rondas completadas: <b class="c-stand">${b.rounds}</b></div>`;
+    if(b.resting){ // v79: descanso entre rondas, con su cuenta atrás bien visible
+      mid=`<div class="pl-phase c-stand">DESCANSO ENTRE RONDAS</div>
+        <div class="pl-timer" id="pl-rest">${fmtSec(b.restLeft)}</div>
+        <div class="pl-next">Acabas la ronda <b class="c-stand">${b.rounds}</b> de ${b.totalRounds} · te quedan ${b.totalRounds-b.rounds}</div>
+        <div class="pl-cue mt-6">Descanso entre rondas: ${b.restTot}s${b.restDeclarado?'':' (no venía indicado en la sesión)'}</div>
+        <div class="pl-cue mt-4">Tiempo total del bloque: ${fmtSec(b.elapsed||0)} — sigue corriendo</div>
+        <div class="mt-10">${_movList(ex)}</div>
+        <button class="btn btn-primary btn-block mt-12" onclick="skipRoundRest()">Saltar descanso → ronda ${b.rounds+1}</button>
+        <button class="btn btn-block mt-8" style="background:rgba(255,255,255,.15);border-color:transparent;color:#fff" onclick="endBlock(false)">Terminar bloque</button>`;
+      document.getElementById('player-body').innerHTML=`
+        <div class="pl-prog"><div class="pl-prog-i" style="width:${pct}%"></div></div>
+        <div class="pl-count">Ejercicio ${P.exi+1} de ${total}</div>
+        <div class="pl-name">${esc(ex.nombre)}</div>
+        <div class="pl-mid">${mid}</div>`;
+      return;
+    }
     /* v76: el circuito era el único bloque sin reloj. AMRAP y EMOM van contra un tiempo fijo, así
        que su cuenta es atrás; el circuito va contra un número de rondas, así que lo útil es el
        tiempo TRANSCURRIDO: es lo que permite comparar el mismo circuito de una semana a otra y lo
@@ -4632,12 +4665,51 @@ function runBlockTimer(){
       if(navigator.vibrate)navigator.vibrate([120,60,120,60,200]);beep(1600,0.4,0.95);endBlock(true);}
   },250);
 }
+/* v79: el descanso ENTRE RONDAS del circuito no existía. Al pulsar "Ronda completada" se pasaba
+   directamente a la ronda siguiente y el único descanso que aparecía era el del final del bloque,
+   cuando ya estaban todas hechas. En un circuito metabólico el descanso entre vueltas es parte de
+   la prescripción, no un extra. Se usa "descanso_rondas_seg" si la sesión lo declara; si no, 60 s,
+   diciéndolo. El cronómetro de tiempo total sigue corriendo durante el descanso: mide la duración
+   real del bloque, descansos incluidos, que es lo comparable de una semana a otra. */
+function roundRestSecs(ex){
+  const v=+((ex&&ex.descanso_rondas_seg)||0);
+  return {seg:(v>0?Math.round(v):60),declarado:v>0};
+}
 function blockRound(){
-  if(!P.blk||P.blk.paused)return;
+  if(!P.blk||P.blk.paused||P.blk.resting)return;
   P.blk.rounds++;beep(1000,0.15,0.7);if(navigator.vibrate)navigator.vibrate(30);
   if(P.blk.type==='circuito'&&P.blk.rounds>=P.blk.totalRounds){endBlock(true);return;}
+  if(P.blk.type==='circuito'){startRoundRest();return;}
   renderBlock();
 }
+function startRoundRest(){
+  const ex=P.sess.exercises[P.exi];
+  const r=roundRestSecs(ex);
+  P.blk.resting=true;P.blk.restDeclarado=r.declarado;P.blk.restTot=r.seg;P.blk.restLeft=r.seg;
+  renderBlock();
+  clearInterval(P.rInt);
+  P.rEndAt=Date.now()+r.seg*1000;
+  let last=r.seg;
+  P.rInt=setInterval(()=>{
+    if(!P.blk||!P.blk.resting)return;
+    if(P.blk.paused){P.rEndAt=Date.now()+P.blk.restLeft*1000;return;}
+    const left=Math.max(0,Math.round((P.rEndAt-Date.now())/1000));
+    if(left!==last){
+      if(left>0&&left<=3&&last>left)countdownCue(left);
+      last=left;P.blk.restLeft=left;
+      const el=document.getElementById('pl-rest');if(el)el.textContent=fmtSec(left);
+    }
+    if(left<=0)endRoundRest();
+  },250);
+}
+function endRoundRest(){
+  clearInterval(P.rInt);P.rInt=null;
+  if(!P.blk)return;
+  P.blk.resting=false;
+  countdownCue(0);if(navigator.vibrate)navigator.vibrate([100,50,100]);
+  renderBlock();
+}
+function skipRoundRest(){endRoundRest();}
 // v71: al pausar se congela el tiempo restante y al reanudar se recalcula el instante de fin
 // (con la cuenta anclada al reloj, mantener la pausa "por ticks" habría descontado la pausa).
 function pauseBlock(){
@@ -4652,6 +4724,7 @@ function pauseBlock(){
   }
 }
 function endBlock(auto){
+  clearInterval(P.rInt);P.rInt=null;if(P.blk)P.blk.resting=false; // v79
   clearInterval(P.int);
   const ex=P.sess.exercises[P.exi];
   const t=(P.blk&&P.blk.type)||blockType(ex);

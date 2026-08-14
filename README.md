@@ -1672,3 +1672,41 @@ leerse junto a la fatiga y el esfuerzo registrados, que son información mucho m
   hueco del teclado (408 px en vez del real).
 - LÍMITE HONESTO: esto es geometría de iOS y aquí no hay navegador. El arnés comprueba la lógica y
   las reglas, no el tacto. Queda por confirmar en el iPhone.
+
+## v79: los dos descansos que faltaban en los circuitos
+- ORIGEN: uso real. El circuito mostraba el tiempo total, pero la cuenta atrás de descanso solo
+  aparecía al terminar TODAS las rondas, no al cerrar cada una. Y el descanso del ejercicio anterior
+  al bloque no se veía: se pasaba directo a la portada del circuito, aunque los pitidos del final
+  sonaban igual.
+
+### 1 · Descanso ENTRE rondas (no existía)
+`blockRound()` sumaba la vuelta y volvía a pintar la misma pantalla: el único descanso del circuito
+era el de después del bloque. En un circuito metabólico el descanso entre vueltas es parte de la
+prescripción, no un extra. Ahora al cerrar una ronda aparece **DESCANSO ENTRE RONDAS** con su cuenta
+atrás, cuántas vueltas quedan y la lista de movimientos para repasar, y al agotarse vuelve solo a la
+ronda siguiente. Se puede saltar. La última ronda no abre descanso: cierra el bloque, como antes.
+- Duración: campo nuevo `descanso_rondas_seg`, documentado en el prompt para que Claude lo prescriba
+  (45-90 s según intensidad) y saneado como el resto. Si no viene, 60 s **diciéndolo**, con el mismo
+  criterio que ya se aplica en el resto de la app.
+- El cronómetro de tiempo total del bloque **sigue corriendo durante el descanso**, a propósito: mide
+  la duración real del circuito, descansos incluidos, que es lo comparable de una semana a otra.
+- No se pueden sumar rondas mientras se descansa, para no falsear el conteo con un toque accidental.
+
+### 2 · El descanso ANTERIOR a un bloque era invisible
+CAUSA: `renderPlayer()` comprobaba `isBlock()` ANTES que la fase. Al terminar el último ejercicio
+normal, `beginRest()` avanzaba el índice, ponía la fase en «descanso» y pintaba… la portada del
+bloque, porque el ejercicio ya apuntado era el bloque. La cuenta atrás corría por debajo, invisible:
+de ahí que se oyeran los pitidos del final sin haber visto nunca el reloj. ARREGLO: la fase manda
+sobre el tipo de ejercicio. Además la vista previa del descanso ahora sabe describir un bloque —un
+bloque no tiene series ni repeticiones— y anuncia «Prepárate para el bloque» con su formato, rondas
+y lista de movimientos.
+
+- VALIDACIÓN: 383 comprobaciones en verde, 0 fallos, en Madrid, UTC y Sídney. Las 35 nuevas cubren:
+  aparición del descanso al cerrar cada ronda con el valor declarado, conteo correcto de vueltas
+  restantes, cronómetro total que no se detiene, bloqueo de rondas durante el descanso, fin
+  automático y vuelta a la ronda siguiente, salto manual, que la última ronda cierre el bloque y
+  conserve el descanso posterior de 120 s, caída a 60 s avisada cuando no viene declarado, que un
+  AMRAP no abra descansos entre rondas por ir contra reloj, y el descanso previo al bloque con su
+  reloj visible, su valor pautado, el anuncio del bloque y su vista previa sin series inventadas.
+- CONTRASTE CON v78: el mismo arnés sobre la v78 se detiene en cuanto busca el salto del descanso
+  entre rondas, porque esa función no existe allí.
