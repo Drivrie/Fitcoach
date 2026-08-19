@@ -189,6 +189,13 @@ textarea.bridge-out{font-family:'SF Mono',ui-monospace,monospace;font-size:11px;
   background:rgba(255,255,255,.12);color:#fff;font-size:24px;font-weight:700;line-height:1;cursor:pointer;
   -webkit-user-select:none;user-select:none;touch-action:manipulation}
 .pl-step:active{background:rgba(255,255,255,.24)}
+/* v80: esfuerzo real de la serie. Botones anchos porque se pulsan con las manos ocupadas. */
+.esf-b{flex:1;min-width:0;height:42px;border-radius:12px;border:1px solid rgba(255,255,255,.25);
+  background:rgba(255,255,255,.10);color:#fff;font-size:calc(12px*var(--fs));font-weight:600;
+  line-height:1.15;cursor:pointer;padding:0 4px;-webkit-user-select:none;user-select:none;
+  touch-action:manipulation}
+.esf-b:active{background:rgba(255,255,255,.24)}
+.esf-b.esf-on{background:rgba(255,255,255,.38);border-color:#fff}
 .pl-nav{display:flex;gap:8px;margin-top:14px}
 .pl-nav .btn{background:rgba(255,255,255,.12);border-color:transparent;color:#fff}
 .pl-nav .btn[disabled]{opacity:.35}
@@ -397,6 +404,11 @@ body{font-size:calc(15px*var(--fs))}
       <div class="field"><label>Nota (opcional)</label><textarea id="limit-nota" placeholder="Ej: molestia en el hombro derecho al elevar por encima de la cabeza" class="u-mh60"></textarea></div>
     </div>
     <div class="card">
+      <div class="card-t">🍽️ Alimentación</div>
+      <p class="note mb-9">Alergias, intolerancias, lo que no comes y lo que no vas a cocinar. Sin esto el menú sale genérico. Ej: "sin lactosa; no como pescado; nada que lleve más de 15 min; desayuno siempre fuera de casa". La app no registra lo que comes: el menú es una propuesta orientativa, no un objetivo al gramo.</p>
+      <div class="field"><label>Preferencias y restricciones (opcional)</label><textarea id="dieta-nota" placeholder="Ej: sin lactosa, vegetariano, no me gusta el pescado azul, presupuesto ajustado" class="u-mh60"></textarea></div>
+    </div>
+    <div class="card">
       <div class="card-t">Configuración</div>
       <div class="field"><label>Nivel</label><select id="nivel">
         <option value="principiante">Principiante</option><option value="intermedio" selected>Intermedio</option><option value="avanzado">Avanzado</option>
@@ -426,7 +438,7 @@ body{font-size:calc(15px*var(--fs))}
     <p class="note mt-8">El botón de Claude es el mismo que encontrarás en Progreso y es el recomendado: tiene en cuenta tu historial, tus cargas reales y tus marcadores de Salud. El generador sin conexión de arriba es el recambio para cuando no puedas usar Claude: reparte ejercicios y progresa las cargas con lo que tengas registrado, pero no lee tus instrucciones ni interpreta tu estado.</p>
     <div class="card">
       <div class="card-t">🗓️ Mesociclo</div>
-      <p class="note mb-9">Tu entrenador (Claude) decide la fase del bloque según tu objetivo global y tu progreso, y la propone en cada adaptación semanal. La semana del programa se cuenta desde tu primer registro. Sin descarga programada.</p>
+      <p class="note mb-9">Tu entrenador (Claude) decide la fase del bloque según tu objetivo global y tu progreso, y la propone en cada adaptación semanal. La semana del programa se cuenta desde tu primer registro. Nunca hay semanas de descanso: si tus datos lo piden, lo que baja es el volumen (mismos días, un 40-50% menos de series), y tu entrenador te explica por qué.</p>
       <div id="meso-info" style="font-size:calc(13px*var(--fs));font-weight:600;margin-bottom:6px"></div>
       <div id="meso-focus-view" style="font-size:calc(13px*var(--fs));color:var(--text2);margin-bottom:10px"></div>
       <details>
@@ -564,7 +576,7 @@ body{font-size:calc(15px*var(--fs))}
         <div id="cloud-status" style="margin-top:7px;font-size:12px"></div>
       </details>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 79</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 80</div>
     <div id="sw-status" style="text-align:center;font-size:11px;color:var(--warn);margin-top:4px;display:none"></div>
     <div style="text-align:center;margin-top:8px">
       <button class="btn btn-xs" onclick="checkForUpdate()">🔄 Buscar actualización</button>
@@ -812,7 +824,7 @@ function areaLabel(code){const f=PAIN_AREAS.find(a=>a[0]===code);return f?f[1]:c
    Hipertrofia: ~10+ series/grupo muscular/semana, cerca del fallo (1-3 RIR), no al fallo absoluto.
    Frecuencia: cada grupo muscular ≥2x/semana. Peso corporal y bandas son válidos. */
 const GOALS={
-  fuerza:{reps:'3-6',sets:[3,4],rest:[150,210],rir:'2-3',carga:'≥80% 1RM',tempo:'2-0-1',split:'fullbody-heavy',cardio:'Caminata o bici suave en días libres para favorecer la recuperación.'},
+  fuerza:{reps:'3-6',sets:[3,4],rest:[150,210],rir:'3-4',carga:'≥80% 1RM',tempo:'2-0-1',split:'fullbody-heavy',cardio:'Caminata o bici suave en días libres para favorecer la recuperación.'},
   musculo:{reps:'6-12',sets:[3,4],rest:[90,150],rir:'1-3',carga:'67-80% 1RM',tempo:'2-1-2',split:'ppl',cardio:'1-2 sesiones de cardio moderado (zona 2) en días libres.'},
   grasa:{reps:'10-15',sets:[3,3],rest:[60,90],rir:'1-2',carga:'moderada',tempo:'2-0-1',split:'fullbody-circuito',cardio:'HIIT 15-20 min o carrera continua. La pérdida de grasa la dirige sobre todo la dieta; la fuerza preserva el músculo.'},
   resistencia:{reps:'15-20',sets:[2,3],rest:[40,60],rir:'2-3',carga:'ligera-moderada',tempo:'1-0-1',split:'fullbody-circuito',cardio:'Carrera o bici de larga duración a ritmo conversacional.'},
@@ -981,6 +993,12 @@ function initState(){
   if(S.profile.limitacionesNota==null)S.profile.limitacionesNota='';
   // v55: histórico de peso para calcular tendencia semanal (independiente de S.profile.peso, que es solo el valor actual)
   if(!S.weightLog)S.weightLog=[];
+  /* v80: la nota semanal vivía SOLO en el textarea. Si iOS descartaba la PWA en segundo plano o
+     entraba una versión nueva del service worker, la instrucción del usuario desaparecía sin
+     avisar y el mensaje para Claude salía sin ella. Ahora se persiste. */
+  if(S.weekNote==null)S.weekNote='';
+  // v80: restricciones y preferencias de alimentación (el menú se generaba a ciegas)
+  if(S.profile.dietaNota==null)S.profile.dietaNota='';
 }
 // deduce la fecha de inicio: lunes de la semana del registro/plan más antiguo
 function inferProgramStart(){
@@ -2530,13 +2548,21 @@ function equipLabels(equipos){
 const NOTE_MAX=600;
 function userNoteFrom(id){
   const el=document.getElementById(id);
-  if(!el)return '';
-  return String(el.value||'').trim().slice(0,NOTE_MAX);
+  let v=el?String(el.value||''):'';
+  // v80: la nota semanal es la única que se persiste; si el campo está vacío o aún no se ha
+  // pintado, manda lo guardado en vez de perder la instrucción
+  if(!v.trim()&&id==='week-note')v=String((typeof S!=='undefined'&&S&&S.weekNote)||'');
+  return v.trim().slice(0,NOTE_MAX);
 }
 // Bloque para el prompt de Claude (vacío si no hay nota)
 function noteForPrompt(txt){
   if(!txt)return '';
-  return `\n- INSTRUCCIONES ADICIONALES DEL USUARIO (tienen prioridad sobre las preferencias generales; si algo contradice al resto del mensaje, haz caso a esto y explica brevemente el ajuste en "meta"): "${txt}"`;
+  /* v80: antes esta nota tenía prioridad sobre TODO el mensaje, lo que incluía el bloque de
+     limitaciones y lesiones, la fatiga y los marcadores de salud. Una petición del tipo "esta
+     semana quiero sentadillas pesadas todos los días" pisaba formalmente una lesión declarada.
+     Ahora la prioridad está acotada a lo que es preferencia, no a lo que es seguridad. */
+  return `\n- INSTRUCCIONES ADICIONALES DEL USUARIO: "${txt}"
+  ALCANCE DE ESTAS INSTRUCCIONES: tienen prioridad sobre mis PREFERENCIAS (estilo, material, reparto de días, elección de ejercicios); explica brevemente el ajuste en "meta". NO tienen prioridad sobre las limitaciones y lesiones declaradas, el dolor registrado, la fatiga acumulada, los marcadores de salud ni ningún criterio de seguridad. Si lo que pido choca con eso, NO lo hagas: sustitúyelo por la alternativa más cercana que sí sea segura y dime en "meta" qué he pedido, por qué no te parece buena idea y qué has puesto en su lugar. Eres el entrenador: no me des la razón por comodidad.`;
 }
 // Aviso bajo el campo cuando se usa la vía offline
 function showNoteHint(hintId,txt){
@@ -2677,13 +2703,21 @@ function complianceFor(key){
     const real=ser.map(x=>`${x.kg!=null&&x.kg!==''?x.kg+'kg':(x.banda?'banda '+x.banda:'pc')}×${x.reps}`).join(', ');
     const rango=repRange(ex.reps);
     const reps=ser.map(x=>toNum(String(x.reps))).filter(v=>!isNaN(v));
+    const esf=esfResumen(ser); // v80
     let estado='completado';
     if(ser.length<(+ex.series||ser.length))estado=`series incompletas (${ser.length}/${ex.series})`;
     else if(rango&&reps.length){
-      if(reps.every(r=>r>=rango[1]))estado='tope del rango en todas las series → toca subir carga';
+      if(reps.every(r=>r>=rango[1])){
+        /* v80: llegar al tope del rango solo justifica subir carga si quedaba margen. Si las
+           series se cerraron al límite, subir es la vía rápida al estancamiento. */
+        estado=esf==='al límite'
+          ? 'tope del rango pero series al límite → consolidar esta carga, no subir todavía'
+          : 'tope del rango en todas las series → toca subir carga';
+      }
       else if(reps.some(r=>r<rango[0]))estado='por debajo del rango en alguna serie → mantener o bajar';
+      else if(esf==='fácil')estado='dentro del rango y con margen de sobra → puedes subir carga o repeticiones';
     }
-    filas.push({nombre:ex.nombre,plan,real,estado});
+    filas.push({nombre:ex.nombre,plan,real:real+(esf?` · esfuerzo ${esf}`:''),estado});
   });
   return filas.length?{key,titulo:sess.title,filas}:null;
 }
@@ -2805,14 +2839,32 @@ function buildPrompt(mode){
     ? `\n- LIMITACIONES/LESIONES (respeta esto, es importante): ${areas.size?'evita o adapta con cuidado los ejercicios de mayor carga/impacto para: '+[...areas].map(areaLabel).join(', ')+'. ':''}${(p.limitacionesNota||'').trim()?'Nota del usuario: "'+p.limitacionesNota.trim()+'". ':''}Propón alternativas de menor riesgo para esas zonas (isométricos, rango parcial, menor carga) en vez de omitir directamente el patrón de movimiento, salvo que el dolor sea agudo. Esto es orientativo, no un diagnóstico médico.`
     : '';
   const ordDays=arr=>DAYS.filter(d=>arr.includes(d));
+  /* v80: el prompt mandaba solo los códigos de día, así que Claude no podía ver que L-M-X eran
+     tres días seguidos. Ahora va la fecha de cada uno para que pueda espaciar los estímulos. */
+  const _wdArr=weekDates(S.currentWeek);
+  const conFecha=arr=>arr.map(c=>{const i=DAYS.indexOf(c);
+    return i>=0?`${c} (${DAY_NAMES[i]} ${_wdArr[i].getDate()}/${_wdArr[i].getMonth()+1})`:c;}).join(', ');
+  /* v80: edad y sexo se enviaban en el perfil y ninguna regla los usaba (la edad solo alimentaba
+     la FCmáx). Aquí se convierten en criterio de programación. */
+  let espTxt='';
+  const _edad=toNum(p.edad);
+  if(!isNaN(_edad)&&_edad>=55){
+    espTxt+=`\n- EDAD (${_edad} años): incluye cada semana algo de trabajo de POTENCIA (fase concéntrica intencionadamente rápida en 1-2 ejercicios seguros, lejos del fallo) y 3-5 min de EQUILIBRIO / apoyo monopodal. Con la edad se pierde potencia antes que fuerza máxima, y el equilibrio es lo que evita caídas. Mantén también algún impacto suave, si no hay contraindicación, por la salud ósea.`;
+  }
+  if(String(p.sexo||'').toLowerCase().indexOf('mujer')===0){
+    espTxt+=`\n- SEXO: soy mujer. NO programes por fases del ciclo menstrual: la evidencia disponible es demasiado débil e inconsistente para prescribir por fase. Lo razonable es autorregular por síntomas, igual que con cualquier otra señal de fatiga que yo registre. Los criterios de carga, volumen y proximidad al fallo son los mismos que para un hombre; no rebajes la exigencia por el sexo.`;
+  }
   const fullDays=ordDays(S.aiDays.filter(d=>!S.briefDays.includes(d)));
   const briefDays=ordDays(S.aiDays.filter(d=>S.briefDays.includes(d)));
   const freeOrd=ordDays(S.freeDays);
   const cfg=`Objetivos (combinar de forma coherente): ${objLabels}. Nivel: ${p.nivel}. Equipo disponible: ${eqLabels}.${eqDetail}${coachExtrasFor(p.equipos,fmt(weekDates(S.currentWeek)[0]))}${limitTxt}${noteForPrompt(userNoteFrom('week-note'))}
-Días de fuerza COMPLETA (~${p.minutos} min, cuerpo entero): ${fullDays.join(', ')||'ninguno'}.
-Días de fuerza BREVE (15-20 min, complementaria porque ese día también hago carrera): ${briefDays.join(', ')||'ninguno'}.
-Días de entrenamiento libre (cardio/paseo): ${freeOrd.join(', ')||'ninguno'}.
-Para los días de fuerza breve: 3-4 ejercicios enfocados y de menor volumen, pensados para hacerse el mismo día que la carrera; prioriza tren superior o core y evita cargar piernas en exceso si ese día hay carrera intensa.
+Días de fuerza COMPLETA (~${p.minutos} min): ${conFecha(fullDays)||'ninguno'}.
+Días de fuerza BREVE (15-20 min, complementaria porque ese día también hago carrera): ${conFecha(briefDays)||'ninguno'}.
+Días de entrenamiento libre (cardio/paseo): ${conFecha(freeOrd)||'ninguno'}.
+- ESTRUCTURA DE LA SEMANA (decídela TÚ): elige el esquema de los días completos —cuerpo entero, superior/inferior, empuje-tirón-pierna u otro— según cuántos días son, los minutos disponibles y mi objetivo, y justifícalo en "mesociclo.justificacion". Con 3 días completos o menos, prioriza cuerpo entero. Con 4 o más, valora repartir por bloques en vez de tocar todos los grupos todos los días. Fíjate en las FECHAS de arriba: si hay días consecutivos, no repitas en ellos los mismos grupos con carga alta; deja ~48 h entre estímulos fuertes del mismo grupo.
+- ORDEN DENTRO DE LA SESIÓN: primero los básicos multiarticulares y lo más técnico o exigente; después accesorios y core. Lo unilateral, después de su equivalente bilateral. Nunca dejes para el final el ejercicio en el que espero progresar en carga.
+- PRESUPUESTO DE TIEMPO (obligatorio; la app lo comprueba y me avisa si no cuadra): la sesión tiene que CABER en los minutos indicados. Estímalo así: minutos ≈ calentamiento + Σ(series × (duración de la serie + descanso_seg)) / 60, contando ~3,5 s por repetición. Si no cabe, quita ejercicios, baja series o acorta descansos; no me entregues una sesión que se pase más de un 10%.
+Para los días de fuerza breve: 3-4 ejercicios enfocados y de menor volumen, pensados para hacerse el mismo día que la carrera; prioriza tren superior o core y evita cargar piernas en exceso si ese día hay carrera intensa. Di además en "meta" si conviene hacer la fuerza ANTES o DESPUÉS de la carrera y cuánta separación recomiendas: si la prioridad de ese día es la carrera, primero la carrera; si la prioridad es la fuerza, primero la fuerza; y siempre que se pueda, sepáralas 6 h o más.
 Si se combinan varios objetivos, prioriza un esquema de fuerza/hipertrofia para el entrenamiento y ajusta SOLO la nutrición para el componente de composición corporal (p. ej. músculo+grasa = recomposición: déficit ligero con proteína alta; grasa = déficit; músculo/fuerza = superávit ligero).`;
   // contexto de mesociclo (semana del programa que se va a planificar)
   let mesoTxt='';
@@ -2827,7 +2879,8 @@ Si se combinan varios objetivos, prioriza un esquema de fuerza/hipertrofia para 
 - ACTÚA COMO ENTRENADOR PROFESIONAL: TÚ decides el enfoque del mesociclo en función de mi objetivo global y mi progreso; no me lo preguntes. Devuélvelo en el campo "mesociclo".
 - Si sigo dentro del mismo bloque (semana ${mi.wInBlock} de ${mi.len}), mantén el enfoque y progresa el volumen/carga de forma ascendente respecto a la semana anterior.
 - Si he llegado al final del bloque (semana ${mi.wInBlock} = ${mi.len}, o si el progreso/fatiga lo aconsejan), propón el enfoque del SIGUIENTE bloque, explicándolo en "mesociclo.justificacion".
-- IMPORTANTE: NO programes semanas de descarga completa (entreno todas las semanas); gestiona la fatiga con volumen y proximidad al fallo.`;
+- SEMANAS DE VOLUMEN REDUCIDO: no programes NUNCA una semana de descanso ni de "no entrenar": entreno todas las semanas, sin excepción. Sí puedes —y debes, si está indicado— programar una semana de VOLUMEN REDUCIDO: mismos días y mismos patrones, carga igual o algo menor, pero un 40-50% menos de series y RIR 3-4. Indicaciones: fatiga alta sostenida dos semanas o más, 1RM estimado plano o a la baja durante 3+ semanas en varios ejercicios, molestia ARTICULAR repetida en la misma zona, o FC en reposo al alza / sueño por debajo de ~7 h de forma mantenida. Si no se cumple ninguna, progresa con normalidad.
+- AUTORIDAD DE ENTRENADOR: yo te voy a pedir no bajar el ritmo. Si los datos dicen que toca reducir, redúcelo IGUALMENTE y explícame en "mesociclo.justificacion" por qué mi preferencia me está perjudicando, qué gano con esta semana y cuándo volvemos a subir. Lo mismo vale para cualquier otra preferencia mía que vaya contra un buen progreso o contra la prevención de lesiones: dilo y corrígelo, con argumentos. Prefiero que me contradigas a que me des la razón.`;
   }
   let histTxt='';
   if(mode==='adapt'){
@@ -2837,10 +2890,10 @@ Si se combinan varios objetivos, prioriza un esquema de fuerza/hipertrofia para 
     // v75: lo pautado frente a lo realizado, ejercicio a ejercicio. Es el dato que permite decidir
     // si toca subir, mantener o bajar; sin él, las cargas sueltas no dicen nada.
     const cmp=complianceLines(21);
-    if(cmp)histTxt+='\n\nCUMPLIMIENTO REAL (lo que te pauté frente a lo que hice, últimas 3 semanas). Úsalo como base de la progresión: "tope del rango en todas las series" = subir carga; "series incompletas" o "por debajo del rango" = mantener o bajar y revisar por qué:\n'+cmp;
+    if(cmp)histTxt+='\n\nCUMPLIMIENTO REAL (lo que te pauté frente a lo que hice, últimas 3 semanas). Úsalo como base de la progresión: "tope del rango en todas las series" = subir carga; "series incompletas" o "por debajo del rango" = mantener o bajar y revisar por qué. El "esfuerzo" es lo que marqué yo al cerrar cada serie (fácil = me sobraban 3+ repeticiones; justo = 1-2 de margen; al límite = sin margen): si pone "al límite", NO subas carga aunque haya llegado al tope del rango; consolida o quita una serie:\n'+cmp;
     const h=S.history.slice(0,38); // ~4 semanas completas con margen, a tu ritmo (hasta 9 ses./sem)
     histTxt+='\n\nHISTORIAL DE SESIONES COMPLETADAS (hasta ~4 semanas, más reciente primero; da más peso a la última semana para decidir la carga inmediata, y usa el conjunto para ver la trayectoria del mesociclo: si progreso, me estanco o acumulo fatiga):\n'+
-      (h.length?h.map(x=>`- ${x.key}: ${x.title}, ${x.duration}min${x.distance?' '+x.distance+'km':''}${x.kcal?' · '+x.kcal+' kcal':''}${x.hr?' · FC media '+x.hr:''}, esfuerzo ${x.feeling}${x.fatiga&&x.fatiga!=='normal'?' · llegaba '+x.fatiga:''}${x.pain&&x.pain.length?' · '+(x.painKind==='muscular'?'agujetas/molestia muscular en ':'molestia ARTICULAR en ')+x.pain.map(areaLabel).join('/'):''}. ${x.notes||''}${x.sets&&x.sets.length?' CARGAS REALES serie a serie: '+x.sets.map(e=>e.nombre+' '+fmtSets(e.series)).join('; ')+'.':''}`).join('\n'):'(ninguna registrada)');
+      (h.length?h.map(x=>`- ${x.key}: ${x.title}, ${x.duration}min${x.distance?' '+x.distance+'km':''}${x.kcal?' · '+x.kcal+' kcal':''}${x.hr?' · FC media '+x.hr:''}, esfuerzo ${x.feeling}${x.fatiga&&x.fatiga!=='normal'?' · llegaba '+x.fatiga:''}${x.pain&&x.pain.length?' · '+(x.painKind==='muscular'?'agujetas/molestia muscular en ':'molestia ARTICULAR en ')+x.pain.map(areaLabel).join('/'):''}. ${x.notes||''}${x.sets&&x.sets.length?' CARGAS REALES serie a serie: '+x.sets.map(e=>e.nombre+' '+fmtSets(e.series)+(esfResumen(e.series)?' ('+esfResumen(e.series)+')':'')).join('; ')+'.':''}`).join('\n'):'(ninguna registrada)');
   }
   // v75 · volumen semanal por grupo muscular, fuerza estimada, cardio y memoria del entrenador
   let coachTxt='';
@@ -2919,11 +2972,18 @@ REGLAS DE ADAPTACIÓN (basadas en evidencia):
 - Sobrecarga progresiva: si el esfuerzo fue 💪/🔥 y completó las sesiones, sube carga ~2-5% o añade 1 serie/repeticiones (doble progresión).
 - Cuando una sesión del historial incluya "CARGAS REALES serie a serie", esos kg×reps son el dato MÁS fiable: úsalos como referencia principal para fijar el peso de la semana siguiente (doble progresión: si alcanzó el tope del rango de reps en todas las series, sube al siguiente escalón de mancuerna disponible; si se quedó lejos, mantén o baja).
 - Si predominó 😓/😴 o faltaron sesiones, reduce volumen y prioriza recuperación.
-- NO programes semanas de descarga. El usuario entrena todas las semanas; si hay fatiga (😓/😴, marcadores peores), reduce volumen o aleja del fallo esa semana, pero sin descarga completa.
+- Nunca una semana de descanso: entreno siempre. Si hay fatiga (😓/😴, marcadores peores, molestia articular repetida), puedes bajar a una semana de VOLUMEN REDUCIDO (40-50% menos series, misma frecuencia, carga similar, RIR 3-4) y decirlo con claridad en "analisis_progreso" y en "mesociclo.justificacion".
+- ESFUERZO REAL DE LAS SERIES: cuando el cumplimiento indique "esfuerzo al límite", NO subas carga aunque haya llegado al tope del rango; consolida esa carga una semana más o reduce una serie. Subir sobre series que ya se hacen al fallo es la forma más rápida de estancarse y de acumular fatiga.
 - En "nota_progresion" de cada ejercicio, explica el cambio concreto frente a la semana anterior.
 - Varía algún ejercicio si lleva 2+ semanas idéntico, para evitar estancamiento.
 - En "analisis_progreso" resume en 3-4 frases qué has ajustado y por qué.`:'';
 
+  /* v80: la nutrición se generaba sin saber nada de lo que como o no puedo comer, así que el
+     menú salía genérico o inaplicable. */
+  const _dieta=((p.dietaNota||'').trim());
+  const dietaTxt=_dieta
+    ? `- ALIMENTACIÓN, restricciones y preferencias (respétalas SIEMPRE en "menu_dia"): "${_dieta}". No propongas alimentos excluidos ni platos que no encajen con esto. Si alguna restricción dificulta llegar a la proteína objetivo, dilo y propón cómo cubrirla.\n`
+    : `- ALIMENTACIÓN: no he indicado restricciones. Cocina sencilla y variada, sin suplementos ni alimentos difíciles de encontrar.\n`;
   const evidence=`
 PRINCIPIOS BASADOS EN EVIDENCIA (referencias comprobadas una a una contra su DOI; si citas evidencia en tus explicaciones usa SOLO referencias reales, y NUNCA inventes ni "actualices" citas):
   · ACSM 2026 Position Stand, "Resistance Training Prescription for Muscle Function, Hypertrophy, and Physical Performance in Healthy Adults", Med Sci Sports Exerc 58(4):851-872, abril 2026, DOI 10.1249/MSS.0000000000003897. Síntesis de 137 revisiones sistemáticas y >30.000 participantes; actualiza el Position Stand de 2009. Subraya que la constancia y el esfuerzo pesan más que el plan perfecto, que bandas, peso corporal y rutinas en casa son plenamente eficaces, y que llegar al fallo, el material concreto y la periodización compleja no son imprescindibles en el adulto sano.
@@ -2936,7 +2996,7 @@ PRINCIPIOS BASADOS EN EVIDENCIA (referencias comprobadas una a una contra su DOI
 - El peso corporal y las bandas son medios válidos y eficaces.
 - Indica el esfuerzo como RIR (repeticiones en reserva), no como RPE.
 - En "peso" especifica SIEMPRE la carga propuesta de forma inequívoca: para mancuernas aclara si es "X kg por mancuerna (una en cada mano)" o "una sola mancuerna de X kg" (p. ej. goblet); para barra "X kg en total incluida la barra"; si es sin carga, "solo peso corporal". Nunca dejes un número de kg sin aclarar a qué se refiere.
-- REPARTO MUSCULAR: el tren inferior (cuádriceps, isquios, glúteos) debe recibir AL MENOS un tercio de los ejercicios de la semana y ≥2 ejercicios en cada sesión completa de cuerpo entero. Las piernas son los grupos más grandes y relevantes; no las relegues frente a empuje/tirón/core.
+- REPARTO MUSCULAR: el tren inferior (cuádriceps, isquios, glúteos) debe recibir AL MENOS un tercio de los ejercicios de la semana, y ≥2 ejercicios en cada sesión completa que incluya piernas (en cuerpo entero, siempre). Las piernas son los grupos más grandes y relevantes; no las relegues frente a empuje/tirón/core.
 - VARIEDAD DE MÉTODOS: además del esquema clásico de series×repeticiones, puedes proponer formatos como HIIT/intervalos, AMRAP, EMOM o circuito metabólico (útiles para acondicionamiento, pérdida de grasa y variedad; hechos en una habitación, con o sin material). Dos formas de expresarlos en el JSON:
   (a) Intervalos/HIIT/Tabata de UN ejercicio: usa el ejercicio normal con "reps" en segundos (p. ej. "40s"), "series" = número de rondas y "descanso_seg" = descanso entre rondas. Ej.: {"nombre":"Burpees","series":8,"reps":"20s","descanso_seg":10,...} (Tabata).
   (b) AMRAP / EMOM / circuito (varios movimientos por ronda): usa un objeto de ejercicio CON ESTA FORMA EXACTA, que la app guía con cronómetro y conteo de rondas:
@@ -2948,12 +3008,17 @@ PRINCIPIOS BASADOS EN EVIDENCIA (referencias comprobadas una a una contra su DOI
 - CARDIO PRESCRITO: en "recomendacion_cardio" da instrucciones concretas y accionables para los días libres y el fin de semana (tipo de actividad, duración, e intensidad orientada por FC o sensación: p. ej. "carrera Z2 cómoda 35-40 min, FC ~125-140" o "paseo ligero 60 min"), coherentes con el objetivo y la fatiga semanal, en lugar de una frase genérica.
 - Proteína 1.6-2.2 g/kg/día (hacia el extremo alto si hay déficit calórico para preservar músculo).
 - CALORÍAS COMO RANGO, no como cifra cerrada: rellena "calorias_diarias" con el centro orientativo y además "calorias_min"/"calorias_max" (aprox. ±7%). Preséntalo como una estimación con margen, nunca como un objetivo exacto a cumplir al gramo.
-- Incluye SIEMPRE 2-3 "errores" comunes de técnica a evitar por cada ejercicio.`;
+- Incluye SIEMPRE 2-3 "errores" comunes de técnica a evitar por cada ejercicio.
+- EQUILIBRIO DE PATRONES (además del reparto por grupos musculares): a lo largo de la semana cubre empuje horizontal, empuje vertical, tirón horizontal, tirón vertical, dominante de rodilla, dominante de cadera, core anti-extensión y core anti-rotación, y algún transporte cargado si hay material para ello. El volumen de TIRÓN debe ser al menos igual al de EMPUJE y nunca menor que la mitad: el desequilibrio hacia el empuje es la vía habitual a los problemas de hombro. Añade a cada ejercicio el campo "patron" con uno de estos valores exactos: empuje_horizontal, empuje_vertical, tiron_horizontal, tiron_vertical, rodilla, cadera, core_antiextension, core_antirrotacion, transporte, otro.
+- SERIES DE APROXIMACIÓN: en "calentamiento" incluye, además de la movilidad, las series de aproximación concretas del primer ejercicio pesado (p. ej. "2 series de aproximación: 50% × 8 y 75% × 4, sin llegar a fatigar"). No me hagas empezar en frío con la carga de trabajo.
+- MÍNIMO AERÓBICO DE SALUD: en "recomendacion_cardio" suma los minutos aeróbicos que salen de mis días libres y compáralos con el mínimo de salud (150-300 min semanales de intensidad moderada, o 75-150 de intensidad vigorosa). Si me quedo corto, dímelo de forma explícita y propón cómo llegar sin comprometer la fuerza, aunque yo no te lo haya pedido.
+${dietaTxt}- AJUSTE CALÓRICO CON MI PESO REAL (ciclo cerrado): usa la serie de PESO REGISTRADO si la hay. Ritmos de referencia: pérdida de grasa 0,25-0,5% del peso corporal por semana; ganancia de músculo 0,2-0,3% por semana; mantenimiento o recomposición, peso estable. Si mi ritmo real se aparta del objetivo durante 2-3 semanas seguidas, mueve el rango de calorías en torno a un 10% en la dirección que toque y dilo ("subo/bajo X kcal porque llevas Y semanas a Z kg por semana"). Si no hay pesos suficientes para juzgarlo, dilo en vez de tocar las calorías a ciegas.
+- PRECISIÓN DEL MENÚ: la app NO registra lo que como, así que el menú es una propuesta orientativa para dar ideas y llegar a la proteína, no un objetivo a cumplir al gramo. Preséntalo con esas palabras.`;
 
   return `Actúa como mi entrenador personal profesional y nutricionista, siguiendo evidencia científica actual. ${mode==='adapt'?'Genera la SIGUIENTE semana de entrenamiento adaptada a mi progreso real.':'Genera mi plan de entrenamiento semanal.'}
 
 PERFIL: ${bioTxt}
-${cfg}${mesoTxt}${healthTxt}${coachTxt}${histTxt}
+${cfg}${espTxt}${mesoTxt}${healthTxt}${coachTxt}${histTxt}
 ${evidence}${adaptRules}
 
 Responde ÚNICAMENTE con un objeto JSON válido, sin texto antes ni después, sin backticks, con esta estructura exacta:
@@ -2963,7 +3028,7 @@ Responde ÚNICAMENTE con un objeto JSON válido, sin texto antes ni después, si
   "sesiones_ia":[
     {"dia_codigo":"L","titulo":"string","meta":"string breve","calentamiento":"string","vuelta_calma":"string",
      "ejercicios":[
-       {"nombre":"string","series":3,"reps":"6-12","descanso_seg":90,"rir":"1-3","tempo":"2-1-2","peso":"p. ej. 16 kg por mancuerna | 12 kg en cada mano | solo peso corporal","descripcion":"string técnica 1 frase","musculos":"string","errores":["error 1","error 2"]${mode==='adapt'?',"nota_progresion":"string"':''}}
+       {"nombre":"string","series":3,"reps":"6-12","descanso_seg":90,"rir":"1-3","tempo":"2-1-2","peso":"p. ej. 16 kg por mancuerna | 12 kg en cada mano | solo peso corporal","descripcion":"string técnica 1 frase","musculos":"string","patron":"rodilla","errores":["error 1","error 2"]${mode==='adapt'?',"nota_progresion":"string"':''}}
      ]}
   ],
   "recomendacion_cardio":"string para días libres",
@@ -3089,6 +3154,45 @@ async function pasteInto(id,after){
   }
 }
 // Valida un ejercicio del JSON; acumula errores (bloquean) y avisos (no bloquean)
+/* v80 · ¿cabe la sesión en el tiempo que tengo?
+   El mensaje decía "~45 min" y ahí acababa la cosa: nadie comprobaba que 6 ejercicios × 4 series
+   × 90 s de descanso son 65-70 minutos reales. Se estima con la misma aritmética que se le pide a
+   Claude, para que el aviso y la instrucción hablen del mismo número. Es una ESTIMACIÓN: no
+   contempla lo que se tarda en cambiar de material ni en montar el ejercicio. */
+const SEG_POR_REP=3.5;      // ~3,5 s por repetición a tempo controlado
+const MIN_CALENTAMIENTO=6;  // movilidad + series de aproximación
+function _segSerie(ex){
+  const seg=parseReps(ex.reps);            // "40s" → 40
+  if(seg)return seg;
+  const r=repRange(ex.reps);
+  const reps=r?r[1]:10;                    // el tope del rango es lo que se va a intentar
+  return Math.max(12,reps*SEG_POR_REP);
+}
+function estimateSessionMin(ejercicios){
+  let seg=MIN_CALENTAMIENTO*60;
+  (ejercicios||[]).forEach(ex=>{
+    if(isBlock(ex)){
+      const t=blockType(ex);
+      const dur=(t==='circuito')
+        ? (+ex.rondas||3)*((ex.movimientos||[]).length*40+(+ex.descanso_rondas_seg||60))
+        : (+ex.duracion_min||10)*60;
+      seg+=dur+(+ex.descanso_seg||0);
+      return;
+    }
+    const series=Math.max(1,parseInt(ex.series)||1);
+    const desc=(+ex.descanso_seg>0)?+ex.descanso_seg:60;
+    seg+=series*(_segSerie(ex)+desc);
+  });
+  return Math.round(seg/60);
+}
+/* Patrones de movimiento: solo se comprueban si Claude los ha declarado. No se infieren del
+   nombre porque adivinarlos daría avisos falsos, que es peor que no avisar. */
+const PATRON_EMPUJE=['empuje_horizontal','empuje_vertical'];
+const PATRON_TIRON=['tiron_horizontal','tiron_vertical'];
+function _esInferior(ex){
+  const t=((ex&&ex.patron)||'')+' '+((ex&&ex.musculos)||'')+' '+((ex&&ex.nombre)||'');
+  return /rodilla|cadera|cu[áa]driceps|isquio|gl[úu]teo|pierna|sentadilla|zancada|peso muerto|puente|hip thrust|prensa|gemelo|s[óo]leo|split|b[úu]lgara|step[- ]?up|subida al caj[óo]n/i.test(t);
+}
 function validateExercise(e,i,issues){
   const tag=e&&e.nombre?`"${e.nombre}"`:`ejercicio ${i+1}`;
   if(!e||!e.nombre){issues.errors.push(`Falta "nombre" en el ejercicio ${i+1}.`);return;}
@@ -3101,6 +3205,14 @@ function validateExercise(e,i,issues){
   const nm=(e.nombre||'').toLowerCase();
   if(/dominada/.test(nm)&&!eq.includes('dominadas')&&!eq.includes('gimnasio'))issues.warns.push(`${tag}: no tienes barra de dominadas configurada.`);
   if(/\bcon barra\b/.test(nm)&&!eq.includes('barra')&&!eq.includes('gimnasio'))issues.warns.push(`${tag}: no tienes barra con discos configurada.`);
+  // v80: material que tampoco tienes y antes pasaba sin aviso
+  if(/kettlebell|pesa rusa/.test(nm)&&!eq.includes('kettlebells')&&!eq.includes('gimnasio'))issues.warns.push(`${tag}: no tienes kettlebells configuradas.`);
+  if(/polea|m[áa]quina|jal[óo]n en polea|prensa/.test(nm)&&!eq.includes('gimnasio'))issues.warns.push(`${tag}: requiere gimnasio y no lo tienes configurado.`);
+  /* v80: "peso" existía pero podía ser ambiguo ("20 kg" sin decir si es por mancuerna o en total),
+     que es justo lo que el mensaje pide evitar. Se avisa cuando hay kilos sin aclaración. */
+  if(e.peso&&/\d/.test(String(e.peso))&&/kg/i.test(String(e.peso))
+     &&!/por mancuerna|cada mano|en total|por lado|cada pierna|cada lado|por pierna|por brazo|incluida la barra|una sola|goblet/i.test(String(e.peso)))
+    issues.warns.push(`${tag}: la carga "${e.peso}" es ambigua (no dice si es por mancuerna, en cada mano o en total).`);
 }
 function validatePlan(plan){
   const issues={errors:[],warns:[]};
@@ -3112,12 +3224,45 @@ function validatePlan(plan){
     else s.ejercicios.forEach((e,i)=>validateExercise(e,i,issues));
   });
   if(plan.nutricion&&(!plan.nutricion.calorias_diarias||!Array.isArray(plan.nutricion.menu_dia)))issues.warns.push('La "nutricion" no sigue el esquema completo (calorias_diarias, proteina_g, agua_litros, menu_dia); se aplicará lo que haya.');
+  coachingChecks(ses,issues); // v80
   return issues;
 }
-function validateSession(s){
+/* v80 · comprobaciones de ENTRENADOR, no de sintaxis.
+   La validación anterior miraba que el JSON tuviera los campos; no miraba nada de lo que el propio
+   mensaje exige (tiempo, reparto de tren inferior, equilibrio empuje/tirón). Todo son AVISOS: el
+   plan se puede aplicar igualmente y el usuario decide. */
+function coachingChecks(ses,issues){
+  let totalEj=0,infEj=0,emp=0,tir=0;
+  ses.forEach(s=>{
+    const ejs=Array.isArray(s.ejercicios)?s.ejercicios:[];
+    const breve=S.briefDays&&S.briefDays.indexOf(s.dia_codigo)>=0;
+    const tope=breve?20:(parseInt(S.profile.minutos)||45);
+    const est=estimateSessionMin(ejs);
+    if(est>tope*1.1)
+      issues.warns.push(`"${s.titulo||s.dia_codigo}": ~${est} min estimados frente a los ${tope} min que tienes. Pide menos ejercicios, menos series o descansos más cortos.`);
+    ejs.forEach(e=>{
+      if(isBlock(e))return;
+      totalEj++;
+      if(_esInferior(e))infEj++;
+      const pat=(e.patron||'').toLowerCase();
+      if(PATRON_EMPUJE.indexOf(pat)>=0)emp++;
+      if(PATRON_TIRON.indexOf(pat)>=0)tir++;
+    });
+  });
+  if(totalEj>=6&&infEj/totalEj<0.28)
+    issues.warns.push(`Tren inferior infrarrepresentado: ${infEj} de ${totalEj} ejercicios de la semana. El plan pide al menos un tercio.`);
+  if(emp+tir>=5&&tir<emp/2)
+    issues.warns.push(`Desequilibrio empuje/tirón: ${emp} de empuje frente a ${tir} de tirón. El tirón debería igualar al empuje, y nunca bajar de la mitad.`);
+  if(totalEj>=6&&emp+tir===0)
+    issues.warns.push('Ningún ejercicio trae el campo "patron", así que no se puede comprobar el equilibrio empuje/tirón.');
+}
+function validateSession(s,minutos){
   const issues={errors:[],warns:[]};
   if(!s||!Array.isArray(s.ejercicios)||!s.ejercicios.length){issues.errors.push('El JSON no contiene "ejercicios".');return issues;}
   s.ejercicios.forEach((e,i)=>validateExercise(e,i,issues));
+  const tope=parseInt(minutos)||parseInt(S.profile.minutos)||45; // v80
+  const est=estimateSessionMin(s.ejercicios);
+  if(est>tope*1.1)issues.warns.push(`~${est} min estimados frente a los ${tope} min previstos. Pide menos ejercicios, menos series o descansos más cortos.`);
   return issues;
 }
 // Mensaje listo para pegar en Claude pidiendo la corrección exacta
@@ -3142,10 +3287,15 @@ function previewBridge(){
     const day=idx>=0?DAY_NAMES[idx]:('¿'+esc(s.dia_codigo||'?')+'?');
     const key=idx>=0?fmt(dates[idx]):null;
     const replaces=key&&(S.schedule[key]||[]).some(x=>x.type==='ai')?' <span style="color:var(--free);font-size:calc(11px*var(--fs))">(sustituye a la sesión IA de ese día)</span>':'';
+    // v80: duración estimada, para ver de un vistazo si la sesión cabe donde dices que cabe
+    const _breve=S.briefDays&&S.briefDays.indexOf(s.dia_codigo)>=0;
+    const _tope=_breve?20:(parseInt(S.profile.minutos)||45);
+    const _est=estimateSessionMin(s.ejercicios||[]);
+    const dur=` <span style="font-size:calc(11px*var(--fs));color:${_est>_tope*1.1?'var(--danger)':'var(--text3)'}">· ~${_est} min</span>`;
     const exs=(s.ejercicios||[]).map(e=>isBlock(e)
       ?`<li>${esc(e.nombre)} · ${esc(_fmtBlock(e,blockType(e)))}</li>`
       :`<li>${esc(e.nombre)||'?'} — ${e.series!=null?esc(e.series):'?'}×${e.reps!=null?esc(e.reps):'?'}${e.peso?' · '+esc(e.peso):''}</li>`).join('');
-    return `<div class="mb-10"><b>${day}</b> · ${esc(s.titulo)||''}${replaces}
+    return `<div class="mb-10"><b>${day}</b> · ${esc(s.titulo)||''}${dur}${replaces}
       <ul style="margin:4px 0 0;padding-left:18px;font-size:calc(12px*var(--fs));color:var(--text2)">${exs}</ul></div>`;
   }).join('');
   const nutri=plan.nutricion?`<div style="margin-top:6px;font-size:calc(12px*var(--fs));color:var(--text2)">🍎 Nutrición: ${esc(plan.nutricion.calorias_diarias||plan.nutricion.kcal||'?')} kcal · ${esc(plan.nutricion.proteina_g||'?')} g proteína${Array.isArray(plan.nutricion.menu_dia)?' · menú de '+plan.nutricion.menu_dia.length+' comidas':''}</div>`:'';
@@ -3247,7 +3397,7 @@ function cleanInt(v,min,max,def){
 function cleanEx(e){
   if(!e||typeof e!=='object')return {nombre:'Ejercicio',series:3,reps:'10',descanso_seg:60};
   const o={...e};
-  ['nombre','peso','musculos','rir','rpe','tempo','tipo','formato','unidad','banda','yt','p'].forEach(k=>{if(o[k]!=null)o[k]=cleanStr(o[k],120);});
+  ['nombre','peso','musculos','patron','rir','rpe','tempo','tipo','formato','unidad','banda','yt','p'].forEach(k=>{if(o[k]!=null)o[k]=cleanStr(o[k],120);});
   if(o.reps!=null)o.reps=cleanStr(o.reps,40);
   if(o.descripcion!=null)o.descripcion=cleanMulti(o.descripcion,600);
   if(!o.nombre)o.nombre='Ejercicio';
@@ -3424,7 +3574,8 @@ function modifyWithClaude(){
   window._modPrompt=`Actúa como mi entrenador personal. Adapta UNA sola sesión de fuerza ya prevista para hoy a un cambio de material, manteniéndola coherente con mi plan y mi objetivo global:
 - Material disponible hoy: ${eqLabels}${eqDetail}${coachExtrasFor(MOD.equipos,MOD.key)}
 - Tiempo disponible hoy: ${mins} minutos
-- Mis objetivos: ${objLabels} (prioriza hipertrofia: 6-12 reps, 3-4 series, 1-3 RIR, descansos 90-150s, sobrecarga progresiva).${mesoTxt?`\n- ${mesoTxt}`:''}${currentTxt}${keepInstruction}${hist?`\n- Entrenamiento reciente (tenlo en cuenta para complementar y repartir bien los grupos, no repetir en exceso):\n${hist}`:''}${noteForPrompt(userNoteFrom('mod-note'))}
+- Mis objetivos: ${objLabels} (prioriza hipertrofia: 6-12 reps, 3-4 series, 1-3 RIR, descansos 90-150s, sobrecarga progresiva).
+- ORDEN: básicos multiarticulares y lo más técnico primero; accesorios y core al final. La sesión debe CABER en el tiempo indicado: minutos ≈ calentamiento + Σ(series × (duración de la serie + descanso_seg))/60, contando ~3,5 s por repetición. La app lo comprueba y me avisa si se pasa.${mesoTxt?`\n- ${mesoTxt}`:''}${currentTxt}${keepInstruction}${hist?`\n- Entrenamiento reciente (tenlo en cuenta para complementar y repartir bien los grupos, no repetir en exceso):\n${hist}`:''}${noteForPrompt(userNoteFrom('mod-note'))}
 - Indica el esfuerzo como RIR. En "peso" especifica la carga de forma inequívoca. Incluye 2-3 errores comunes de técnica por ejercicio.
 - Puedes incluir como mucho UN bloque AMRAP/EMOM/circuito (la app lo guía con cronómetro y conteo de rondas) usando un ejercicio con esta forma: {"nombre":"AMRAP 10 min","tipo":"amrap","duracion_min":10,"descanso_seg":90,"movimientos":[{"nombre":"Sentadilla goblet","reps":"12"},{"nombre":"Flexiones","reps":"10"}],"descripcion":"...","musculos":"..."} ("tipo": amrap|emom|circuito; amrap/emom→"duracion_min"; circuito→"rondas").
 
@@ -3548,6 +3699,7 @@ function generateWithClaude(){
   window._genPrompt=`Actúa como mi entrenador personal. Crea UNA sesión ADICIONAL para un día concreto que COMPLEMENTE mi entrenamiento reciente sin interferir en mi objetivo global.
 - Objetivo de esta sesión: ${GOAL_LABELS[objetivo]||objetivo}
 - Nivel: ${nivel}
+- ORDEN: básicos multiarticulares y lo más técnico primero; accesorios y core al final. La sesión debe CABER en los minutos indicados: minutos ≈ calentamiento + Σ(series × (duración de la serie + descanso_seg))/60, contando ~3,5 s por repetición. La app lo comprueba y me avisa si se pasa.
 - Tiempo disponible: ${mins} min
 - Material disponible: ${eqLabels}${eqDetail}${coachExtrasFor(GEN.equipos,GEN.key)}${mesoTxt?`\n- ${mesoTxt}`:''}${hist?`\n- Entrenamiento reciente (para COMPLEMENTAR, no repetir en exceso los mismos grupos):\n${hist}`:''}${noteForPrompt(userNoteFrom('gen-note'))}
 - Prioriza los grupos musculares menos trabajados últimamente; respeta el reparto (las piernas son grupos grandes, no las relegues).
@@ -4343,6 +4495,11 @@ function renderPlayer(){
     const prefKg=(P.rec&&P.rec.exi===P.exi&&P.rec.kg!=null)?P.rec.kg:(parseKg(ex.peso)!=null?parseKg(ex.peso):'');
     const prefReps=(P.rec&&P.rec.exi===P.exi&&P.rec.reps!=null)?P.rec.reps:targetReps(ex.reps);
     const prefBanda=(P.rec&&P.rec.exi===P.exi&&P.rec.banda)?P.rec.banda:suggestedBand(ex);
+    /* v80: el esfuerzo real de cada serie. Sin él, "llegó al tope del rango" era ambiguo: 12
+       repeticiones a RIR 3 y 12 repeticiones arrastrándose al fallo pedían decisiones opuestas y
+       el entrenador no podía distinguirlas. */
+    const prefEsf=(P.rec&&P.rec.exi===P.exi&&P.rec.esf)?P.rec.esf:null;
+    P.esf=prefEsf;
     const inpSt='text-align:center;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:10px;color:#fff;padding:8px 6px;font-size:16px';
     const bandOpts=availableBands();
     const cargaInput=esBanda
@@ -4374,6 +4531,10 @@ function renderPlayer(){
           <span class="pl-cue">reps</span>
           <button type="button" class="pl-step" onclick="stepField('pl-reps',1,0,false)">+</button>
         </div>
+        <div class="pl-rec-row" style="margin-top:10px;gap:6px">
+          ${ESF_OPTS.map(([k,lab])=>`<button type="button" id="esf-${k}" class="esf-b${prefEsf===k?' esf-on':''}" onclick="setEsf('${k}')">${lab}</button>`).join('')}
+        </div>
+        <div class="pl-cue" style="font-size:calc(10px*var(--fs));margin-top:5px">¿Cómo fue esta serie? De esto depende que tu entrenador suba la carga o la consolide.</div>
         ${last?`<div class="pl-cue" style="margin-top:6px;color:var(--ring-stand)">Última vez (${last.date}): ${fmtSets(last.series)}</div>`:''}
       </div>`:'';
     mid=`<div style="width:170px;height:135px;margin:0 auto 14px">${exSVG(ex.nombre,ex.p)}</div>
@@ -4392,6 +4553,25 @@ function renderPlayer(){
     <div class="pl-count">Ejercicio ${P.exi+1} de ${total}</div>
     <div class="pl-name">${esc(ex.nombre)}</div>
     <div class="pl-mid">${mid}</div>`;
+}
+/* v80 · esfuerzo percibido de la serie, en el idioma del que entrena (no en RIR, que hay que
+   traducir mentalmente a mitad de serie). Se guarda con cada serie y viaja al prompt. */
+const ESF_OPTS=[['facil','😌 Fácil'],['justo','💪 Justo'],['limite','🔥 Al límite']];
+const ESF_LABEL={facil:'fácil (le sobraban 3+ repeticiones)',justo:'justo (1-2 repeticiones de margen)',limite:'al límite (sin margen)'};
+function setEsf(v){
+  P.esf=(P.esf===v)?null:v; // volver a pulsar lo deselecciona
+  ESF_OPTS.forEach(([k])=>{
+    const b=document.getElementById('esf-'+k);
+    if(b)b.className='esf-b'+(k===P.esf?' esf-on':'');
+  });
+}
+/* Resumen del esfuerzo de un conjunto de series, para el mensaje a Claude */
+function esfResumen(series){
+  const v=(series||[]).map(x=>x&&x.esf).filter(Boolean);
+  if(!v.length)return '';
+  if(v.some(x=>x==='limite'))return 'al límite';
+  if(v.every(x=>x==='facil'))return 'fácil';
+  return 'justo';
 }
 function fmtSec(s){s=Math.max(0,Math.round(+s||0));const m=String(Math.floor(s/60)).padStart(2,'0');return m+':'+String(s%60).padStart(2,'0');}
 /* v71: cuentas atrás ancladas a la hora del sistema.
@@ -4442,8 +4622,9 @@ function recordSet(ex){
   if(!e){e={nombre:ex.nombre,series:[]};P.setLog.push(e);}
   const serie={kg:(kg!=null&&!isNaN(kg))?kg:null,reps};
   if(banda)serie.banda=banda;
+  if(P.esf)serie.esf=P.esf; // v80
   e.series.push(serie);
-  P.rec={exi:P.exi,kg:kgRaw,reps:rpRaw,banda}; // prellenar la siguiente serie del MISMO ejercicio
+  P.rec={exi:P.exi,kg:kgRaw,reps:rpRaw,banda,esf:P.esf}; // prellenar la siguiente serie del MISMO ejercicio
   persistSetLog(); // v71
 }
 /* Ejercicios por tiempo: se registran solos ("40s" por serie) */
@@ -5152,10 +5333,27 @@ function loadProfile(){
   const p=S.profile;
   peso.value=p.peso;altura.value=p.altura;edad.value=p.edad;sexo.value=p.sexo;nivel.value=p.nivel;
   document.getElementById('minutos').value=p.minutos;document.getElementById('min-out').textContent=p.minutos;
+  const dn=document.getElementById('dieta-nota');
+  if(dn&&document.activeElement!==dn)dn.value=p.dietaNota||'';
+  const wn=document.getElementById('week-note');
+  if(wn&&document.activeElement!==wn&&!wn.value)wn.value=S.weekNote||''; // v80
   renderObjChips();renderEquipChips();renderLimitChips();prefillManualHealth();
   if(p.peso&&p.altura&&p.edad)calcBio();
 }
 document.getElementById('limit-nota').addEventListener('change',e=>{S.profile.limitacionesNota=e.target.value.trim();save();});
+// v80: alimentación
+document.getElementById('dieta-nota').addEventListener('change',e=>{S.profile.dietaNota=e.target.value.trim();save();});
+/* v80: la nota semanal se guarda mientras se escribe (con retardo para no machacar localStorage
+   en cada tecla) y también al salir del campo. Antes solo existía en pantalla. */
+(function(){
+  const wn=document.getElementById('week-note');
+  if(!wn)return;
+  let t=null;
+  const guardar=()=>{S.weekNote=String(wn.value||'').trim().slice(0,NOTE_MAX);save();};
+  wn.addEventListener('input',()=>{clearTimeout(t);t=setTimeout(guardar,800);});
+  wn.addEventListener('change',()=>{clearTimeout(t);guardar();});
+  wn.addEventListener('blur',()=>{clearTimeout(t);guardar();});
+})();
 ['peso','altura','edad','sexo','nivel'].forEach(id=>{
   document.getElementById(id).addEventListener('change',()=>{calcBio();saveProfile();});
   document.getElementById(id).addEventListener('input',()=>{if(['peso','altura','edad'].includes(id))calcBio();});

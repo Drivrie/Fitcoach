@@ -1710,3 +1710,151 @@ y lista de movimientos.
   reloj visible, su valor pautado, el anuncio del bloque y su vista previa sin series inventadas.
 - CONTRASTE CON v78: el mismo arnés sobre la v78 se detiene en cuanto busca el salto del descanso
   entre rondas, porque esa función no existe allí.
+
+## v80: auditoría del contenido — el entrenador recupera el criterio profesional
+
+Esta versión no arregla un fallo aislado: es el resultado de auditar QUÉ le pide la app a Claude y
+qué comprueba de lo que Claude devuelve. El diagnóstico fue que el mensaje ya mandaba muchos datos
+—cargas reales serie a serie, volumen por grupo, fatiga, marcadores, memoria de decisiones— pero
+subordinaba el criterio del entrenador a las preferencias del usuario en tres puntos, y que la
+validación del JSON era sintáctica: miraba que los campos existieran, no que el plan fuese bueno.
+
+### 1 · La descarga estaba prohibida por contrato (y era incoherente)
+El mensaje decía dos veces «NO programes semanas de descarga», en absoluto. El problema es que
+confundía **descarga** con **no entrenar**: una descarga es una semana de entrenamiento con los
+mismos días y la misma carga, pero menos series. Peor: en la misma frase se le pedía el mecanismo
+—«reduce volumen o aleja del fallo»— mientras se le prohibía el nombre. Instrucciones contradictorias.
+- Ahora: **nunca** una semana de descanso (se entrena todas las semanas, sin excepción), pero sí
+  puede —y debe, si está indicado— una **semana de VOLUMEN REDUCIDO**: mismos días y patrones, carga
+  igual o algo menor, 40-50% menos series, RIR 3-4.
+- Con indicaciones concretas, no a ojo: fatiga alta sostenida 2+ semanas, 1RM estimado plano o a la
+  baja 3+ semanas en varios ejercicios, molestia ARTICULAR repetida en la misma zona, o FC en reposo
+  al alza / sueño por debajo de ~7 h de forma mantenida.
+- Honestidad sobre la evidencia: no hay ensayos sólidos que demuestren que las descargas
+  planificadas mejoren resultados a largo plazo, y el ACSM 2026 dice que la periodización compleja
+  no es imprescindible en el adulto sano. Quitar la descarga fija cada 4 semanas (v27) fue correcto;
+  prohibirla en absoluto era el error simétrico. Lo que se recupera es la HERRAMIENTA, no un
+  calendario.
+- Nuevo bloque **AUTORIDAD DE ENTRENADOR**: se le ordena expresamente contradecir al usuario, con
+  argumentos, cuando una preferencia vaya contra el progreso o contra la prevención de lesiones, y
+  explicar en `mesociclo.justificacion` qué se gana y cuándo se vuelve a subir.
+
+### 2 · La nota libre del usuario pisaba las lesiones
+`noteForPrompt()` decía que las instrucciones adicionales «tienen prioridad sobre las preferencias
+generales; si algo contradice al resto del mensaje, haz caso a esto». «El resto del mensaje» incluía
+el bloque de LIMITACIONES/LESIONES, la fatiga y los marcadores. Una nota del tipo «esta semana
+quiero sentadillas pesadas todos los días» tenía, formalmente, prioridad sobre una lesión declarada.
+Era el fallo de gobernanza más serio del prompt.
+- Ahora la prioridad está ACOTADA: manda sobre preferencias (estilo, material, reparto de días,
+  elección de ejercicios) y NO sobre limitaciones, dolor registrado, fatiga, marcadores ni seguridad.
+  Si choca, debe sustituir por la alternativa segura más cercana y decir en `meta` qué se pidió, por
+  qué no le parece buena idea y qué ha puesto en su lugar.
+
+### 3 · «Cuerpo entero» estaba fijado en el código
+El mensaje decía literalmente `Días de fuerza COMPLETA (~45 min, cuerpo entero)`. Con 2-3 días es lo
+mejor; con 5-6 obliga a tocar todos los grupos cinco veces por semana y cierra la puerta a
+superior/inferior o empuje-tirón. Además solo se mandaban los CÓDIGOS de día, así que Claude no
+podía ver que L-M-X eran tres días seguidos.
+- La estructura la decide ahora Claude y la justifica. Con ≤3 días completos, cuerpo entero.
+- Los días van con FECHA (`L (Lunes 17/8)`), con instrucción de dejar ~48 h entre estímulos fuertes
+  del mismo grupo cuando haya días consecutivos.
+
+### 4 · Nadie comprobaba que la sesión cupiera en el tiempo
+El mensaje decía «~45 min» y ahí acababa. Seis ejercicios × 4 series × 90 s de descanso son 65-70
+minutos reales. `validatePlan()` no miraba la duración.
+- Nueva `estimateSessionMin()`: calentamiento (6 min) + Σ(series × (duración de la serie +
+  descanso)), a ~3,5 s por repetición; los ejercicios por tiempo («40s») usan sus segundos y los
+  bloques AMRAP/EMOM/circuito su duración o sus rondas.
+- La MISMA aritmética se le pide a Claude en el mensaje, para que el aviso y la instrucción hablen
+  del mismo número.
+- La vista previa muestra `~N min` por día, en rojo si se pasa, y se genera un aviso por encima del
+  110% del tiempo declarado (20 min en los días breves). Los avisos NO bloquean: siguen alimentando
+  el botón de «copiar petición de corrección» que ya existía.
+
+### 5 · «Llegó al tope del rango» era ambiguo (esfuerzo real por serie)
+`complianceFor()` decidía subir carga con kg×reps. Pero 12 repeticiones a RIR 3 y 12 repeticiones
+arrastrándose al fallo piden decisiones OPUESTAS, y el entrenador no podía distinguirlas.
+- En el reproductor, junto a kg y repeticiones, tres botones anchos: **😌 Fácil / 💪 Justo /
+  🔥 Al límite**. En el idioma del que entrena, no en RIR (que hay que traducir a mitad de serie).
+  Se prellena con lo marcado en la serie anterior del mismo ejercicio y se puede deseleccionar.
+- Se guarda en cada serie (`esf`) y viaja al mensaje, tanto en CUMPLIMIENTO REAL como en las cargas
+  reales del historial.
+- Cambia la conclusión: «tope del rango pero series al límite → consolidar esta carga, no subir
+  todavía»; «dentro del rango y con margen de sobra → puedes subir». Y una regla explícita en las
+  reglas de adaptación.
+- Es OPCIONAL: sin esfuerzo marcado, el comportamiento es idéntico al de la v79 (probado).
+
+### 6 · Comprobaciones de ENTRENADOR, no de sintaxis (`coachingChecks`)
+La validación anterior comprobaba `nombre`, `series`, `reps` y `dia_codigo`, y dos casos de material
+por expresión regular. No comprobaba NADA de lo que el propio mensaje exige. Añadido, todo como
+avisos:
+- Tren inferior por debajo del 28% de los ejercicios de la semana (el mensaje pide un tercio).
+- Desequilibrio empuje/tirón, con el campo nuevo `patron`. No se infiere del nombre: adivinarlo daría
+  avisos falsos, que es peor que no avisar. Si ningún ejercicio trae `patron`, se dice que no se ha
+  podido comprobar.
+- Carga ambigua: `"20 kg"` sin aclarar si es por mancuerna, en cada mano o en total — justo lo que el
+  mensaje pide evitar y antes solo se avisaba si el campo faltaba del todo.
+- Material inexistente: kettlebells y máquinas/poleas, además de dominadas y barra.
+- Duración estimada (punto 4), también en las sesiones sueltas (`validateSession`).
+
+### 7 · Variables que un entrenador considera y no llegaban
+- **Patrones de movimiento**: cubrir empuje/tirón horizontal y vertical, dominante de rodilla y de
+  cadera, core anti-extensión y anti-rotación y transporte cargado. El tirón nunca por debajo de la
+  mitad del empuje. Campo `patron` nuevo en el esquema JSON (saneado en `cleanEx`).
+- **Series de aproximación**: el calentamiento era una cadena libre y la sesión guiada arrancaba en
+  frío con la carga de trabajo. Ahora se piden aproximaciones concretas del primer básico pesado.
+- **Orden dentro de la sesión**: básicos y lo técnico primero; unilateral tras bilateral; nunca al
+  final el ejercicio en el que se espera progresar. El motor offline ya lo hacía; el mensaje no lo
+  pedía.
+- **Concurrencia**: en los días de fuerza breve, si la fuerza va antes o después de la carrera y con
+  cuánta separación (por defecto, 6 h o más).
+- **Edad ≥55**: trabajo de potencia, equilibrio monopodal e impacto suave. La edad solo se usaba para
+  la FCmáx de Tanaka.
+- **Sexo**: se enviaba y ninguna regla lo usaba. Se le dice explícitamente que NO programe por fases
+  del ciclo menstrual —la evidencia es demasiado débil e inconsistente para prescribir así— y que
+  autorregule por síntomas, sin rebajar la exigencia por el sexo.
+- **Mínimo aeróbico de salud**: sumar los minutos aeróbicos de la semana y compararlos con 150-300
+  min moderados (o 75-150 vigorosos), diciéndolo aunque no se le pregunte.
+
+### 8 · Nutrición: se cierra el bucle, sin fingir precisión
+El menú se generaba sin saber nada de lo que el usuario come, y las calorías no se ataban nunca al
+peso observado (la serie de peso se mandaba, pero ninguna regla la usaba para ajustar).
+- Tarjeta nueva en Perfil: **🍽️ Alimentación**, con alergias, intolerancias y preferencias
+  (`profile.dietaNota`). Si está vacía se dice explícitamente en vez de suponer.
+- Regla de ajuste con ritmos de referencia: pérdida 0,25-0,5% del peso corporal por semana, ganancia
+  0,2-0,3%, mantenimiento estable. Si el ritmo real se aparta 2-3 semanas, mover el rango ~10% y
+  DECIRLO. Si no hay pesos suficientes, decirlo en vez de tocar calorías a ciegas.
+- Honestidad: la app NO registra la ingesta, así que el menú es una propuesta orientativa y se pide
+  presentarlo con esas palabras. **No se ha añadido registro de comidas**: era mucha superficie nueva
+  para un dato que el usuario no va a introducir a diario, y prometerlo sin cumplirlo es peor.
+
+### 9 · La nota semanal no se guardaba (pérdida silenciosa de datos)
+`userNoteFrom('week-note')` leía el `<textarea>` y el valor NO se escribía en `S` en ningún sitio. Si
+iOS descartaba la PWA en segundo plano o entraba una versión nueva del service worker, la
+instrucción desaparecía sin avisar y el mensaje salía sin ella.
+- Ahora se persiste (`S.weekNote`) mientras se escribe, con 800 ms de retardo para no machacar
+  localStorage en cada tecla, y también al salir del campo; se repinta al cargar el perfil y
+  `userNoteFrom()` recurre al estado si el campo aún está vacío.
+
+### 10 · Coherencia entre los dos entrenadores
+`GOALS.fuerza.rir` era `2-3` mientras el bloque de evidencia dice que en fuerza se puede dejar más
+margen (RIR 3-4). El motor offline y Claude daban consejos distintos sobre lo mismo: alineado a 3-4.
+También se ha reescrito el texto de la tarjeta de Mesociclo, que decía «Sin descarga programada».
+
+### Validación
+- **126 comprobaciones en verde, 0 fallos**, en Europe/Madrid, UTC, America/Santiago,
+  Australia/Sydney y Pacific/Kiritimati (`test-v80.js`, jsdom con DOM real).
+- Persistencia campo a campo con estado de usuario veterano: intacta. `weekPlans` y `earnedBadges` se
+  comprueban como datos DERIVADOS (la app añade la foto de la semana en curso y recalcula insignias
+  desde el historial): lo que se verifica es que no borran lo anterior.
+- Aplicar un plan sigue conservando las cargas anotadas (regresión v74), el historial y el peso.
+- **Contraste con la v79**: el mismo arnés da 44 fallos sobre la versión anterior, exactamente en lo
+  corregido.
+- Regresiones cubiertas: bloques AMRAP/circuito y su `descanso_rondas_seg` (v79), `looseJSON` con
+  comillas tipográficas (v72), fechas locales y `daysBetween` en el cambio de hora, ausencia de
+  llamadas a `api.anthropic.com`, motor offline vivo.
+- `node --check` sobre el script y etiquetas balanceadas.
+- **NO validado en navegador**: los botones de esfuerzo son maquetación nueva dentro del reproductor.
+  jsdom confirma que se pintan, que el estado alterna y que la serie se guarda con su esfuerzo; NO
+  confirma cómo se ven en un iPhone con el teclado abierto. Requiere Playwright o prueba en el
+  dispositivo antes de darlo por bueno.

@@ -1,4 +1,4 @@
-const CACHE = 'fitcoach-v79';
+const CACHE = 'fitcoach-v80';
 const ASSETS = [
   './',
   './index.html',
