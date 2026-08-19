@@ -576,7 +576,7 @@ body{font-size:calc(15px*var(--fs))}
         <div id="cloud-status" style="margin-top:7px;font-size:12px"></div>
       </details>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 80</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 81</div>
     <div id="sw-status" style="text-align:center;font-size:11px;color:var(--warn);margin-top:4px;display:none"></div>
     <div style="text-align:center;margin-top:8px">
       <button class="btn btn-xs" onclick="checkForUpdate()">🔄 Buscar actualización</button>
@@ -2001,76 +2001,165 @@ function exSVG(arg,patHint){
 }
 
 /* --- Alternativas más seguras por ejercicio (mismo grupo, menos lesivas) --- */
+/* v81: cada alternativa declara con qué material se puede hacer. Antes no lo decía ninguna, así
+   que la app ofrecía "Press con mancuernas" a quien solo tiene bandas, o "Jalón con banda" a quien
+   no tiene banda ni anclaje. `anc:true` = necesita punto de anclaje para la banda. */
 const ALT={
   militar:[
-    {nombre:'Press militar sentado con respaldo',descripcion:'Sentado con la espalda apoyada en respaldo vertical; elimina la carga sobre la zona lumbar al empujar.',musculos:'Deltoides, tríceps'},
-    {nombre:'Elevaciones laterales',descripcion:'De pie o sentado, eleva las mancuernas a los lados hasta la altura de los hombros; aísla el deltoide sin comprimir la columna.',musculos:'Deltoides lateral'}
+    {nombre:'Press militar sentado con respaldo',eq:['mancuernas','barra','gimnasio'],descripcion:'Sentado con la espalda apoyada en respaldo vertical; elimina la carga sobre la zona lumbar al empujar.',musculos:'Deltoides, tríceps'},
+    {nombre:'Elevaciones laterales',eq:['mancuernas','bandas','gimnasio'],descripcion:'De pie o sentado, eleva las mancuernas a los lados hasta la altura de los hombros; aísla el deltoide sin comprimir la columna.',musculos:'Deltoides lateral'}
   ],
   rdl:[
-    {nombre:'Hip thrust con mancuerna',descripcion:'Espalda apoyada en sofá/banco, empuja la cadera arriba con la mancuerna sobre la cadera; trabaja glúteo e isquios con mínima carga lumbar.',musculos:'Glúteos, isquios'},
-    {nombre:'Puente de glúteo',descripcion:'Tumbado boca arriba, eleva la cadera apretando glúteos; versión sin carga axial, muy segura para la espalda.',musculos:'Glúteos, isquios'}
+    {nombre:'Hip thrust con mancuerna',eq:['mancuernas','kettlebell','gimnasio'],descripcion:'Espalda apoyada en sofá/banco, empuja la cadera arriba con la mancuerna sobre la cadera; trabaja glúteo e isquios con mínima carga lumbar.',musculos:'Glúteos, isquios'},
+    {nombre:'Puente de glúteo',eq:['ninguno'],descripcion:'Tumbado boca arriba, eleva la cadera apretando glúteos; versión sin carga axial, muy segura para la espalda.',musculos:'Glúteos, isquios'}
   ],
   pesomuerto:[
-    {nombre:'Hip thrust con mancuerna',descripcion:'Empuje de cadera con apoyo de espalda; carga la cadena posterior sin comprimir la columna.',musculos:'Glúteos, isquios'}
+    {nombre:'Hip thrust con mancuerna',eq:['mancuernas','kettlebell','gimnasio'],descripcion:'Empuje de cadera con apoyo de espalda; carga la cadena posterior sin comprimir la columna.',musculos:'Glúteos, isquios'},
+    {nombre:'Puente de glúteo',eq:['ninguno'],descripcion:'Extensión de cadera sin carga axial: la opción cuando no hay material y la espalda manda.',musculos:'Glúteos, isquios'}
   ],
   goblet:[
-    {nombre:'Sentadilla a caja',descripcion:'Sentadilla bajando a tocar una silla/caja y subiendo; controla la profundidad y reduce el estrés en rodilla y zona baja.',musculos:'Cuádriceps, glúteos'},
-    {nombre:'Zancadas',descripcion:'Zancadas con o sin mancuernas; trabajo unilateral con menos carga sobre la columna.',musculos:'Cuádriceps, glúteos'}
+    {nombre:'Sentadilla a caja',eq:['ninguno','mancuernas','kettlebell','gimnasio'],descripcion:'Sentadilla bajando a tocar una silla/caja y subiendo; controla la profundidad y reduce el estrés en rodilla y zona baja.',musculos:'Cuádriceps, glúteos'},
+    {nombre:'Zancadas',eq:['ninguno','mancuernas','barra','gimnasio'],descripcion:'Zancadas con o sin mancuernas; trabajo unilateral con menos carga sobre la columna.',musculos:'Cuádriceps, glúteos'}
   ],
   sentadilla:[
-    {nombre:'Sentadilla a caja',descripcion:'Bajada controlada a una caja/silla; reduce el estrés lumbar y de rodilla.',musculos:'Cuádriceps, glúteos'}
+    {nombre:'Sentadilla a caja',eq:['ninguno','mancuernas','kettlebell','gimnasio'],descripcion:'Bajada controlada a una caja/silla; reduce el estrés lumbar y de rodilla.',musculos:'Cuádriceps, glúteos'}
   ],
   zancada:[
-    {nombre:'Sentadilla goblet',descripcion:'Si la zancada te molesta la rodilla, la goblet reparte mejor la carga.',musculos:'Cuádriceps, glúteos'}
+    {nombre:'Sentadilla goblet',eq:['mancuernas','kettlebell','gimnasio'],descripcion:'Si la zancada te molesta la rodilla, la goblet reparte mejor la carga.',musculos:'Cuádriceps, glúteos'},
+    {nombre:'Sentadilla a caja',eq:['ninguno'],descripcion:'Sin material: baja a tocar una silla y sube; controla la profundidad y protege la rodilla.',musculos:'Cuádriceps, glúteos'}
   ],
   dominada:[
-    {nombre:'Jalón con banda',descripcion:'Tira de una banda anclada arriba hacia el pecho; mismo patrón de dorsal con menos exigencia de hombro.',musculos:'Dorsal, bíceps'},
-    {nombre:'Remo con mancuerna',descripcion:'Remo a una mano con apoyo; trabaja la espalda con menos tensión en el hombro.',musculos:'Dorsal, romboides'}
+    {nombre:'Jalón con banda',eq:['bandas'],anc:true,descripcion:'Tira de una banda anclada arriba hacia el pecho; mismo patrón de dorsal con menos exigencia de hombro.',musculos:'Dorsal, bíceps'},
+    {nombre:'Remo con mancuerna',eq:['mancuernas','kettlebell','gimnasio'],descripcion:'Remo a una mano con apoyo; trabaja la espalda con menos tensión en el hombro.',musculos:'Dorsal, romboides'},
+    {nombre:'Remo sentado con banda',eq:['bandas'],descripcion:'Sentado, banda pasada por los pies; tira llevando los codos atrás. No necesita anclaje.',musculos:'Dorsal, romboides'}
   ],
   pressbanca:[
-    {nombre:'Press con mancuernas',descripcion:'Las mancuernas permiten un recorrido más natural y menos estrés en el hombro que la barra.',musculos:'Pecho, tríceps'},
-    {nombre:'Flexiones',descripcion:'Empuje con peso corporal, articulación del hombro más libre.',musculos:'Pecho, tríceps'}
+    {nombre:'Press con mancuernas',eq:['mancuernas','gimnasio'],descripcion:'Las mancuernas permiten un recorrido más natural y menos estrés en el hombro que la barra.',musculos:'Pecho, tríceps'},
+    {nombre:'Flexiones',eq:['ninguno'],descripcion:'Empuje con peso corporal, articulación del hombro más libre.',musculos:'Pecho, tríceps'}
   ],
   pressdb:[
-    {nombre:'Flexiones',descripcion:'Si el press te molesta el hombro, las flexiones permiten que las escápulas se muevan libres.',musculos:'Pecho, tríceps'}
+    {nombre:'Flexiones',eq:['ninguno'],descripcion:'Si el press te molesta el hombro, las flexiones permiten que las escápulas se muevan libres.',musculos:'Pecho, tríceps'}
   ],
   flexion:[
-    {nombre:'Flexiones inclinadas',descripcion:'Manos apoyadas en una superficie elevada; reduce la carga y el estrés en muñeca y hombro.',musculos:'Pecho, tríceps'}
+    {nombre:'Flexiones inclinadas',eq:['ninguno'],descripcion:'Manos apoyadas en una superficie elevada; reduce la carga y el estrés en muñeca y hombro.',musculos:'Pecho, tríceps'}
   ],
   fondos:[
-    {nombre:'Flexiones',descripcion:'Menos estrés en el hombro que los fondos si tienes molestias.',musculos:'Pecho, tríceps'}
+    {nombre:'Flexiones',eq:['ninguno'],descripcion:'Menos estrés en el hombro que los fondos si tienes molestias.',musculos:'Pecho, tríceps'}
   ]
 };
-function altsFor(ex){const k=figKey((ex._orig&&ex._orig.nombre)||ex.nombre);return ALT[k]||null;}
+/* v81 · ¿puedo hacer esto con lo que tengo marcado hoy? */
+function equipOk(eq){
+  if(!Array.isArray(eq)||!eq.length)return true;   // sin material declarado: no se puede descartar
+  if(eq.indexOf('ninguno')>=0)return true;
+  const disp=equipSet();
+  return eq.some(t=>disp.has(t));
+}
+/* v81 · grupo muscular PRINCIPAL a partir del texto de músculos (o del nombre).
+   Se recorre por partes en orden: "Cuádriceps, glúteos" es cuádriceps, no glúteo. */
+function muscleGroup(txt){
+  const uno=t=>{
+    if(/cu[áa]driceps/.test(t))return 'cuádriceps';
+    if(/isquio|femoral|gl[úu]teo/.test(t))return 'glúteos e isquios';
+    if(/gemelo|s[óo]leo|pantorrilla/.test(t))return 'gemelos';
+    if(/aductor|abductor/.test(t))return 'cadera';
+    if(/pecho|pectoral/.test(t))return 'pecho';
+    if(/hombro|deltoide/.test(t))return 'hombro';
+    if(/tr[íi]ceps/.test(t))return 'tríceps';
+    if(/dorsal|espalda|trapecio|rombo/.test(t))return 'espalda';
+    if(/b[íi]ceps|braquial/.test(t))return 'bíceps';
+    if(/core|oblicuo|abdom|lumbar/.test(t))return 'core';
+    if(/cardio/.test(t))return 'cardio';
+    if(/pierna/.test(t))return 'cuádriceps';
+    return null;
+  };
+  const s=_norm(txt);
+  const partes=s.split(/[,;/·]+/);
+  for(let i=0;i<partes.length;i++){const g=uno(partes[i]);if(g)return g;}
+  return uno(s)||'otro';
+}
+/* Grupo de un ejercicio de la sesión: lo que diga el plan, y si no, la base de ejercicios */
+function grupoDe(ex){
+  if(!ex)return 'otro';
+  if(ex.musculos)return muscleGroup(ex.musculos);
+  const db=EXDB.find(e=>_norm(e.n)===_norm(ex.nombre));
+  return muscleGroup((db&&db.m)||ex.nombre);
+}
+/* v81: al cambiar de ejercicio, la carga pautada del anterior puede dejar de tener sentido
+   (16 kg por mancuerna en unas flexiones). Se ajusta en vez de arrastrarla. */
+function pesoTrasCambio(pesoActual,eq){
+  const p=String(pesoActual||'');
+  const tieneKg=/\d/.test(p)&&/kg/i.test(p);
+  const conCarga=t=>['mancuernas','barra','kettlebell','gimnasio'].indexOf(t)>=0;
+  if(!Array.isArray(eq)||!eq.length)return pesoActual;
+  if(eq.length===1&&eq[0]==='ninguno')return 'solo peso corporal';
+  if(!eq.some(conCarga)&&eq.indexOf('bandas')>=0)return 'banda con la tensión que te deje el RIR pautado';
+  if(tieneKg&&!eq.some(conCarga))return 'ajusta la carga al ejercicio nuevo';
+  return pesoActual;
+}
+function altsFor(ex,sess){
+  const k=figKey((ex._orig&&ex._orig.nombre)||ex.nombre);
+  let l=ALT[k]||null;
+  if(!l)return null;
+  // v81: solo lo que se puede hacer con el material de hoy, y sin repetir lo que ya hay en la sesión
+  const enSesion=new Set(((sess&&sess.exercises)||[])
+    .filter(x=>_norm(x.nombre)!==_norm(ex.nombre)).map(x=>_norm(x.nombre)));
+  l=l.filter(o=>equipOk(o.eq)&&!(o.anc&&!S.bandAnchor)&&!enSesion.has(_norm(o.nombre)));
+  return l.length?l:null;
+}
 function swapExercise(key,i,optIdx){
   const sess=mainAISess(key);if(!sess)return;
   const ex=sess.exercises[i];if(!ex)return;
-  if(!ex._orig)ex._orig={nombre:ex.nombre,descripcion:ex.descripcion,musculos:ex.musculos,errores:ex.errores,yt:ex.yt};
-  const opts=[ex._orig].concat(altsFor(ex)||[]);
+  // v81: se guarda también el peso original, para poder volver a él si se deshace el cambio
+  if(!ex._orig)ex._orig={nombre:ex.nombre,descripcion:ex.descripcion,musculos:ex.musculos,
+    errores:ex.errores,yt:ex.yt,p:ex.p,peso:ex.peso};
+  const opts=[ex._orig].concat(altsFor(ex,sess)||[]);
   const sel=opts[optIdx];if(!sel)return;
   ex.nombre=sel.nombre;ex.descripcion=sel.descripcion;ex.musculos=sel.musculos;
   ex.errores=sel.errores||ERRORS[figKey(sel.nombre)]||[];
   ex.yt=sel.yt||(matchYT({nombre:sel.nombre}).yt);
+  // v81: el patrón se quedaba con el del ejercicio ANTERIOR, lo que falseaba la figura y la
+  // siguiente búsqueda de compatibles
+  ex.p=(optIdx===0&&sel.p)?sel.p:(patFromName(sel.nombre)||ex.p);
+  ex.peso=(optIdx===0)?sel.peso:pesoTrasCambio(ex.peso,sel.eq);
   save();showSess(key);
 }
 /* --- Búsqueda/sustitución libre (v56): cualquier ejercicio compatible por patrón y equipo,
    no solo la lista curada ALT. Marca con ⚠ los que caen en una zona de riesgo activa
    (limitación fija o dolor reciente), sin bloquearlos: es información, no una prohibición. */
-function compatibleExercises(ex){
+/* v81 · el buscador ofrecía cualquier ejercicio del MISMO PATRÓN, y el patrón es grueso: dentro de
+   "pierna" caben cuádriceps, isquios, glúteos y gemelos, así que como alternativa a una sentadilla
+   aparecía un peso muerto rumano, que es otro grupo muscular. Además no miraba el resto de la
+   sesión, de modo que proponía justamente lo que ya se entrena en otro ejercicio del día.
+   Ahora: mismo grupo muscular primero, el resto aparte y etiquetado, y fuera lo ya presente. */
+function compatibleExercises(ex,sess){
   const pat=ex.p||patFromName(ex.nombre);
   const eq=equipSet();
-  return EXDB.filter(e=>e.p===pat&&e.n!==ex.nombre&&(e.eq.includes('ninguno')||e.eq.some(t=>eq.has(t))))
-    .sort((a,b)=>a.n.localeCompare(b.n,'es'));
+  const grp=grupoDe(ex);
+  const otros=((sess&&sess.exercises)||[]).filter(x=>x!==ex&&!isBlock(x));
+  const enSesion=new Set(otros.map(x=>_norm(x.nombre)));
+  const gruposDelDia=new Set(otros.map(grupoDe));
+  return EXDB.filter(e=>e.p===pat&&e.n!==ex.nombre
+      &&(e.eq.includes('ninguno')||e.eq.some(t=>eq.has(t)))
+      &&!enSesion.has(_norm(e.n)))
+    .map(e=>{const g=muscleGroup(e.m||e.n);
+      return Object.assign({},e,{g,mismo:g===grp,yaHoy:g!==grp&&gruposDelDia.has(g)});})
+    .sort((a,b)=>{
+      if(a.mismo!==b.mismo)return a.mismo?-1:1;
+      if(a.yaHoy!==b.yaHoy)return a.yaHoy?1:-1;
+      return a.n.localeCompare(b.n,'es');
+    });
 }
 function swapToName(key,i,name){
   if(!name)return;
   const sess=mainAISess(key);if(!sess)return;
   const ex=sess.exercises[i];if(!ex)return;
   const found=EXDB.find(e=>e.n===name);if(!found)return;
-  if(!ex._orig)ex._orig={nombre:ex.nombre,descripcion:ex.descripcion,musculos:ex.musculos,errores:ex.errores,yt:ex.yt};
+  if(!ex._orig)ex._orig={nombre:ex.nombre,descripcion:ex.descripcion,musculos:ex.musculos,
+    errores:ex.errores,yt:ex.yt,p:ex.p,peso:ex.peso};
   ex.nombre=found.n;ex.p=found.p;ex.descripcion=found.d||descFor(found);ex.musculos=found.m;
   ex.errores=ERRORS[figKey(found.n)]||[];
   ex.yt=found.yt||matchYT({nombre:found.n}).yt;
+  ex.peso=pesoTrasCambio(ex.peso,found.eq); // v81
   save();showSess(key);
 }
 function toggleSearch(i){const el=document.getElementById('srch-'+i);if(el)el.style.display=el.style.display==='none'?'block':'none';}
@@ -2117,25 +2206,32 @@ function showSess(key){
   sess.exercises.forEach((ex,i)=>{
     if(isBlock(ex)){h+=blockCard(ex,i);return;}
     const errs=(ex.errores&&ex.errores.length?ex.errores:(ERRORS[figKey(ex.nombre)]||[]));
-    const alts=altsFor(ex);
+    const alts=altsFor(ex,sess); // v81: filtradas por material y sin repetir la sesión
     let altHtml='';
     if(alts&&alts.length){
       const opts=[(ex._orig?{nombre:ex._orig.nombre}:{nombre:ex.nombre})].concat(alts);
       const curName=ex.nombre;
       altHtml=`<div class="pad-exsec">
-        <div style="font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">⇄ Alternativas (elige una; por defecto la propuesta)</div>
+        <div style="font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">⇄ Alternativas con tu material (elige una; por defecto la propuesta)</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">
         ${opts.map((o,oi)=>`<span class="chip${o.nombre===curName?' sel':''}" onclick="event.stopPropagation();swapExercise('${key}',${i},${oi})">${oi===0?'★ ':''}${esc(o.nombre)}</span>`).join('')}
         </div></div>`;
     }
-    const compat=compatibleExercises(ex);
+    /* v81: el desplegable venía como una lista plana del mismo patrón, así que mezclaba grupos
+       musculares distintos sin decirlo. Ahora va en dos grupos, el bueno primero. */
+    const compat=compatibleExercises(ex,sess);
+    const grpEx=grupoDe(ex);
+    const mismos=compat.filter(e=>e.mismo), otrosG=compat.filter(e=>!e.mismo);
+    const opt=e=>`<option value="${esc(e.n)}">${riskNames.has(e.n)?'⚠ ':''}${(e.anc&&!S.bandAnchor)?'⚓ ':''}${esc(e.n)}${e.mismo?'':' · '+esc(e.g)}${e.yaHoy?' (ya lo trabajas hoy)':''}</option>`;
     const searchHtml=compat.length?`<div class="pad-exsec">
-        <button class="btn btn-xs" onclick="event.stopPropagation();toggleSearch(${i})">🔍 Buscar otro ejercicio (${compat.length})</button>
+        <button class="btn btn-xs" onclick="event.stopPropagation();toggleSearch(${i})">🔍 Buscar otro ejercicio (${mismos.length})</button>
         <div id="srch-${i}" style="display:none;margin-top:8px">
           <select onchange="event.stopPropagation();swapToName('${key}',${i},this.value)" onclick="event.stopPropagation()" style="width:100%;padding:9px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px">
-            <option value="">Elige un ejercicio del mismo patrón (${esc(ex.p||'?')})…</option>
-            ${compat.map(e=>`<option value="${esc(e.n)}">${riskNames.has(e.n)?'⚠ ':''}${(e.anc&&!S.bandAnchor)?'⚓ ':''}${esc(e.n)}</option>`).join('')}
+            <option value="">Elige un ejercicio…</option>
+            ${mismos.length?`<optgroup label="Mismo grupo muscular (${esc(grpEx)})">${mismos.map(opt).join('')}</optgroup>`:''}
+            ${otrosG.length?`<optgroup label="Otro grupo muscular · cambia lo que entrenas">${otrosG.map(opt).join('')}</optgroup>`:''}
           </select>
+          <p class="note mt-6">Solo aparecen ejercicios que puedes hacer con el material que tienes marcado y que no están ya en esta sesión. Los del segundo grupo cambian el músculo que trabajas: elígelos a sabiendas.</p>
           ${riskNames.size?'<p class="note mt-6">⚠ = ejercicio de mayor carga/impacto para una zona que tienes marcada como limitación o con dolor reciente. Puedes elegirlo igualmente; es solo un aviso.</p>':''}
           ${(!S.bandAnchor&&compat.some(e=>e.anc))?'<p class="note mt-6">⚓ = necesita anclar la banda a un punto fijo (puerta, barra…), que has indicado no tener. Puedes elegirlo si hoy sí puedes anclarla.</p>':''}
         </div></div>`:'';

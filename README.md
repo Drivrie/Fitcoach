@@ -1858,3 +1858,67 @@ También se ha reescrito el texto de la tarjeta de Mesociclo, que decía «Sin d
   jsdom confirma que se pintan, que el estado alterna y que la serie se guarda con su esfuerzo; NO
   confirma cómo se ven en un iPhone con el teclado abierto. Requiere Playwright o prueba en el
   dispositivo antes de darlo por bueno.
+
+## v81: las alternativas de ejercicio dejan de ser incongruentes
+
+Tres defectos en el sustituto de ejercicios de la pantalla Sesión, reportados desde el uso real:
+proponía ejercicios con material que no se tiene, proponía otro grupo muscular sin decirlo, y
+arrastraba la carga en kilos del ejercicio anterior.
+
+### 1 · Las alternativas curadas no miraban el material
+La tabla `ALT` no tenía campo de equipo: **ninguna** de sus once entradas declaraba con qué material
+se hace. Así que a quien solo tiene peso corporal se le ofrecía «Press con mancuernas» como
+alternativa al press de banca, y «Jalón con banda» a quien no tiene banda ni anclaje.
+- Cada alternativa declara ahora su `eq` y, cuando procede, `anc:true` (necesita punto de anclaje).
+- `altsFor()` filtra por `equipSet()` y por `S.bandAnchor`; si no queda ninguna viable, el bloque de
+  alternativas no se pinta en vez de ofrecer cosas imposibles.
+- De paso se han añadido las que faltaban para cubrir los huecos que dejaba el filtro: «Puente de
+  glúteo» sin material para el peso muerto, «Sentadilla a caja» sin material para la zancada, y
+  «Remo sentado con banda» (sin anclaje) para las dominadas.
+
+### 2 · El buscador mezclaba grupos musculares
+`compatibleExercises()` filtraba solo por PATRÓN, y el patrón es grueso: dentro de `pierna` caben
+cuádriceps, isquios, glúteos y gemelos. Como alternativa a una sentadilla goblet aparecían, en orden
+alfabético, «Curl femoral con banda» o «Elevación de talones» — otro grupo muscular por completo. Y
+como no miraba el resto de la sesión, proponía justo lo que ya se entrenaba en otro ejercicio del
+mismo día.
+- Nuevo clasificador `muscleGroup()`: deduce el grupo PRINCIPAL del texto de músculos recorriéndolo
+  por partes en orden, de modo que «Cuádriceps, glúteos» es cuádriceps y no glúteo. Funciona igual
+  con lo que escribe Claude en `musculos` que con la base `EXDB`.
+- El desplegable va en dos `optgroup`: **«Mismo grupo muscular (X)»** primero y **«Otro grupo
+  muscular · cambia lo que entrenas»** después, con el grupo escrito en cada opción. No se ocultan:
+  se etiquetan, que es distinto.
+- Los ejercicios ya presentes en la sesión se excluyen; los que trabajan un grupo que YA se entrena
+  ese día se marcan «(ya lo trabajas hoy)» y bajan en el orden.
+- El contador del botón pasa a mostrar los del mismo grupo, no el total.
+
+### 3 · La carga en kilos se arrastraba al ejercicio nuevo
+Al cambiar «Press de banca · 40 kg en total incluida la barra» por «Flexiones», el ejercicio se
+quedaba con los 40 kg. Nueva `pesoTrasCambio()`: a peso corporal pone «solo peso corporal»; a banda,
+«banda con la tensión que te deje el RIR pautado»; si el ejercicio nuevo no admite carga externa y el
+texto traía kilos, pide ajustar. Con mancuernas o barra se respeta lo que hubiera.
+- `_orig` guarda ahora también `peso` y `p`, de modo que volver al ejercicio original **restaura la
+  carga original**, no una inventada.
+- `swapExercise()` actualizaba nombre, descripción y músculos pero **no el patrón**: se quedaba con
+  el del ejercicio anterior, lo que falseaba la figura y la siguiente búsqueda de compatibles.
+  Corregido.
+
+### Corrección del arnés
+El resumen de resultados estaba escrito ANTES de los bloques añadidos en la v80, así que las seis
+comprobaciones del reproductor se ejecutaban pero **no se contaban ni se reportaban**. El total real
+de la v80 eran 132, no 126. Movido al final; ahora ningún bloque puede quedar fuera del recuento.
+
+### Validación
+- **169 comprobaciones en verde, 0 fallos**, en Europe/Madrid, UTC, America/Santiago,
+  Australia/Sydney y Pacific/Kiritimati (`test-v81.js`).
+- **Contraste con la v80**: 5 fallos, uno por cada defecto corregido — ofrece press con mancuernas
+  sin tener mancuernas, repite un ejercicio ya presente en la sesión, encabeza la lista con otro
+  grupo muscular y arrastra los 40 kg a unas flexiones.
+- 33 comprobaciones nuevas: clasificador de grupo muscular caso a caso, filtrado por material con y
+  sin anclaje de banda, exclusión de duplicados de sesión, orden por grupo, marcado de «ya lo
+  trabajas hoy», ajuste de carga en las cuatro combinaciones, swap real sobre la agenda e ida y
+  vuelta al ejercicio original conservando la carga.
+- `node --check` y etiquetas balanceadas, incluidos los `optgroup` nuevos.
+- **NO validado en navegador**: los `optgroup` dentro del `<select>` son maquetación nueva. jsdom
+  confirma que se generan; no confirma cómo los pinta Safari en iOS, que usa su propio selector
+  nativo. Conviene mirarlo en el móvil.
