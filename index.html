@@ -196,6 +196,23 @@ textarea.bridge-out{font-family:'SF Mono',ui-monospace,monospace;font-size:11px;
   touch-action:manipulation}
 .esf-b:active{background:rgba(255,255,255,.24)}
 .esf-b.esf-on{background:rgba(255,255,255,.38);border-color:#fff}
+/* v82: en el iPhone, la ficha técnica y los avisos quedaban por debajo del corte sin ninguna
+   señal de que hubiera más. Medido a 375x812: 319 px de contenido fuera de pantalla con la fuente
+   normal. Este indicador aparece solo cuando de verdad hay algo debajo. */
+#pl-more{display:none;flex-shrink:0;padding:8px 10px;text-align:center;cursor:pointer;
+  font-size:calc(11.5px*var(--fs));font-weight:600;color:var(--accent);
+  background:rgba(255,255,255,.06);border-top:1px solid var(--border)}
+#pl-more.show{display:block}
+.pl-ficha{margin-top:12px;padding:11px 12px;background:rgba(255,255,255,.07);border-radius:12px;text-align:left}
+.pl-ficha-t{font-size:calc(10.5px*var(--fs));font-weight:700;text-transform:uppercase;letter-spacing:.6px;
+  color:rgba(255,255,255,.55);margin-bottom:5px}
+.pl-ficha ul{margin:4px 0 0;padding-left:17px}
+.pl-ficha li{font-size:calc(12.5px*var(--fs));color:var(--text2);line-height:1.5;margin-bottom:3px}
+/* v83 */
+.orden-b{flex:1;min-width:0;padding:9px 4px;border-radius:11px;border:1px solid var(--border);
+  background:var(--surface2);color:var(--text2);font-size:calc(11.5px*var(--fs));font-weight:600;
+  text-align:center;cursor:pointer;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+.orden-b.sel{background:var(--accent);border-color:transparent;color:#fff}
 .pl-nav{display:flex;gap:8px;margin-top:14px}
 .pl-nav .btn{background:rgba(255,255,255,.12);border-color:transparent;color:#fff}
 .pl-nav .btn[disabled]{opacity:.35}
@@ -576,7 +593,7 @@ body{font-size:calc(15px*var(--fs))}
         <div id="cloud-status" style="margin-top:7px;font-size:12px"></div>
       </details>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 81</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 83</div>
     <div id="sw-status" style="text-align:center;font-size:11px;color:var(--warn);margin-top:4px;display:none"></div>
     <div style="text-align:center;margin-top:8px">
       <button class="btn btn-xs" onclick="checkForUpdate()">🔄 Buscar actualización</button>
@@ -592,6 +609,7 @@ body{font-size:calc(15px*var(--fs))}
     <button class="btn btn-sm" id="mus-btn" onclick="toggleMusic()">🎵</button>
   </div>
   <div id="player-body"></div>
+  <div id="pl-more" onclick="plScrollMore()">▼ Desliza: queda técnica y avisos por leer</div>
   <div id="player-music"></div>
 </div>
 
@@ -997,6 +1015,7 @@ function initState(){
      entraba una versión nueva del service worker, la instrucción del usuario desaparecía sin
      avisar y el mensaje para Claude salía sin ella. Ahora se persiste. */
   if(S.weekNote==null)S.weekNote='';
+  // v83: nada que inicializar para el orden fuerza/cardio: vive dentro de cada log (log.orden)
   // v80: restricciones y preferencias de alimentación (el menú se generaba a ciegas)
   if(S.profile.dietaNota==null)S.profile.dietaNota='';
 }
@@ -2268,6 +2287,38 @@ function openLog(key,mode){
   const isAdd=mode==='add';
   document.getElementById('log-title').textContent=(isAdd?'Añadir actividad · ':'Registrar · ')+(idx>=0?DAY_NAMES[idx]:'');
   const dayPicker=isAdd?`<div class="field"><label>Día</label><select id="l-day">${DAYS.map((c,i)=>`<option value="${dates[i]}"${dates[i]===key?' selected':''}>${DAY_NAMES[i]}</option>`).join('')}</select></div>`:'';
+  /* v83 · Desde la v80 el entrenador recomienda si la fuerza va ANTES o DESPUÉS de la carrera en
+     los días que llevan las dos cosas, pero no había forma de registrar lo que se hizo de verdad:
+     la recomendación se emitía y nadie podía comprobarla. Este campo cierra ese bucle. Solo
+     aparece cuando el día puede tener las dos cosas. */
+  const _cod=idx>=0?DAYS[idx]:null;
+  const _yaHay=(S.schedule[key]||[]);
+  const _hayFuerza=_yaHay.some(x=>x.type==='ai');
+  const _hayCardio=_yaHay.some(x=>x.type==='free'&&x.done);
+  const _diaDoble=(!!_cod&&(S.briefDays||[]).indexOf(_cod)>=0)||(_hayFuerza&&(_hayCardio||isAdd))||(!isAdd&&_hayCardio);
+  /* v83 · lo que de verdad se guarda en el historial, a la vista y sin poder confundirlo con las
+     notas. Antes convivían dos versiones de las cargas —las del reproductor y el texto libre— sin
+     que se dijera en ninguna parte cuál prevalece (prevalecen las del reproductor: son las que lee
+     complianceFor()). */
+  const _sessReal=isAdd?null:mainAISess(key);
+  const _setsReal=(_sessReal&&_sessReal.sets&&_sessReal.sets.length)?_sessReal.sets:null;
+  const resumenReal=_setsReal?`
+    <div class="note mb-11" style="border-left:3px solid var(--ring-ex)">
+      <div style="font-weight:700;margin-bottom:5px">🏋 Esto es lo que se guardará en tu historial</div>
+      ${_setsReal.map(e=>{const es=esfResumen(e.series);
+        return `<div style="margin-bottom:3px">${esc(e.nombre)}: ${esc(fmtSets(e.series))}${es?` · <b>esfuerzo ${esc(es)}</b>`:' · <i>sin esfuerzo marcado</i>'}</div>`;}).join('')}
+      <div style="margin-top:6px;color:var(--text3)">Son las series que anotaste durante la sesión guiada, y las que usa tu entrenador para decidir si subes carga. Las notas de más abajo son contexto: no sustituyen a estos datos.</div>
+    </div>`:'';
+  const ordenHTML=_diaDoble?`
+    <div class="field"><label>¿Y la otra actividad de hoy (carrera, caminata…)?</label>
+      <div class="feel">
+        <div class="orden-b sel" onclick="selOrden(this)" data-v="unica">🔸 Solo esto</div>
+        <div class="orden-b" onclick="selOrden(this)" data-v="antes">⬅️ Esto fue ANTES</div>
+        <div class="orden-b" onclick="selOrden(this)" data-v="despues">➡️ Esto fue DESPUÉS</div>
+      </div>
+      <div class="field mt-8"><label>Horas entre una y otra (opcional)</label>
+        <input type="text" id="l-sep" placeholder="Ej: 6, o 0 si fue seguido" inputmode="decimal" autocapitalize="off" autocorrect="off"></div>
+      <p class="note mt-6">Tu entrenador te recomienda cada semana en qué orden hacerlas y con cuánta separación. Sin este dato no puede saber si la recomendación funcionó ni corregirla.</p></div>`:'';
   const typeOpts=isAdd
     ? `<option>Carrera</option><option>Carrera en cinta</option><option>Caminata / Paseo</option><option>Bicicleta</option><option>Natación</option><option>HIIT</option><option>Fuerza libre</option><option>Yoga / Movilidad</option><option>Senderismo</option><option>Otro</option>`
     : `<option>Fuerza (sesión IA)</option><option>Carrera</option><option>Carrera en cinta</option><option>Caminata / Paseo</option><option>Bicicleta</option><option>Natación</option><option>HIIT</option><option>Yoga / Movilidad</option><option>Otro</option>`;
@@ -2289,6 +2340,7 @@ function openLog(key,mode){
         <div class="feel-b sel" onclick="selFeel(this)" data-f="💪" title="bien">💪</div>
         <div class="feel-b" onclick="selFeel(this)" data-f="🔥" title="excelente">🔥</div>
       </div></div>
+    ${ordenHTML}
     <div class="field"><label>¿Cómo llegabas antes de empezar?</label>
       <div class="feel">
         <div class="fatiga-b" onclick="selFatiga(this)" data-v="fresco">😊 Fresco</div>
@@ -2303,6 +2355,7 @@ function openLog(key,mode){
         <div class="pain-b" onclick="selPainKind(this)" data-k="articular">⚠️ Articular o punzante</div>
       </div>
       <p class="note mt-6">La distinción importa: las agujetas son parte normal del entrenamiento y solo se anotan como contexto. Una molestia <b>articular o punzante</b> sí hace que el generador evite durante 14 días los ejercicios de más carga o impacto para esa zona, y se le señala a Claude para que adapte en vez de suprimir el movimiento.</p></div>
+    ${resumenReal}
     <div class="field"><label style="display:flex;justify-content:space-between;align-items:center">Notas (pesos, series reales, sensaciones)${isAdd?'':`<button class="btn btn-xs" onclick="insertLoadTemplate('${key}')">${(()=>{const s=mainAISess(key);return (s&&s.sets&&s.sets.length)?'＋ Cargas reales':'＋ Plantilla cargas';})()}</button>`}</label>
       <textarea id="l-notes" placeholder="${isAdd?'Ej: 7,1 km, 5:30/km, 412 kcal, FC media 152...':'Ej: goblet 16kg llegué a 12, press 16kg 3×10 justo...'}"></textarea></div>`;
   openSheet('log-bg');
@@ -2316,6 +2369,7 @@ function openLog(key,mode){
   }
 }
 function selFatiga(el){document.querySelectorAll('.fatiga-b').forEach(b=>b.classList.remove('sel'));el.classList.add('sel');}
+function selOrden(el){document.querySelectorAll('.orden-b').forEach(b=>b.classList.remove('sel'));el.classList.add('sel');} // v83
 function togglePain(el){el.classList.toggle('sel');}
 function selPainKind(el){document.querySelectorAll('#pain-kind .pain-b').forEach(b=>b.classList.remove('sel'));el.classList.add('sel');}
 /* Inserta en notas el esqueleto de cargas con los ejercicios de la sesión IA del día */
@@ -2333,12 +2387,15 @@ function insertLoadTemplate(key){
       if(isBlock(e))return `${e.nombre} (${blockType(e)}): ___ rondas`;
       const real=realByName[(e.nombre||'').toLowerCase().trim()];
       if(real&&real.series&&real.series.length){
-        return `${e.nombre}: ${fmtSets(real.series)}`;           // lo REALMENTE registrado
+        // v83: el esfuerzo marcado serie a serie no aparecía por ningún lado al registrar la
+        // sesión, así que no había forma de saber si se había guardado
+        const es=esfResumen(real.series);
+        return `${e.nombre}: ${fmtSets(real.series)}${es?' — esfuerzo '+es:''}`;
       }
       return `${e.nombre} ${e.series}×${e.reps}${e.peso?' · '+e.peso:''}: (previsto — sin registrar)`;
     });
     const header=hasAnyReal
-      ? '(Cargas reales registradas en la sesión guiada; corrige si hiciste algo distinto)'
+      ? '(Cargas y esfuerzo registrados serie a serie en la sesión guiada. Lo de abajo es una COPIA para que lo veas: lo que cuenta para la progresión es lo anotado en la sesión, no este texto. Escribe aquí solo comentarios o correcciones, y dilo con palabras si algo no cuadra.)'
       : '(✓ = según lo previsto; corrige solo lo que cambió y añade comentario)';
     // si NO hay ningún registro real, mantenemos el formato anterior con ✓ para no confundir
     tpl=hasAnyReal
@@ -2377,7 +2434,13 @@ function saveLog(){
   const painKind=pain.length?((painKindEl&&painKindEl.dataset.k)||'muscular'):null; // v75
   const notes=document.getElementById('l-notes').value;
   if(!S.schedule[key])S.schedule[key]=[];
+  // v83: orden respecto a la otra actividad del día y separación en horas
+  const ordEl=document.querySelector('.orden-b.sel');
+  const orden=ordEl?ordEl.dataset.v:null;
+  const sepEl=document.getElementById('l-sep');
+  const sepH=sepEl?String(sepEl.value||'').replace(',','.').trim():'';
   const log={type,duration:dur,distance:dist,kcal,hr,feeling:feel,fatiga,pain,painKind,notes,date:key};
+  if(orden&&orden!=='unica'){log.orden=orden;if(sepH&&!isNaN(+sepH))log.sepH=+sepH;}
   const aiIdx=mainAIIdx(key);
   // v52: si el reproductor registró cargas serie a serie, viajan con el registro y el historial
   if(type.includes('IA')&&aiIdx>=0&&S.schedule[key][aiIdx].sets)log.sets=S.schedule[key][aiIdx].sets;
@@ -2989,7 +3052,7 @@ Si se combinan varios objetivos, prioriza un esquema de fuerza/hipertrofia para 
     if(cmp)histTxt+='\n\nCUMPLIMIENTO REAL (lo que te pauté frente a lo que hice, últimas 3 semanas). Úsalo como base de la progresión: "tope del rango en todas las series" = subir carga; "series incompletas" o "por debajo del rango" = mantener o bajar y revisar por qué. El "esfuerzo" es lo que marqué yo al cerrar cada serie (fácil = me sobraban 3+ repeticiones; justo = 1-2 de margen; al límite = sin margen): si pone "al límite", NO subas carga aunque haya llegado al tope del rango; consolida o quita una serie:\n'+cmp;
     const h=S.history.slice(0,38); // ~4 semanas completas con margen, a tu ritmo (hasta 9 ses./sem)
     histTxt+='\n\nHISTORIAL DE SESIONES COMPLETADAS (hasta ~4 semanas, más reciente primero; da más peso a la última semana para decidir la carga inmediata, y usa el conjunto para ver la trayectoria del mesociclo: si progreso, me estanco o acumulo fatiga):\n'+
-      (h.length?h.map(x=>`- ${x.key}: ${x.title}, ${x.duration}min${x.distance?' '+x.distance+'km':''}${x.kcal?' · '+x.kcal+' kcal':''}${x.hr?' · FC media '+x.hr:''}, esfuerzo ${x.feeling}${x.fatiga&&x.fatiga!=='normal'?' · llegaba '+x.fatiga:''}${x.pain&&x.pain.length?' · '+(x.painKind==='muscular'?'agujetas/molestia muscular en ':'molestia ARTICULAR en ')+x.pain.map(areaLabel).join('/'):''}. ${x.notes||''}${x.sets&&x.sets.length?' CARGAS REALES serie a serie: '+x.sets.map(e=>e.nombre+' '+fmtSets(e.series)+(esfResumen(e.series)?' ('+esfResumen(e.series)+')':'')).join('; ')+'.':''}`).join('\n'):'(ninguna registrada)');
+      (h.length?h.map(x=>`- ${x.key}: ${x.title}, ${x.duration}min${x.distance?' '+x.distance+'km':''}${x.kcal?' · '+x.kcal+' kcal':''}${x.hr?' · FC media '+x.hr:''}, esfuerzo ${x.feeling}${x.fatiga&&x.fatiga!=='normal'?' · llegaba '+x.fatiga:''}${x.pain&&x.pain.length?' · '+(x.painKind==='muscular'?'agujetas/molestia muscular en ':'molestia ARTICULAR en ')+x.pain.map(areaLabel).join('/'):''}${x.orden?' · esta actividad fue '+(x.orden==='antes'?'ANTES':'DESPUÉS')+' de la otra del día'+(x.sepH!=null?' ('+x.sepH+' h de separación)':' (separación sin anotar)'):''}. ${x.notes||''}${x.sets&&x.sets.length?' CARGAS REALES serie a serie: '+x.sets.map(e=>e.nombre+' '+fmtSets(e.series)+(esfResumen(e.series)?' ('+esfResumen(e.series)+')':'')).join('; ')+'.':''}`).join('\n'):'(ninguna registrada)');
   }
   // v75 · volumen semanal por grupo muscular, fuerza estimada, cardio y memoria del entrenador
   let coachTxt='';
@@ -3070,6 +3133,7 @@ REGLAS DE ADAPTACIÓN (basadas en evidencia):
 - Si predominó 😓/😴 o faltaron sesiones, reduce volumen y prioriza recuperación.
 - Nunca una semana de descanso: entreno siempre. Si hay fatiga (😓/😴, marcadores peores, molestia articular repetida), puedes bajar a una semana de VOLUMEN REDUCIDO (40-50% menos series, misma frecuencia, carga similar, RIR 3-4) y decirlo con claridad en "analisis_progreso" y en "mesociclo.justificacion".
 - ESFUERZO REAL DE LAS SERIES: cuando el cumplimiento indique "esfuerzo al límite", NO subas carga aunque haya llegado al tope del rango; consolida esa carga una semana más o reduce una serie. Subir sobre series que ya se hacen al fallo es la forma más rápida de estancarse y de acumular fatiga.
+- ORDEN FUERZA / CARDIO REALIZADO: en los días con las dos cosas, el historial dice cuál hice ANTES y con cuánta separación. Compáralo con lo que recomendaste la semana pasada: si lo hice al revés y el rendimiento en fuerza cayó, dilo y explica por qué el orden importa; si lo hice como dijiste y funcionó, mantenlo; si funcionó igual del otro modo, reconócelo y adáptate a lo que me resulte más fácil de cumplir. Si no hay dato de orden, no supongas: pídemelo en "meta".
 - En "nota_progresion" de cada ejercicio, explica el cambio concreto frente a la semana anterior.
 - Varía algún ejercicio si lleva 2+ semanas idéntico, para evitar estancamiento.
 - En "analisis_progreso" resume en 3-4 frases qué has ajustado y por qué.`:'';
@@ -4462,6 +4526,11 @@ function persistSetLog(){
   }catch(e){}
 }
 
+(function(){ // v82: recalcular el indicador al desplazar y al girar/redimensionar
+  const b=document.getElementById('player-body');
+  if(b)b.addEventListener('scroll',()=>plMoreCheck(),{passive:true});
+  window.addEventListener('resize',()=>{if(P&&P.active)plMoreCheck();});
+})();
 function startPlayer(key){
   const sess=mainAISess(key);
   if(!sess||!sess.exercises)return;
@@ -4535,6 +4604,42 @@ function toggleMusic(){
   renderPlayerMusic();
 }
 
+/* v82 · ficha técnica del ejercicio en el reproductor.
+   Antes se pintaba la descripción suelta y UN SOLO error —`errs[0]`—, cuando al entrenador se le
+   piden 2-3 por ejercicio: dos de cada tres avisos no llegaban nunca a la pantalla. Los músculos
+   implicados y la nota de progresión, que sí están en el plan, no se mostraban en ningún momento
+   de la sesión guiada. */
+function fichaTecnica(ex,errs){
+  const partes=[];
+  if(ex.descripcion)partes.push(`<div class="pl-ficha-t">Cómo se hace</div>
+    <div style="font-size:calc(12.5px*var(--fs));color:var(--text2);line-height:1.5">${esc(ex.descripcion)}</div>`);
+  if(ex.musculos)partes.push(`<div class="pl-ficha-t" style="margin-top:9px">Músculos</div>
+    <div style="font-size:calc(12.5px*var(--fs));color:var(--text2)">💪 ${esc(ex.musculos)}</div>`);
+  if(ex.nota_progresion)partes.push(`<div class="pl-ficha-t" style="margin-top:9px">Progresión</div>
+    <div style="font-size:calc(12.5px*var(--fs));color:var(--text2);line-height:1.5">📈 ${esc(ex.nota_progresion)}</div>`);
+  if(errs&&errs.length)partes.push(`<div class="pl-ficha-t" style="margin-top:9px;color:var(--danger)">⚠ Errores a evitar (${errs.length})</div>
+    <ul>${errs.map(e=>`<li>${esc(e)}</li>`).join('')}</ul>`);
+  return partes.length?`<div class="pl-ficha">${partes.join('')}</div>`:'';
+}
+/* Aparece solo si queda contenido fuera de pantalla; al tocarlo, baja. */
+function plMoreCheck(){
+  const b=document.getElementById('player-body'), m=document.getElementById('pl-more');
+  if(!b||!m)return;
+  const queda=b.scrollHeight-b.clientHeight-b.scrollTop;
+  m.classList.toggle('show',queda>24);
+}
+function plScrollMore(){
+  const b=document.getElementById('player-body');if(!b)return;
+  b.scrollTo({top:b.scrollTop+Math.round(b.clientHeight*0.8),behavior:'smooth'});
+}
+/* Escribe en el cuerpo del reproductor y recalcula el indicador. Todos los pintados pasan por
+   aquí para que ninguna pantalla se quede sin él. */
+function plPaint(html){
+  const b=document.getElementById('player-body');if(!b)return;
+  b.innerHTML=html;
+  b.scrollTop=0;
+  requestAnimationFrame(plMoreCheck);
+}
 function renderPlayer(){
   const ex=P.sess.exercises[P.exi];
   /* v79: el descanso ANTERIOR a un bloque no se veía. Al terminar el último ejercicio normal,
@@ -4568,8 +4673,7 @@ function renderPlayer(){
         <div style="font-weight:700;font-size:calc(16px*var(--fs))">${esc(ex.nombre)}</div>
         <div class="pl-cue mt-4">${ex.series>1?`${esc(ex.series)} series`:'1 serie'} · ${esc(ex.reps)}${/^\d+$/.test(String(ex.reps))?' reps':''}${ex.rir?' · RIR '+esc(ex.rir):''}</div>
         ${ex.peso?`<div style="margin-top:6px;color:var(--ring-ex);font-weight:600;font-size:calc(14px*var(--fs))">🏋 ${esc(ex.peso)}</div>`:''}
-        ${ex.descripcion?`<div class="pl-cue mt-6">${esc(ex.descripcion)}</div>`:''}
-        ${errs.length?`<div class="pl-cue" style="margin-top:6px;color:var(--danger)">⚠ Evita: ${errs[0].toLowerCase()}</div>`:''}
+        ${fichaTecnica(ex,errs)}
       </div>`;
     }
     mid=`<div class="pl-phase c-free">DESCANSO</div>
@@ -4633,22 +4737,25 @@ function renderPlayer(){
         <div class="pl-cue" style="font-size:calc(10px*var(--fs));margin-top:5px">¿Cómo fue esta serie? De esto depende que tu entrenador suba la carga o la consolide.</div>
         ${last?`<div class="pl-cue" style="margin-top:6px;color:var(--ring-stand)">Última vez (${last.date}): ${fmtSets(last.series)}</div>`:''}
       </div>`:'';
-    mid=`<div style="width:170px;height:135px;margin:0 auto 14px">${exSVG(ex.nombre,ex.p)}</div>
+    /* v82: con la fuente ampliada, la figura empujaba el botón principal fuera de pantalla
+       (medido: botón a 824 px en un alto de 812 con escala 1,35). Se encoge al ampliar. */
+    const _fs=+S.fontScale||1;
+    const figW=_fs>1.15?118:(_fs>1?142:170), figH=Math.round(figW*135/170);
+    mid=`<div style="width:${figW}px;height:${figH}px;margin:0 auto 14px">${exSVG(ex.nombre,ex.p)}</div>
       <div class="pl-reps">${ex.series>1?`Serie ${P.set} de ${esc(ex.series)}`:'1 serie'} · ${esc(ex.reps)}${/^\d+$/.test(String(ex.reps))?' reps':''}</div>
       ${ex.peso?`<div class="pl-cue" style="margin-top:4px;color:var(--ring-ex);font-weight:600">🏋 ${esc(ex.peso)}</div>`:''}
       ${(ex.rir||ex.rpe)?`<div class="pl-cue">Deja ${esc(ex.rir||ex.rpe)} reps en reserva (RIR)${ex.tempo?' · tempo '+esc(ex.tempo):''}</div>`:''}
       ${recHTML}
       <button class="btn btn-primary btn-block mt-12" onclick="finishSet()">${repSecs?'Iniciar ('+repSecs+'s)':'✓ Serie completada'}</button>
       ${P.sess.userNote?`<div class="pl-cue mt-12" style="color:var(--accent)">💬 ${esc(P.sess.userNote)}</div>`:''}
-      <div class="pl-cue mt-8">${esc(ex.descripcion||'')}</div>
-      ${errs.length?`<div class="pl-cue" style="margin-top:8px;color:var(--danger)">⚠ Evita: ${errs[0].toLowerCase()}</div>`:''}
+      ${fichaTecnica(ex,errs)}
       ${navEjercicios()}`;
   }
-  document.getElementById('player-body').innerHTML=`
+  plPaint(`
     <div class="pl-prog"><div class="pl-prog-i" style="width:${pct}%"></div></div>
     <div class="pl-count">Ejercicio ${P.exi+1} de ${total}</div>
     <div class="pl-name">${esc(ex.nombre)}</div>
-    <div class="pl-mid">${mid}</div>`;
+    <div class="pl-mid">${mid}</div>`);
 }
 /* v80 · esfuerzo percibido de la serie, en el idioma del que entrena (no en RIR, que hay que
    traducir mentalmente a mitad de serie). Se guarda con cada serie y viaja al prompt. */
@@ -4859,11 +4966,11 @@ function renderBlock(){
         <div class="mt-10">${_movList(ex)}</div>
         <button class="btn btn-primary btn-block mt-12" onclick="skipRoundRest()">Saltar descanso → ronda ${b.rounds+1}</button>
         <button class="btn btn-block mt-8" style="background:rgba(255,255,255,.15);border-color:transparent;color:#fff" onclick="endBlock(false)">Terminar bloque</button>`;
-      document.getElementById('player-body').innerHTML=`
+      plPaint(`
         <div class="pl-prog"><div class="pl-prog-i" style="width:${pct}%"></div></div>
         <div class="pl-count">Ejercicio ${P.exi+1} de ${total}</div>
         <div class="pl-name">${esc(ex.nombre)}</div>
-        <div class="pl-mid">${mid}</div>`;
+        <div class="pl-mid">${mid}</div>`);
       return;
     }
     /* v76: el circuito era el único bloque sin reloj. AMRAP y EMOM van contra un tiempo fijo, así
@@ -4883,11 +4990,11 @@ function renderBlock(){
         <button class="btn btn-block" style="background:rgba(255,255,255,.15);border-color:transparent;color:#fff" onclick="endBlock(false)">${t==='circuito'?'Terminar bloque':'Terminar antes'}</button>
       </div>`;
   }
-  document.getElementById('player-body').innerHTML=`
+  plPaint(`
     <div class="pl-prog"><div class="pl-prog-i" style="width:${pct}%"></div></div>
     <div class="pl-count">Ejercicio ${P.exi+1} de ${total}</div>
     <div class="pl-name">${esc(ex.nombre)}</div>
-    <div class="pl-mid">${mid}</div>`;
+    <div class="pl-mid">${mid}</div>`);
 }
 function startBlock(){
   clearInterval(P.int);
@@ -5019,7 +5126,7 @@ function endBlock(auto){
      eso si el ejercicio siguiente era otro bloque. En un circuito metabólico el descanso entre
      bloques es parte de la prescripción, así que ahora se muestra y corre solo. */
   const rest=(+ex.descanso_seg>0)?Math.round(+ex.descanso_seg):60;
-  document.getElementById('player-body').innerHTML=`
+  plPaint(`
     <div style="text-align:center;padding:22px 18px">
       <div style="font-size:38px;margin-bottom:6px">⏱️</div>
       <div style="font-size:calc(18px*var(--fs));font-weight:700;margin-bottom:6px">Bloque terminado</div>
@@ -5028,7 +5135,7 @@ function endBlock(auto){
       <div class="pl-timer" id="pl-timer">${fmtSec(rest)}</div>
       <div class="pl-cue mt-6">Descanso previsto tras el bloque: ${rest}s${(+ex.descanso_seg>0)?'':' (no venía indicado en la sesión)'}</div>
       <button class="btn btn-primary btn-block mt-16" onclick="blockContinue()">Saltar descanso →</button>
-    </div>`;
+    </div>`);
   startCountdown(rest,
     left=>{const el=document.getElementById('pl-timer');if(el)el.textContent=fmtSec(left);},
     ()=>{if(navigator.vibrate)navigator.vibrate([100,50,100]);blockContinue();});
@@ -5099,7 +5206,7 @@ function finishSession(){
   const after={...st,total:st.total+1};
   const newly=BADGES.filter(b=>b.test(after)&&!prevIds.has(b.id));
   beep(1500,0.3,0.9);setTimeout(()=>beep(1800,0.3,0.9),250);setTimeout(()=>beep(2100,0.45,0.95),500);
-  document.getElementById('player-body').innerHTML=`<div style="text-align:center;padding:32px 20px">
+  plPaint(`<div style="text-align:center;padding:32px 20px">
     <div style="font-size:54px;margin-bottom:10px">🎉</div>
     <div style="font-size:calc(22px*var(--fs));font-weight:700;margin-bottom:14px">¡Sesión completada!</div>
     <div style="display:flex;justify-content:center;gap:18px;margin-bottom:18px">
@@ -5119,7 +5226,7 @@ function finishSession(){
     <div style="color:rgba(255,255,255,.7);font-size:calc(13px*var(--fs));margin-bottom:20px">Registra cómo te has sentido para ajustar la próxima semana.</div>
     <button class="btn btn-primary btn-block" onclick="closePlayer();openLog('${P.key}')">✓ Registrar sesión</button>
     <button class="btn btn-block" style="margin-top:9px;background:rgba(255,255,255,.15);border-color:transparent;color:#fff" onclick="closePlayer()">Cerrar</button>
-  </div>`;
+  </div>`);
   if(navigator.vibrate)navigator.vibrate([100,60,100,60,200]);
 }
 

@@ -1922,3 +1922,91 @@ de la v80 eran 132, no 126. Movido al final; ahora ningún bloque puede quedar f
 - **NO validado en navegador**: los `optgroup` dentro del `<select>` son maquetación nueva. jsdom
   confirma que se generan; no confirma cómo los pinta Safari en iOS, que usa su propio selector
   nativo. Conviene mirarlo en el móvil.
+
+## v82: la técnica y los avisos ya se leen enteros en la sesión guiada
+
+Reportado desde el uso: en las pantallas donde se explican los ejercicios no se lee todo el texto.
+Medido con Playwright (Chromium, iPhone 12 mini, 375×812, Europe/Madrid) sobre un ejercicio con la
+descripción y los tres errores que devuelve Claude de verdad.
+
+### Lo que dio la medición
+- **Pantalla Sesión: correcta.** Cero elementos con contenido recortado por CSS, las cinco viñetas de
+  «errores a evitar» visibles. El problema no estaba ahí.
+- **Reproductor: se pintaba UN SOLO error.** `renderPlayer()` hacía `errs[0].toLowerCase()` tanto en
+  la pantalla de trabajo como en la vista previa del descanso. Al entrenador se le piden 2-3 errores
+  por ejercicio: **dos de cada tres avisos no llegaban nunca a la pantalla.** No era un recorte
+  visual, era que no se pintaban.
+- **`musculos` y `nota_progresion` no se mostraban en ningún momento** de la sesión guiada, aunque
+  vienen en el plan y sí se ven en la pantalla Sesión.
+- **319 px de contenido por debajo del corte** con la fuente normal (`scrollHeight` 854 frente a
+  `clientHeight` 535) y ninguna señal de que hubiera más: el reproductor parece una tarjeta centrada
+  y nada invita a deslizar.
+- **Con la fuente ampliada, el botón principal se salía de la pantalla**: «✓ Serie completada» a
+  824 px en un alto de 812 con escala 1,35.
+
+### Lo que se ha cambiado
+- Nueva `fichaTecnica()`, usada por la pantalla de trabajo y por la vista previa del descanso:
+  **cómo se hace** (descripción completa), **músculos**, **progresión** y **todos los errores** en
+  lista, con el número entre paréntesis para que se vea si falta alguno.
+- Indicador `▼ Desliza: queda técnica y avisos por leer` al pie del reproductor. Aparece solo cuando
+  de verdad queda contenido debajo (más de 24 px), se recalcula al desplazar y al girar el móvil, y
+  al tocarlo baja un 80% de pantalla.
+- Todos los pintados del cuerpo del reproductor pasan ahora por `plPaint()`, que además devuelve el
+  scroll arriba en cada cambio de pantalla y recalcula el indicador. Eran cinco sitios distintos
+  escribiendo `innerHTML` por su cuenta.
+- La figura del ejercicio se encoge al ampliar la fuente (170→142→118 px), para que el botón de
+  serie completada no se vaya fuera.
+
+### Validación
+- **184 comprobaciones en verde, 0 fallos**, en cinco zonas horarias.
+- **Contraste con la v81: 14 fallos**, todos en el bloque nuevo.
+- Medición con Playwright repetida tras el cambio: 3 de 3 errores en pantalla, músculos y progresión
+  presentes, indicador visible con el texto correcto.
+- Comprobado que la pantalla de fin de sesión, que también pasa por `plPaint()`, se sigue pintando.
+- **Pendiente en dispositivo**: el indicador y el encogido de la figura no se han visto en un iPhone
+  real. Chromium a 375×812 no es Safari en iOS.
+
+## v83: los dos huecos que dejó la v80 en el bucle de datos
+
+Reportado desde el uso: dos de las mejoras de la v80 estaban escritas en el mensaje a Claude pero no
+tenían la contraparte en la app, así que no se podían usar.
+
+### 1 · El orden fuerza / carrera se recomendaba y no se podía registrar
+Desde la v80 el entrenador dice, en los días que llevan fuerza breve y carrera, si la fuerza va
+ANTES o DESPUÉS y con cuánta separación. **No había ningún sitio donde anotar lo que se hizo de
+verdad**, así que la recomendación se emitía al vacío: no había forma de comprobar si funcionó ni de
+corregirla. Un consejo que nunca se contrasta no es coaching, es una frase.
+- Nuevo selector en la hoja de registro: **Solo esto / Esto fue ANTES / Esto fue DESPUÉS**, más un
+  campo opcional de horas de separación. Se guarda en `log.orden` y `log.sepH`.
+- Aparece **solo en los días que pueden llevar las dos cosas** (días de fuerza breve, o días donde ya
+  hay registrada otra actividad). En un día normal no estorba.
+- «Solo esto» viene marcado por defecto y no ensucia el registro: si no hay dos actividades, no se
+  guarda nada.
+- Viaja al mensaje dentro de cada línea del historial, con una regla nueva: contrastar lo hecho con
+  lo recomendado la semana anterior, mantener lo que funcionó, corregir lo que no, y **pedirlo
+  expresamente si falta el dato en vez de suponerlo**.
+
+### 2 · El esfuerzo por serie se anotaba y luego desaparecía de la vista
+El esfuerzo (fácil / justo / al límite) se guarda con cada serie desde la v80 y sí llega al
+historial y al mensaje —eso funcionaba—, pero **en ningún momento del registro de la sesión se
+mostraba**. La plantilla de «＋ Cargas reales» volcaba en las notas `16 kg × 12, 11` sin el esfuerzo.
+Resultado práctico: no había forma de saber si se había guardado.
+
+Y había un problema de fondo peor: **dos versiones de las cargas conviviendo sin decir cuál manda.**
+Las series del reproductor (`sess.sets`) y el texto libre de las notas. La app invitaba a «corregir
+si hiciste algo distinto» en un texto que **no se lee para nada**: `complianceFor()` solo mira
+`sess.sets`. Corregir ahí no cambiaba ninguna decisión de progresión.
+- Bloque nuevo y no editable al abrir el registro: **«🏋 Esto es lo que se guardará en tu
+  historial»**, con las series y el esfuerzo de cada ejercicio, y «sin esfuerzo marcado» cuando falta.
+- Dice explícitamente qué prevalece: son las series de la sesión guiada las que usa el entrenador; las
+  notas son contexto y no las sustituyen.
+- La plantilla de notas incluye ahora el esfuerzo y su cabecera avisa de que es una **copia**, no la
+  fuente.
+
+### Validación
+- **205 comprobaciones en verde, 0 fallos**, en cinco zonas horarias.
+- **Contraste con la v82: 16 fallos**, todos en los dos bloques nuevos.
+- Comprobado el recorrido completo: marcar el orden → guardar → persistir en localStorage → aparecer
+  en el mensaje; y anotar esfuerzo → verlo en el resumen → guardarlo → que llegue al mensaje.
+- **Pendiente en dispositivo**: el selector de orden son tres botones nuevos en la hoja de registro,
+  que es donde se abre el teclado. Requiere prueba en el iPhone.
