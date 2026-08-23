@@ -593,7 +593,7 @@ body{font-size:calc(15px*var(--fs))}
         <div id="cloud-status" style="margin-top:7px;font-size:12px"></div>
       </details>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 83</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 84</div>
     <div id="sw-status" style="text-align:center;font-size:11px;color:var(--warn);margin-top:4px;display:none"></div>
     <div style="text-align:center;margin-top:8px">
       <button class="btn btn-xs" onclick="checkForUpdate()">🔄 Buscar actualización</button>
@@ -2497,8 +2497,8 @@ function renderProg(){
     <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border)">
       <div class="flex1"><div style="font-size:13px;font-weight:600">${esc(h.title)}</div>
         <div style="font-size:11px;color:var(--text2)">${esc(h.key)} · ${esc(h.duration)}min${h.distance?' · '+esc(h.distance)+'km':''}</div>
-        ${h.notes?`<div style="font-size:11px;color:var(--text3);margin-top:2px">${esc(h.notes.slice(0,70))}${h.notes.length>70?'…':''}</div>`:''}
-        ${h.sets&&h.sets.length?(()=>{const t=h.sets.map(e=>e.nombre+' '+fmtSets(e.series)).join(' · ');return `<div style="font-size:11px;color:var(--ai);margin-top:2px">🏋 ${esc(t.slice(0,90))}${t.length>90?'…':''}</div>`;})():''}</div>
+        ${h.notes?recorteExpandible(esc(h.notes),70,'var(--text3)'):''}
+        ${h.sets&&h.sets.length?(()=>{const t=h.sets.map(e=>e.nombre+' '+fmtSets(e.series)+(esfResumen(e.series)?' ('+esfResumen(e.series)+')':'')).join(' · ');return recorteExpandible('🏋 '+esc(t),90,'var(--ai)');})():''}</div>
       <span style="font-size:19px;margin-left:8px">${esc(h.feeling)||'💪'}</span></div>`).join('')
     +(S.history.length>_tope?`<button class="btn btn-block mt-8" onclick="verMasHistorial()">Ver ${Math.min(50,S.history.length-_tope)} sesiones más (quedan ${S.history.length-_tope})</button>`:'');
   renderBadges();renderMarkerCharts();renderLoadProgression();renderVolume();renderCardio();
@@ -2939,8 +2939,8 @@ function logCoachDecision(plan,weekKeyStr){
     fecha:todayKey(),
     semana:weekKeyStr||weekKeyOf(todayKey()),
     enfoque:cleanStr(meso.enfoque,120),
-    justificacion:cleanStr(meso.justificacion,300),
-    analisis:cleanStr(plan.analisis_progreso,400),
+    justificacion:cleanMulti(meso.justificacion,700),   // v84
+    analisis:cleanMulti(plan.analisis_progreso,900),    // v84
     sesiones:(plan.sesiones_ia||[]).length
   };
   if(!entrada.enfoque&&!entrada.analisis)return;
@@ -3503,7 +3503,9 @@ function applyBridgePlan(plan){
   });
   S.freeDays.forEach(code=>{const idx=DAYS.indexOf(code);if(idx<0)return;const key=fmt(dates[idx]);
     if(!S.schedule[key])S.schedule[key]=[];
-    if(!S.schedule[key].some(s=>s.type==='free'))S.schedule[key].push({type:'free',title:'Entrenamiento libre',meta:cleanStr(plan.recomendacion_cardio,140)||'Actividad libre',done:false});});
+    // v84: desde la v80 la recomendación de cardio lleva zonas, pulsaciones y el contraste con el
+    // mínimo aeróbico semanal. En 140 caracteres no cabía ni la primera frase.
+    if(!S.schedule[key].some(s=>s.type==='free'))S.schedule[key].push({type:'free',title:'Entrenamiento libre',meta:cleanMulti(plan.recomendacion_cardio,500)||'Actividad libre',done:false});});
   if(plan.nutricion)S.nutri=cleanNutri(plan.nutricion); // v72
   if(plan.mesociclo){
     if(plan.mesociclo.enfoque)S.mesoFocus=cleanStr(plan.mesociclo.enfoque,120);
@@ -3516,10 +3518,14 @@ function applyBridgePlan(plan){
   const insightParts=[];
   if(plan.analisis_progreso)insightParts.push(cleanMulti(plan.analisis_progreso,2000));
   if(plan.mesociclo&&(plan.mesociclo.enfoque||plan.mesociclo.justificacion)){
-    const j=plan.mesociclo.justificacion?' — '+cleanMulti(plan.mesociclo.justificacion,600):'';
+    // v84: aquí es donde el entrenador explica por qué contradice una preferencia mía y por qué
+    // toca bajar volumen. Cortarlo deja el argumento a medias, que es justo lo que no se debe cortar.
+    const j=plan.mesociclo.justificacion?' — '+cleanMulti(plan.mesociclo.justificacion,1200):'';
     insightParts.push('🗓️ Fase del mesociclo: '+(cleanStr(plan.mesociclo.enfoque,120)||S.mesoFocus)+j);
   }
-  if(plan.recomendacion_cardio)insightParts.push('🏃 Cardio recomendado: '+cleanStr(plan.recomendacion_cardio,300));
+  // v84: 300 caracteres no daban para zonas + rangos de pulsaciones + minutos semanales + cómo
+  // llegar al mínimo de salud, que es lo que se le pide desde la v80
+  if(plan.recomendacion_cardio)insightParts.push('🏃 Cardio recomendado: '+cleanMulti(plan.recomendacion_cardio,1200));
   if(insightParts.length)S.insight=insightParts.join('\n\n');
   logCoachDecision(plan,weekKeyOf(fmt(dates[0]))); // v75: continuidad de criterio entre semanas
   save();closeSheet('bridge-bg');renderCal();renderNutri();renderProg();tab('cal');
@@ -3533,6 +3539,23 @@ function applyBridgePlan(plan){
    salen también el prompt y los cuadros de texto; el escapado se aplica AL PINTAR, con esc(),
    que es la capa donde importa. Guardar ya escapado obligaría a des-escapar en todas las demás.
    ============================================================ */
+/* v84 · en el historial se recortaba el texto con «…» y no había forma de ver el resto: el dato
+   estaba guardado entero pero era inalcanzable desde la interfaz. Ahora el recorte se abre al
+   tocarlo. Recibe el texto YA escapado. */
+function recorteExpandible(txtEsc,lim,color){
+  if(!txtEsc)return '';
+  const est=`font-size:calc(11px*var(--fs));color:${color};margin-top:2px;line-height:1.45`;
+  if(txtEsc.length<=lim)return `<div style="${est}">${txtEsc}</div>`;
+  const id='rx'+(recorteExpandible._n=(recorteExpandible._n||0)+1);
+  return `<div style="${est}">
+    <span id="${id}-c">${txtEsc.slice(0,lim)}… <b style="color:var(--accent);cursor:pointer" onclick="event.stopPropagation();abrirRecorte('${id}')">ver más</b></span>
+    <span id="${id}-f" style="display:none">${txtEsc} <b style="color:var(--accent);cursor:pointer" onclick="event.stopPropagation();cerrarRecorte('${id}')">ver menos</b></span>
+  </div>`;
+}
+function abrirRecorte(id){const c=document.getElementById(id+'-c'),f=document.getElementById(id+'-f');
+  if(c&&f){c.style.display='none';f.style.display='inline';}}
+function cerrarRecorte(id){const c=document.getElementById(id+'-c'),f=document.getElementById(id+'-f');
+  if(c&&f){c.style.display='inline';f.style.display='none';}}
 function cleanStr(v,max){
   if(v==null)return '';
   let t=String(v).replace(/[\u0000-\u001F\u007F]/g,' ').replace(/\s+/g,' ').trim();
@@ -3559,7 +3582,9 @@ function cleanEx(e){
   const o={...e};
   ['nombre','peso','musculos','patron','rir','rpe','tempo','tipo','formato','unidad','banda','yt','p'].forEach(k=>{if(o[k]!=null)o[k]=cleanStr(o[k],120);});
   if(o.reps!=null)o.reps=cleanStr(o.reps,40);
-  if(o.descripcion!=null)o.descripcion=cleanMulti(o.descripcion,600);
+  if(o.descripcion!=null)o.descripcion=cleanMulti(o.descripcion,1000); // v84
+  if(o.nota_progresion!=null)o.nota_progresion=cleanMulti(o.nota_progresion,500); // v84: se guardaba sin sanear
+  if(Array.isArray(o.errores))o.errores=o.errores.slice(0,6).map(x=>cleanStr(x,220)); // v84: no se saneaban
   if(!o.nombre)o.nombre='Ejercicio';
   if(Array.isArray(o.movimientos))o.movimientos=o.movimientos.slice(0,20).map(m=>({
     ...(m&&typeof m==='object'?m:{}),
@@ -3584,7 +3609,7 @@ function cleanNutri(n){
   ['calorias_diarias','calorias_min','calorias_max','proteina_g'].forEach(k=>{if(o[k]!=null)o[k]=cleanInt(o[k],0,20000,null);});
   if(o.agua_litros!=null)o.agua_litros=cleanStr(o.agua_litros,10);
   if(o.modo!=null)o.modo=cleanStr(o.modo,80);
-  if(o.nota!=null)o.nota=cleanMulti(o.nota,600);
+  if(o.nota!=null)o.nota=cleanMulti(o.nota,900); // v84
   if(Array.isArray(o.menu_dia))o.menu_dia=o.menu_dia.slice(0,12).map(m=>({
     ...(m&&typeof m==='object'?m:{}),
     momento:cleanStr(m&&m.momento,40),hora:cleanStr(m&&m.hora,10),plato:cleanStr(m&&m.plato,200),
@@ -3596,9 +3621,12 @@ function cleanNutri(n){
 function cleanSession(s){
   if(!s||typeof s!=='object')return s;
   s.titulo=cleanStr(s.titulo,90)||'Sesión';
-  s.meta=cleanStr(s.meta,140);
-  if(s.calentamiento!=null)s.calentamiento=cleanMulti(s.calentamiento,600);
-  if(s.vuelta_calma!=null)s.vuelta_calma=cleanMulti(s.vuelta_calma,600);
+  /* v84: `meta` es la explicación del día que se lee en el calendario. Estaba cortada a 140
+     caracteres AL GUARDAR, así que llegaba con «…» y el resto se perdía para siempre: no era un
+     problema de que no cupiera en pantalla, es que el texto ya no existía. */
+  s.meta=cleanMulti(s.meta,500);
+  if(s.calentamiento!=null)s.calentamiento=cleanMulti(s.calentamiento,900); // v84: incluye aproximaciones
+  if(s.vuelta_calma!=null)s.vuelta_calma=cleanMulti(s.vuelta_calma,700);
   s.ejercicios=(Array.isArray(s.ejercicios)?s.ejercicios:[]).slice(0,25).map(cleanEx).map(matchYT);
   return s;
 }

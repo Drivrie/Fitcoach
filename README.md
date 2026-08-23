@@ -2010,3 +2010,61 @@ si hiciste algo distinto» en un texto que **no se lee para nada**: `complianceF
   en el mensaje; y anotar esfuerzo → verlo en el resumen → guardarlo → que llegue al mensaje.
 - **Pendiente en dispositivo**: el selector de orden son tres botones nuevos en la hoja de registro,
   que es donde se abre el teclado. Requiere prueba en el iPhone.
+
+## v84: el texto no se cortaba en pantalla, se cortaba AL GUARDAR
+
+Reportado: en Progreso y en la explicación de cada día del calendario el texto sale cortado o con
+puntos suspensivos. Medido con Playwright a 375×812: **no era un problema de que no cupiera.** El
+texto llegaba entero de Claude y la app lo recortaba antes de escribirlo en localStorage. Lo que
+sobraba no estaba oculto: había dejado de existir.
+
+### Medición sobre la v83
+Con una explicación de día de 451 caracteres y una recomendación de cardio de 364:
+- `meta` del día guardado: **140 de 451 caracteres**, terminado en «…».
+- `meta` del día libre (la recomendación de cardio): **141 de 364**.
+- El análisis de Progreso contenía un recorte.
+- La descripción de un ejercicio de 850 caracteres se guardaba en 601.
+
+### Por qué apareció ahora
+Los límites eran razonables cuando se fijaron. La v80 amplió mucho lo que se le pide al entrenador:
+la recomendación de cardio ahora lleva zonas, rangos de pulsaciones, minutos aeróbicos semanales y la
+comparación con el mínimo de salud; `mesociclo.justificacion` es donde argumenta por qué contradice
+una preferencia y por qué toca bajar volumen. Se ampliaron las peticiones y no los límites de
+guardado, así que **cuanto mejor respondía el entrenador, más se le cortaba**.
+
+### Límites nuevos
+| Campo | Antes | Ahora |
+|---|---|---|
+| `meta` (explicación del día en el calendario) | 140 | 500 |
+| `meta` del día libre (recomendación de cardio) | 140 | 500 |
+| `recomendacion_cardio` en Progreso | 300 | 1200 |
+| `mesociclo.justificacion` en Progreso | 600 | 1200 |
+| `justificacion` en la memoria del entrenador | 300 | 700 |
+| `analisis_progreso` en la memoria del entrenador | 400 | 900 |
+| `descripcion` de cada ejercicio | 600 | 1000 |
+| `calentamiento` (ahora lleva aproximaciones) | 600 | 900 |
+| `vuelta_calma` | 600 | 700 |
+| `nota` de nutrición | 600 | 900 |
+
+`meta` pasa además de `cleanStr` a `cleanMulti`: conserva los saltos de línea, porque ya no es una
+frase suelta.
+
+### Dos huecos de saneado
+`errores` y `nota_progresion` **no pasaban por ningún saneador**: entraban en el estado tal cual
+llegaban del JSON. No era explotable —el escapado se aplica al pintar, con `esc()`— pero rompía la
+regla de la casa de sanear todo lo que entra. Ahora los errores se limitan a 6 por ejercicio y 220
+caracteres cada uno, y `nota_progresion` a 500.
+
+### Historial: los recortes ahora se abren
+En la lista de sesiones, las notas se cortaban a 70 caracteres y las cargas a 90, con «…» y sin forma
+de ver el resto: el dato estaba guardado entero pero era inalcanzable. Nueva `recorteExpandible()`
+con **ver más / ver menos**. Las cargas del historial muestran además el esfuerzo.
+
+### Validación
+- **220 comprobaciones en verde, 0 fallos**, en cinco zonas horarias.
+- **Contraste con la v83: 12 fallos.**
+- Medición con Playwright repetida tras el cambio: los 451 caracteres se guardan y se pintan
+  enteros, sin «…» y sin recorte de CSS en el calendario.
+- Regresión de la v82 comprobada: siguen los 3 errores en el reproductor y el indicador de scroll.
+- **Ojo con lo ya guardado**: los planes aplicados antes de la v84 conservan el texto recortado. Es
+  irrecuperable, se perdió al guardarse. Se corrige solo al generar la semana siguiente.
