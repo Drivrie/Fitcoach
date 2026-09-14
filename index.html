@@ -593,7 +593,7 @@ body{font-size:calc(15px*var(--fs))}
         <div id="cloud-status" style="margin-top:7px;font-size:12px"></div>
       </details>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 84</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 85</div>
     <div id="sw-status" style="text-align:center;font-size:11px;color:var(--warn);margin-top:4px;display:none"></div>
     <div style="text-align:center;margin-top:8px">
       <button class="btn btn-xs" onclick="checkForUpdate()">🔄 Buscar actualización</button>
@@ -2862,21 +2862,27 @@ function complianceFor(key){
     const real=ser.map(x=>`${x.kg!=null&&x.kg!==''?x.kg+'kg':(x.banda?'banda '+x.banda:'pc')}×${x.reps}`).join(', ');
     const rango=repRange(ex.reps);
     const reps=ser.map(x=>toNum(String(x.reps))).filter(v=>!isNaN(v));
-    const esf=esfResumen(ser); // v80
+    const esf=esfResumen(ser);
+    const nLim=nAlLimite(ser);                          // v85
+    const conEsf=ser.filter(x=>x&&x.esf).length;
     let estado='completado';
     if(ser.length<(+ex.series||ser.length))estado=`series incompletas (${ser.length}/${ex.series})`;
     else if(rango&&reps.length){
       if(reps.every(r=>r>=rango[1])){
-        /* v80: llegar al tope del rango solo justifica subir carga si quedaba margen. Si las
-           series se cerraron al límite, subir es la vía rápida al estancamiento. */
-        estado=esf==='al límite'
-          ? 'tope del rango pero series al límite → consolidar esta carga, no subir todavía'
-          : 'tope del rango en todas las series → toca subir carga';
+        /* v85: antes bastaba UNA serie al límite para bloquear la subida, porque solo llegaba la
+           etiqueta agregada. Ahora se mira cuántas: que cueste la última es lo normal en una serie
+           bien puesta; que cuesten la mitad o más dice que la carga está pasada. */
+        if(conEsf&&nLim*2>=conEsf)
+          estado=`tope del rango pero ${nLim} de ${conEsf} series al límite → consolidar esta carga, no subir todavía`;
+        else if(nLim)
+          estado=`tope del rango y solo ${nLim} de ${conEsf} series al límite (las últimas) → puedes subir al siguiente escalón`;
+        else
+          estado='tope del rango en todas las series → toca subir carga';
       }
       else if(reps.some(r=>r<rango[0]))estado='por debajo del rango en alguna serie → mantener o bajar';
       else if(esf==='fácil')estado='dentro del rango y con margen de sobra → puedes subir carga o repeticiones';
     }
-    filas.push({nombre:ex.nombre,plan,real:real+(esf?` · esfuerzo ${esf}`:''),estado});
+    filas.push({nombre:ex.nombre,plan,real:real+esfDetalle(ser),estado});
   });
   return filas.length?{key,titulo:sess.title,filas}:null;
 }
@@ -3049,10 +3055,10 @@ Si se combinan varios objetivos, prioriza un esquema de fuerza/hipertrofia para 
     // v75: lo pautado frente a lo realizado, ejercicio a ejercicio. Es el dato que permite decidir
     // si toca subir, mantener o bajar; sin él, las cargas sueltas no dicen nada.
     const cmp=complianceLines(21);
-    if(cmp)histTxt+='\n\nCUMPLIMIENTO REAL (lo que te pauté frente a lo que hice, últimas 3 semanas). Úsalo como base de la progresión: "tope del rango en todas las series" = subir carga; "series incompletas" o "por debajo del rango" = mantener o bajar y revisar por qué. El "esfuerzo" es lo que marqué yo al cerrar cada serie (fácil = me sobraban 3+ repeticiones; justo = 1-2 de margen; al límite = sin margen): si pone "al límite", NO subas carga aunque haya llegado al tope del rango; consolida o quita una serie:\n'+cmp;
+    if(cmp)histTxt+='\n\nCUMPLIMIENTO REAL (lo que te pauté frente a lo que hice, últimas 3 semanas). Úsalo como base de la progresión: "tope del rango en todas las series" = subir carga; "series incompletas" o "por debajo del rango" = mantener o bajar y revisar por qué. El "esfuerzo por serie" es lo que marqué yo al cerrar CADA serie, en orden (s1, s2, s3…): fácil = me sobraban 3+ repeticiones, justo = 1-2 de margen, al límite = sin margen. Léelo como una curva, no como una etiqueta: que solo las últimas salgan al límite es una progresión sana y puedes subir; que la mitad o más salgan al límite dice que la carga está pasada y toca consolidar o quitar una serie. Si una serie pone "sin marcar", no supongas nada de ella.\nAVISO SOBRE LAS UNIDADES: los kilos y las repeticiones que registro son NÚMEROS, sin unidad implícita. Su significado es el del campo "pautado" que acompaña a cada ejercicio: si pautaste "16 kg por mancuerna" y "8-10 por pierna", entonces "16 kg × 10" significa 16 kg en cada mano y 10 repeticiones POR PIERNA, no en total. Interpreta siempre el registro con esa referencia, y si en algún ejercicio no aparece el campo "pautado", dilo en "meta" en vez de suponer:\n'+cmp;
     const h=S.history.slice(0,38); // ~4 semanas completas con margen, a tu ritmo (hasta 9 ses./sem)
     histTxt+='\n\nHISTORIAL DE SESIONES COMPLETADAS (hasta ~4 semanas, más reciente primero; da más peso a la última semana para decidir la carga inmediata, y usa el conjunto para ver la trayectoria del mesociclo: si progreso, me estanco o acumulo fatiga):\n'+
-      (h.length?h.map(x=>`- ${x.key}: ${x.title}, ${x.duration}min${x.distance?' '+x.distance+'km':''}${x.kcal?' · '+x.kcal+' kcal':''}${x.hr?' · FC media '+x.hr:''}, esfuerzo ${x.feeling}${x.fatiga&&x.fatiga!=='normal'?' · llegaba '+x.fatiga:''}${x.pain&&x.pain.length?' · '+(x.painKind==='muscular'?'agujetas/molestia muscular en ':'molestia ARTICULAR en ')+x.pain.map(areaLabel).join('/'):''}${x.orden?' · esta actividad fue '+(x.orden==='antes'?'ANTES':'DESPUÉS')+' de la otra del día'+(x.sepH!=null?' ('+x.sepH+' h de separación)':' (separación sin anotar)'):''}. ${x.notes||''}${x.sets&&x.sets.length?' CARGAS REALES serie a serie: '+x.sets.map(e=>e.nombre+' '+fmtSets(e.series)+(esfResumen(e.series)?' ('+esfResumen(e.series)+')':'')).join('; ')+'.':''}`).join('\n'):'(ninguna registrada)');
+      (h.length?h.map(x=>`- ${x.key}: ${x.title}, ${x.duration}min${x.distance?' '+x.distance+'km':''}${x.kcal?' · '+x.kcal+' kcal':''}${x.hr?' · FC media '+x.hr:''}, esfuerzo ${x.feeling}${x.fatiga&&x.fatiga!=='normal'?' · llegaba '+x.fatiga:''}${x.pain&&x.pain.length?' · '+(x.painKind==='muscular'?'agujetas/molestia muscular en ':'molestia ARTICULAR en ')+x.pain.map(areaLabel).join('/'):''}${x.orden?' · esta actividad fue '+(x.orden==='antes'?'ANTES':'DESPUÉS')+' de la otra del día'+(x.sepH!=null?' ('+x.sepH+' h de separación)':' (separación sin anotar)'):''}. ${x.notes||''}${x.sets&&x.sets.length?' CARGAS REALES serie a serie: '+x.sets.map(e=>e.nombre+refSets(e)+' '+fmtSets(e.series)+esfDetalle(e.series)).join('; ')+'.':''}`).join('\n'):'(ninguna registrada)');
   }
   // v75 · volumen semanal por grupo muscular, fuerza estimada, cardio y memoria del entrenador
   let coachTxt='';
@@ -4797,12 +4803,35 @@ function setEsf(v){
   });
 }
 /* Resumen del esfuerzo de un conjunto de series, para el mensaje a Claude */
+/* Etiqueta única, para la interfaz (una línea por ejercicio). Es deliberadamente conservadora:
+   basta una serie al límite para que lo diga. NO se usa ya para decidir la progresión. */
 function esfResumen(series){
   const v=(series||[]).map(x=>x&&x.esf).filter(Boolean);
   if(!v.length)return '';
   if(v.some(x=>x==='limite'))return 'al límite';
   if(v.every(x=>x==='facil'))return 'fácil';
   return 'justo';
+}
+/* v85 · El esfuerzo se marca serie a serie y se guarda serie a serie, pero al entrenador solo le
+   llegaba UNA etiqueta por ejercicio. Con la regla de agregación, "fácil, fácil, fácil, al límite"
+   y "al límite × 4" se leían igual, y son situaciones opuestas: la primera es una progresión sana,
+   la segunda dice que la carga está pasada. Esto devuelve el detalle. */
+const ESF_CORTO={facil:'fácil',justo:'justo',limite:'al límite'};
+function esfSerie(s){return (s&&s.esf&&ESF_CORTO[s.esf])||'';}
+function esfDetalle(series){
+  const v=(series||[]);
+  if(!v.some(x=>x&&x.esf))return '';
+  return ' · esfuerzo por serie: '+v.map((x,i)=>`s${i+1} ${esfSerie(x)||'sin marcar'}`).join(', ');
+}
+/* Cuántas series se cerraron sin margen. Es lo que decide si se puede subir carga. */
+function nAlLimite(series){return (series||[]).filter(x=>x&&x.esf==='limite').length;}
+/* v85 · la referencia de lo pautado, para que "16 kg × 10" no sea ambiguo */
+function refSets(e){
+  if(!e)return '';
+  const p=[];
+  if(e.pesoRef)p.push(e.pesoRef);
+  if(e.repsRef)p.push('reps pautadas '+e.repsRef);
+  return p.length?` [pautado: ${p.join(' · ')}]`:'';
 }
 function fmtSec(s){s=Math.max(0,Math.round(+s||0));const m=String(Math.floor(s/60)).padStart(2,'0');return m+':'+String(s%60).padStart(2,'0');}
 /* v71: cuentas atrás ancladas a la hora del sistema.
@@ -4851,6 +4880,12 @@ function recordSet(ex){
   if((kg==null||isNaN(kg))&&reps==null&&!banda)return;
   let e=(P.setLog=P.setLog||[]).find(x=>x.nombre===ex.nombre);
   if(!e){e={nombre:ex.nombre,series:[]};P.setLog.push(e);}
+  /* v85: el registro guardaba números pelados. "16 kg × 10" no dice si los 16 kg son por mancuerna
+     o en total, ni si las 10 repeticiones son por pierna o entre las dos. El significado estaba
+     solo en el texto pautado, que en el historial NO acompaña a las cargas. Se guarda la referencia
+     con las series para que el dato se interprete solo. */
+  if(ex.peso&&!e.pesoRef)e.pesoRef=ex.peso;
+  if(ex.reps&&!e.repsRef)e.repsRef=String(ex.reps);
   const serie={kg:(kg!=null&&!isNaN(kg))?kg:null,reps};
   if(banda)serie.banda=banda;
   if(P.esf)serie.esf=P.esf; // v80
@@ -4862,6 +4897,8 @@ function recordSet(ex){
 function recordTimedSet(ex){
   let e=(P.setLog=P.setLog||[]).find(x=>x.nombre===ex.nombre);
   if(!e){e={nombre:ex.nombre,series:[]};P.setLog.push(e);}
+  if(ex.peso&&!e.pesoRef)e.pesoRef=ex.peso;   // v85
+  if(ex.reps&&!e.repsRef)e.repsRef=String(ex.reps); // v85
   const serie={kg:parseKg(ex.peso),reps:String(ex.reps)};
   if(isBandExercise(ex)){const b=suggestedBand(ex);if(b)serie.banda=b;}
   e.series.push(serie);

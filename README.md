@@ -2068,3 +2068,56 @@ con **ver más / ver menos**. Las cargas del historial muestran además el esfue
 - Regresión de la v82 comprobada: siguen los 3 errores en el reproductor y el indicador de scroll.
 - **Ojo con lo ya guardado**: los planes aplicados antes de la v84 conservan el texto recortado. Es
   irrecuperable, se perdió al guardarse. Se corrige solo al generar la semana siguiente.
+
+## v85: el esfuerzo llegaba resumido y los kilos llegaban sin unidad
+
+Dos dudas planteadas desde el uso, ambas confirmadas leyendo el código. Las dos eran pérdida de
+información entre lo que se registra y lo que lee el entrenador.
+
+### 1 · El esfuerzo se marcaba serie a serie y llegaba como una etiqueta por ejercicio
+Lo que se guarda en localStorage **sí es serie a serie**: cada objeto de serie lleva su `esf`. Eso
+nunca se perdió. Lo que se perdía era en el camino al mensaje: tanto `complianceFor()` como la línea
+del historial pasaban por `esfResumen()`, que colapsa todo el ejercicio en una sola palabra con esta
+regla: si alguna serie fue al límite, el ejercicio entero es «al límite».
+
+Consecuencia: **«fácil, fácil, fácil, al límite» y «al límite × 4» llegaban idénticos.** Son
+situaciones opuestas. La primera es una progresión sana —que cueste la última serie es lo esperable
+en una serie bien puesta—; la segunda dice que la carga está pasada. Con la regla de la v80, la
+primera bloqueaba la subida igual que la segunda, y eso explica que tantos ejercicios aparezcan
+semana tras semana como «consolidar, no subir».
+
+- Nueva `esfDetalle()`: el mensaje recibe `esfuerzo por serie: s1 fácil, s2 fácil, s3 justo, s4 al
+  límite`. Las series sin marcar se declaran como tal en vez de desaparecer.
+- La decisión de progresión ya no la vuelca una sola serie: se cuenta cuántas fueron al límite. La
+  mitad o más → consolidar. Menos de la mitad → subir al siguiente escalón, diciendo cuántas fueron.
+- El mensaje le explica que lo lea como una curva, no como una etiqueta.
+- `esfResumen()` se queda para la interfaz, donde una línea por ejercicio sí tiene sentido.
+- Sin esfuerzo marcado, el comportamiento es el de siempre (probado).
+
+### 2 · Los kilos y las repeticiones viajaban sin decir a qué se refieren
+La app guarda **números pelados**: `{kg:16, reps:'10'}`. No modela «por mancuerna» frente a «en
+total», ni «por pierna» frente a «entre las dos». Ese significado vive solo en el texto pautado
+(`peso` y `reps`), que el mensaje obliga a escribir sin ambigüedad.
+- En el bloque CUMPLIMIENTO REAL no había problema: lo pautado y lo realizado van juntos en la misma
+  línea, así que «16 kg × 10» se interpreta con su «@ 16 kg por mancuerna … 4×8-10 por pierna».
+- En el bloque HISTORIAL **sí lo había**: «CARGAS REALES serie a serie: Sentadilla búlgara 16 kg ×
+  10, 10, 10, 10» aparecía sin ninguna referencia. El historial cubre ~4 semanas y el cumplimiento
+  solo 3, así que en la parte más antigua el entrenador tenía que adivinar. Con una zancada inversa,
+  10 repeticiones significan cosas distintas y la diferencia es del 100% del volumen.
+
+- Al registrar una serie se guarda ahora `pesoRef` y `repsRef` con el texto pautado del ejercicio.
+- La línea del historial lo lleva delante: `Zancada inversa [pautado: 18 kg por mancuerna (una en
+  cada mano) · reps pautadas 10-12 por pierna] 18 kg × 12, 12, 12`.
+- Nuevo aviso en el mensaje: los números no tienen unidad implícita, se interpretan con el campo
+  «pautado», y si en algún ejercicio falta, que lo pregunte en «meta» en vez de suponer.
+
+Las observaciones escritas a mano **sí llegaban y siguen llegando**, en el campo de notas, palabra
+por palabra. Lo que no había era una referencia estructurada que no dependiera de escribirla cada
+semana.
+
+### Validación
+- **241 comprobaciones en verde, 0 fallos**, en cinco zonas horarias.
+- **Contraste con la v84: 4 fallos**, incluidos los dos comportamientos concretos: el esfuerzo de
+  cada serie no llegaba, y una sola serie al límite bloqueaba la subida.
+- **Solo aplica a lo que se registre a partir de ahora**: las sesiones ya guardadas no tienen
+  `pesoRef` ni `repsRef`. El aviso del mensaje cubre ese caso pidiéndole que no suponga.
