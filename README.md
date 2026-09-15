@@ -2121,3 +2121,34 @@ semana.
   cada serie no llegaba, y una sola serie al límite bloqueaba la subida.
 - **Solo aplica a lo que se registre a partir de ahora**: las sesiones ya guardadas no tienen
   `pesoRef` ni `repsRef`. El aviso del mensaje cubre ese caso pidiéndole que no suponga.
+
+## v86: lo que arregló la v85 no se veía en ninguna pantalla
+
+Reportado tras entrenar con la v85: el registro de la sesión se ve exactamente igual que antes.
+**Es correcto, y el fallo es de la v85.** Aquella versión arregló lo que VIAJA al entrenador —el
+esfuerzo serie a serie y la referencia de unidades— y no tocó ni una línea de lo que se ve en
+pantalla. El dato estaba bien guardado y bien enviado, y seguía sin aparecer donde se mira.
+
+En concreto, tres sitios seguían mostrando lo de siempre:
+- El resumen **«🏋 Esto es lo que se guardará en tu historial»** al cerrar la sesión, que seguía
+  colapsando el ejercicio entero en una etiqueta (`esfResumen`), que es exactamente lo que se había
+  señalado como problema.
+- La **plantilla de notas**, con el mismo resumen agregado y sin unidades.
+- La **lista del historial** en Progreso.
+
+Ninguno mostraba nunca a qué se refieren los kilos ni las repeticiones.
+
+### Cambios
+- Nueva `fmtSerieUna()` / `fmtSetsDetalladas()`: cada serie con su carga, sus repeticiones y **su**
+  esfuerzo — `16 kg × 10 (fácil) · 16 kg × 10 (justo) · 16 kg × 10 (al límite)`.
+- El resumen al registrar muestra, por ejercicio, la línea de **pautado** (`18 kg por mancuerna (una
+  en cada mano) · reps pautadas 10-12 por pierna`) encima de las series.
+- Nueva `refSetsCon()`: si la sesión se registró antes de la v85 y no tiene `pesoRef`, la referencia
+  se toma del ejercicio de la sesión. Así también funciona con lo ya guardado.
+- Misma información en la plantilla de notas y en la lista del historial.
+- El «Última vez» del reproductor muestra también el esfuerzo de cada serie.
+
+### Validación
+- **254 comprobaciones en verde, 0 fallos**, en cinco zonas horarias.
+- **Contraste con la v85: 14 fallos**, todos de visibilidad.
+- Comprobado con un registro SIN `pesoRef` (anterior a la v85): la referencia se recupera igualmente.

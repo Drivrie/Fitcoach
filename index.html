@@ -593,7 +593,7 @@ body{font-size:calc(15px*var(--fs))}
         <div id="cloud-status" style="margin-top:7px;font-size:12px"></div>
       </details>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 85</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 86</div>
     <div id="sw-status" style="text-align:center;font-size:11px;color:var(--warn);margin-top:4px;display:none"></div>
     <div style="text-align:center;margin-top:8px">
       <button class="btn btn-xs" onclick="checkForUpdate()">🔄 Buscar actualización</button>
@@ -2305,9 +2305,15 @@ function openLog(key,mode){
   const resumenReal=_setsReal?`
     <div class="note mb-11" style="border-left:3px solid var(--ring-ex)">
       <div style="font-weight:700;margin-bottom:5px">🏋 Esto es lo que se guardará en tu historial</div>
-      ${_setsReal.map(e=>{const es=esfResumen(e.series);
-        return `<div style="margin-bottom:3px">${esc(e.nombre)}: ${esc(fmtSets(e.series))}${es?` · <b>esfuerzo ${esc(es)}</b>`:' · <i>sin esfuerzo marcado</i>'}</div>`;}).join('')}
-      <div style="margin-top:6px;color:var(--text3)">Son las series que anotaste durante la sesión guiada, y las que usa tu entrenador para decidir si subes carga. Las notas de más abajo son contexto: no sustituyen a estos datos.</div>
+      ${_setsReal.map(e=>{const ref=refSetsCon(e,(_sessReal&&_sessReal.exercises)||[]);
+        const det=fmtSetsDetalladas(e);
+        const sinEsf=!((e.series||[]).some(x=>x&&x.esf));
+        return `<div style="margin-bottom:7px">
+          <div style="font-weight:600">${esc(e.nombre)}</div>
+          ${ref?`<div style="color:var(--text3)">${esc(ref.replace(/^ /,''))}</div>`:''}
+          <div>${esc(det)}${sinEsf?' · <i>sin esfuerzo marcado</i>':''}</div>
+        </div>`;}).join('')}
+      <div style="margin-top:6px;color:var(--text3)">Cada serie va con SU esfuerzo, una por una: así es como se guarda y así es como lo lee tu entrenador. El "pautado" dice a qué se refieren los kilos y las repeticiones (por mancuerna, por pierna…). Las notas de más abajo son contexto: no sustituyen a estos datos.</div>
     </div>`:'';
   const ordenHTML=_diaDoble?`
     <div class="field"><label>¿Y la otra actividad de hoy (carrera, caminata…)?</label>
@@ -2389,8 +2395,8 @@ function insertLoadTemplate(key){
       if(real&&real.series&&real.series.length){
         // v83: el esfuerzo marcado serie a serie no aparecía por ningún lado al registrar la
         // sesión, así que no había forma de saber si se había guardado
-        const es=esfResumen(real.series);
-        return `${e.nombre}: ${fmtSets(real.series)}${es?' — esfuerzo '+es:''}`;
+        // v86: serie a serie, con su esfuerzo y con la referencia de unidades
+        return `${e.nombre}${refSetsCon(real,sess.exercises)}: ${fmtSetsDetalladas(real)}`;
       }
       return `${e.nombre} ${e.series}×${e.reps}${e.peso?' · '+e.peso:''}: (previsto — sin registrar)`;
     });
@@ -2498,7 +2504,7 @@ function renderProg(){
       <div class="flex1"><div style="font-size:13px;font-weight:600">${esc(h.title)}</div>
         <div style="font-size:11px;color:var(--text2)">${esc(h.key)} · ${esc(h.duration)}min${h.distance?' · '+esc(h.distance)+'km':''}</div>
         ${h.notes?recorteExpandible(esc(h.notes),70,'var(--text3)'):''}
-        ${h.sets&&h.sets.length?(()=>{const t=h.sets.map(e=>e.nombre+' '+fmtSets(e.series)+(esfResumen(e.series)?' ('+esfResumen(e.series)+')':'')).join(' · ');return recorteExpandible('🏋 '+esc(t),90,'var(--ai)');})():''}</div>
+        ${h.sets&&h.sets.length?(()=>{const t=h.sets.map(e=>e.nombre+refSets(e)+' '+fmtSetsDetalladas(e)).join(' · ');return recorteExpandible('🏋 '+esc(t),90,'var(--ai)');})():''}</div>
       <span style="font-size:19px;margin-left:8px">${esc(h.feeling)||'💪'}</span></div>`).join('')
     +(S.history.length>_tope?`<button class="btn btn-block mt-8" onclick="verMasHistorial()">Ver ${Math.min(50,S.history.length-_tope)} sesiones más (quedan ${S.history.length-_tope})</button>`:'');
   renderBadges();renderMarkerCharts();renderLoadProgression();renderVolume();renderCardio();
@@ -4769,7 +4775,7 @@ function renderPlayer(){
           ${ESF_OPTS.map(([k,lab])=>`<button type="button" id="esf-${k}" class="esf-b${prefEsf===k?' esf-on':''}" onclick="setEsf('${k}')">${lab}</button>`).join('')}
         </div>
         <div class="pl-cue" style="font-size:calc(10px*var(--fs));margin-top:5px">¿Cómo fue esta serie? De esto depende que tu entrenador suba la carga o la consolide.</div>
-        ${last?`<div class="pl-cue" style="margin-top:6px;color:var(--ring-stand)">Última vez (${last.date}): ${fmtSets(last.series)}</div>`:''}
+        ${last?`<div class="pl-cue" style="margin-top:6px;color:var(--ring-stand)">Última vez (${last.date}): ${esc(fmtSetsDetalladas(last))}</div>`:''}
       </div>`:'';
     /* v82: con la fuente ampliada, la figura empujaba el botón principal fuera de pantalla
        (medido: botón a 824 px en un alto de 812 con escala 1,35). Se encoge al ampliar. */
@@ -4825,6 +4831,25 @@ function esfDetalle(series){
 }
 /* Cuántas series se cerraron sin margen. Es lo que decide si se puede subir carga. */
 function nAlLimite(series){return (series||[]).filter(x=>x&&x.esf==='limite').length;}
+/* v86 · una serie con su carga, sus repeticiones y su esfuerzo, para MOSTRARLO.
+   La v85 arregló lo que viaja al entrenador pero dejó la interfaz igual: el resumen al cerrar la
+   sesión seguía enseñando una sola etiqueta de esfuerzo para todo el ejercicio y ninguna referencia
+   de unidades, que es justo donde se mira. */
+function fmtSerieUna(x){
+  if(!x)return '';
+  const carga=(x.kg!=null&&x.kg!=='')?x.kg+' kg':(x.banda?'banda '+x.banda:'pc');
+  const e=esfSerie(x);
+  return `${carga} × ${x.reps}${e?` (${e})`:''}`;
+}
+function fmtSetsDetalladas(e){
+  return ((e&&e.series)||[]).map(fmtSerieUna).join(' · ');
+}
+/* Si la serie se registró antes de la v85 no lleva `pesoRef`; se toma del ejercicio de la sesión */
+function refSetsCon(e,exs){
+  if(e&&(e.pesoRef||e.repsRef))return refSets(e);
+  const ex=(exs||[]).find(x=>_norm(x.nombre)===_norm(e&&e.nombre));
+  return ex?refSets({pesoRef:ex.peso,repsRef:ex.reps?String(ex.reps):''}):'';
+}
 /* v85 · la referencia de lo pautado, para que "16 kg × 10" no sea ambiguo */
 function refSets(e){
   if(!e)return '';
