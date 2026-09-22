@@ -593,7 +593,7 @@ body{font-size:calc(15px*var(--fs))}
         <div id="cloud-status" style="margin-top:7px;font-size:12px"></div>
       </details>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 86</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 87</div>
     <div id="sw-status" style="text-align:center;font-size:11px;color:var(--warn);margin-top:4px;display:none"></div>
     <div style="text-align:center;margin-top:8px">
       <button class="btn btn-xs" onclick="checkForUpdate()">🔄 Buscar actualización</button>
@@ -609,7 +609,7 @@ body{font-size:calc(15px*var(--fs))}
     <button class="btn btn-sm" id="mus-btn" onclick="toggleMusic()">🎵</button>
   </div>
   <div id="player-body"></div>
-  <div id="pl-more" onclick="plScrollMore()">▼ Desliza: queda técnica y avisos por leer</div>
+  <div id="pl-more" onclick="plScrollMore()">▼ Desliza: hay más abajo</div>
   <div id="player-music"></div>
 </div>
 
@@ -1615,7 +1615,7 @@ function renderTodayHero(){
   const dName=new Date().toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
   if(!inWeek){kicker='Semana mostrada';title='Estás viendo otra semana';meta='Vuelve a la semana actual para ver tu sesión de hoy.';}
   else if(ai){kicker='Hoy · '+dName;title=ai.title;meta=ai.meta||'';
-    cta=`<div class="hero-cta"><button class="btn btn-primary" onclick="startPlayer('${todayKey}')">▶ Empezar</button><button class="btn" onclick="showSess('${todayKey}')">Ver sesión</button></div>`;}
+    cta=`<div class="hero-cta"><button class="btn btn-primary" onclick="preSesion('${todayKey}')">▶ Empezar</button><button class="btn" onclick="showSess('${todayKey}')">Ver sesión</button></div>`;}
   else if(freePend){kicker='Hoy · '+dName;title=freePend.title;meta=freePend.meta||'Entrenamiento libre';
     cta=`<div class="hero-cta"><button class="btn btn-primary" onclick="openLog('${todayKey}')">✓ Registrar</button></div>`;}
   else if(allDone){kicker='Hoy · '+dName;title='¡Completado! 💪';meta='Buen trabajo. Descansa y recupera.';}
@@ -2219,7 +2219,7 @@ function showSess(key){
   const riskNames=riskExcludeNames(activeRiskAreas()); // v56: para marcar ⚠ en el buscador de sustitución
   let h=`<div class="card"><div style="font-size:16px;font-weight:600">${esc(sess.title)}</div>
     <div style="font-size:12px;color:var(--text2);margin-top:3px">${esc(sess.meta)||''}</div>
-    <button class="btn btn-primary btn-block mt-12" onclick="startPlayer('${key}')">▶ Empezar sesión guiada</button></div>`;
+    <button class="btn btn-primary btn-block mt-12" onclick="preSesion('${key}')">▶ Empezar sesión guiada</button></div>`;
   if(sess.userNote)h+=`<div class="note mb-11" style="border-left:3px solid var(--accent)">💬 <b>Tu nota para esta sesión:</b> ${esc(sess.userNote)}</div>`;
   if(sess.warmup)h+=`<div class="note mb-11">🔥 <b>Calentamiento:</b> ${esc(sess.warmup)}</div>`;
   sess.exercises.forEach((ex,i)=>{
@@ -2450,6 +2450,7 @@ function saveLog(){
   const aiIdx=mainAIIdx(key);
   // v52: si el reproductor registró cargas serie a serie, viajan con el registro y el historial
   if(type.includes('IA')&&aiIdx>=0&&S.schedule[key][aiIdx].sets)log.sets=S.schedule[key][aiIdx].sets;
+  if(type.includes('IA')&&aiIdx>=0&&S.schedule[key][aiIdx].ajusteDia)log.ajusteDia=S.schedule[key][aiIdx].ajusteDia; // v87
   if(type.includes('IA')&&aiIdx>=0){S.schedule[key][aiIdx].done=true;S.schedule[key][aiIdx].log=log;}
   else{
     const fIdx=S.schedule[key].findIndex(s=>s.type==='free'&&!s.done);
@@ -2858,7 +2859,7 @@ function complianceFor(key){
   const filas=[];
   sess.exercises.forEach(ex=>{
     if(isBlock(ex))return;
-    const plan=`${ex.series||'?'}×${ex.reps||'?'}${ex.peso?' @ '+ex.peso:''}`;
+    const plan=`${ex.series||'?'}×${ex.reps||'?'}${ex.peso?' @ '+ex.peso:''}${ex._preAjuste?` (ajustado ese día; plan semanal: ${ex._preAjuste.series}×${ex.reps}${ex._preAjuste.peso?' @ '+ex._preAjuste.peso:''})`:''}`;
     const hecho=(sess.sets||[]).find(e=>_norm(e.nombre)===_norm(ex.nombre));
     if(!hecho||!hecho.series||!hecho.series.length){
       filas.push({nombre:ex.nombre,plan,real:'sin registrar',estado:'sin dato'});
@@ -3064,7 +3065,7 @@ Si se combinan varios objetivos, prioriza un esquema de fuerza/hipertrofia para 
     if(cmp)histTxt+='\n\nCUMPLIMIENTO REAL (lo que te pauté frente a lo que hice, últimas 3 semanas). Úsalo como base de la progresión: "tope del rango en todas las series" = subir carga; "series incompletas" o "por debajo del rango" = mantener o bajar y revisar por qué. El "esfuerzo por serie" es lo que marqué yo al cerrar CADA serie, en orden (s1, s2, s3…): fácil = me sobraban 3+ repeticiones, justo = 1-2 de margen, al límite = sin margen. Léelo como una curva, no como una etiqueta: que solo las últimas salgan al límite es una progresión sana y puedes subir; que la mitad o más salgan al límite dice que la carga está pasada y toca consolidar o quitar una serie. Si una serie pone "sin marcar", no supongas nada de ella.\nAVISO SOBRE LAS UNIDADES: los kilos y las repeticiones que registro son NÚMEROS, sin unidad implícita. Su significado es el del campo "pautado" que acompaña a cada ejercicio: si pautaste "16 kg por mancuerna" y "8-10 por pierna", entonces "16 kg × 10" significa 16 kg en cada mano y 10 repeticiones POR PIERNA, no en total. Interpreta siempre el registro con esa referencia, y si en algún ejercicio no aparece el campo "pautado", dilo en "meta" en vez de suponer:\n'+cmp;
     const h=S.history.slice(0,38); // ~4 semanas completas con margen, a tu ritmo (hasta 9 ses./sem)
     histTxt+='\n\nHISTORIAL DE SESIONES COMPLETADAS (hasta ~4 semanas, más reciente primero; da más peso a la última semana para decidir la carga inmediata, y usa el conjunto para ver la trayectoria del mesociclo: si progreso, me estanco o acumulo fatiga):\n'+
-      (h.length?h.map(x=>`- ${x.key}: ${x.title}, ${x.duration}min${x.distance?' '+x.distance+'km':''}${x.kcal?' · '+x.kcal+' kcal':''}${x.hr?' · FC media '+x.hr:''}, esfuerzo ${x.feeling}${x.fatiga&&x.fatiga!=='normal'?' · llegaba '+x.fatiga:''}${x.pain&&x.pain.length?' · '+(x.painKind==='muscular'?'agujetas/molestia muscular en ':'molestia ARTICULAR en ')+x.pain.map(areaLabel).join('/'):''}${x.orden?' · esta actividad fue '+(x.orden==='antes'?'ANTES':'DESPUÉS')+' de la otra del día'+(x.sepH!=null?' ('+x.sepH+' h de separación)':' (separación sin anotar)'):''}. ${x.notes||''}${x.sets&&x.sets.length?' CARGAS REALES serie a serie: '+x.sets.map(e=>e.nombre+refSets(e)+' '+fmtSets(e.series)+esfDetalle(e.series)).join('; ')+'.':''}`).join('\n'):'(ninguna registrada)');
+      (h.length?h.map(x=>`- ${x.key}: ${x.title}, ${x.duration}min${x.distance?' '+x.distance+'km':''}${x.kcal?' · '+x.kcal+' kcal':''}${x.hr?' · FC media '+x.hr:''}, esfuerzo ${x.feeling}${x.fatiga&&x.fatiga!=='normal'?' · llegaba '+x.fatiga:''}${x.pain&&x.pain.length?' · '+(x.painKind==='muscular'?'agujetas/molestia muscular en ':'molestia ARTICULAR en ')+x.pain.map(areaLabel).join('/'):''}${x.orden?' · esta actividad fue '+(x.orden==='antes'?'ANTES':'DESPUÉS')+' de la otra del día'+(x.sepH!=null?' ('+x.sepH+' h de separación)':' (separación sin anotar)'):''}. ${x.notes||''}${x.ajusteDia&&((x.ajusteDia.cambios||[]).length||(x.ajusteDia.rechazados||[]).length)?' AJUSTE DEL DÍA ('+(x.ajusteDia.fuente==='claude'?'revisado con Claude':'reglas de la app')+', llegaba '+x.ajusteDia.estado+(x.ajusteDia.dolor&&x.ajusteDia.dolor.length?', molestia '+x.ajusteDia.dolor.map(areaLabel).join('/'):'')+'): '+((x.ajusteDia.cambios||[]).length?'aplicado '+x.ajusteDia.cambios.map(c=>c.nombre+' ['+c.desc+']').join('; '):'nada aplicado')+((x.ajusteDia.rechazados||[]).length?'; rechacé '+x.ajusteDia.rechazados.map(c=>c.nombre+' ['+c.desc+']').join('; '):'')+'.':''}${x.sets&&x.sets.length?' CARGAS REALES serie a serie: '+x.sets.map(e=>e.nombre+refSets(e)+' '+fmtSets(e.series)+esfDetalle(e.series)).join('; ')+'.':''}`).join('\n'):'(ninguna registrada)');
   }
   // v75 · volumen semanal por grupo muscular, fuerza estimada, cardio y memoria del entrenador
   let coachTxt='';
@@ -3145,6 +3146,7 @@ REGLAS DE ADAPTACIÓN (basadas en evidencia):
 - Si predominó 😓/😴 o faltaron sesiones, reduce volumen y prioriza recuperación.
 - Nunca una semana de descanso: entreno siempre. Si hay fatiga (😓/😴, marcadores peores, molestia articular repetida), puedes bajar a una semana de VOLUMEN REDUCIDO (40-50% menos series, misma frecuencia, carga similar, RIR 3-4) y decirlo con claridad en "analisis_progreso" y en "mesociclo.justificacion".
 - ESFUERZO REAL DE LAS SERIES: cuando el cumplimiento indique "esfuerzo al límite", NO subas carga aunque haya llegado al tope del rango; consolida esa carga una semana más o reduce una serie. Subir sobre series que ya se hacen al fallo es la forma más rápida de estancarse y de acumular fatiga.
+- AJUSTES DEL DÍA: antes de cada sesión la app revisa lo previsto con lo último registrado y me propone ajustes acotados (±1 escalón de carga, −1 serie, RIR +1); el historial dice cuáles apliqué y cuáles rechacé, y si los revisé contigo. Si se repiten en el mismo sentido (siempre bajando la carga que pautaste, o siempre subiéndola), es que tu planificación semanal va desajustada: corrígela y dilo en "analisis_progreso". Si rechacé un ajuste y la sesión fue bien, dale peso a mi criterio; si fue mal, dímelo.
 - ORDEN FUERZA / CARDIO REALIZADO: en los días con las dos cosas, el historial dice cuál hice ANTES y con cuánta separación. Compáralo con lo que recomendaste la semana pasada: si lo hice al revés y el rendimiento en fuerza cayó, dilo y explica por qué el orden importa; si lo hice como dijiste y funcionó, mantenlo; si funcionó igual del otro modo, reconócelo y adáptate a lo que me resulte más fácil de cumplir. Si no hay dato de orden, no supongas: pídemelo en "meta".
 - En "nota_progresion" de cada ejercicio, explica el cambio concreto frente a la semana anterior.
 - Varía algún ejercicio si lleva 2+ semanas idéntico, para evitar estancamiento.
@@ -4571,6 +4573,342 @@ function persistSetLog(){
   if(b)b.addEventListener('scroll',()=>plMoreCheck(),{passive:true});
   window.addEventListener('resize',()=>{if(P&&P.active)plMoreCheck();});
 })();
+/* ============================================================
+   v87 · REVISIÓN PREVIA DEL DÍA
+   El plan se genera una vez por semana, ANTES de las sesiones que lo componen: cuando el miércoles
+   repites un patrón que hiciste el lunes, la carga del miércoles se fijó sin conocer el resultado
+   del lunes. Esto es lo que un entrenador presencial corrige al verte llegar.
+   Dos capas, ninguna con llamadas a la API:
+   1) Reglas locales, siempre: gratis, instantáneas y sin red.
+   2) Revisión con Claude por copiar y pegar, opcional, como la semanal.
+   Los ajustes están ACOTADOS (±1 escalón de carga, −1 serie, RIR +1): corrigen desviaciones del
+   día, no replanifican la semana. Todo se guarda, es reversible y llega al entrenador semanal.
+   Los umbrales ("la mitad o más de las series al límite") son convenciones de práctica, no
+   puntos de corte validados por un estudio.
+   ============================================================ */
+let PRE=null;
+function _escalones(pesoTxt){
+  if(/kettlebell|pesa rusa/i.test(String(pesoTxt||''))){
+    const l=String((S.kettlebells&&S.kettlebells.list)||'').split(/[,;\s]+/).map(toNum).filter(v=>!isNaN(v)&&v>0);
+    return [...new Set(l)].sort((a,b)=>a-b);
+  }
+  return dumbbellList();
+}
+function _stepKg(kg,dir,pesoTxt){
+  const l=_escalones(pesoTxt);if(!l.length||kg==null||isNaN(kg))return null;
+  if(dir>0){const n=l.find(w=>w>kg+1e-9);return n==null?null:n;}
+  const p=l.slice().reverse().find(w=>w<kg-1e-9);return p==null?null:p;
+}
+function _pesoCon(pesoTxt,kg){
+  const t=String(pesoTxt||'');
+  return /\d/.test(t)?t.replace(/\d+(?:[.,]\d+)?/,String(kg)):(kg+' kg');
+}
+function _rirMas1(r){
+  const t=String(r||'').trim();if(!t)return '';
+  const m=t.match(/^(\d+)\s*-\s*(\d+)$/);if(m)return (+m[1]+1)+'-'+(+m[2]+1);
+  const n=t.match(/^(\d+)$/);if(n)return String(+n[1]+1);
+  return t;
+}
+function _conKg(ex){
+  const p=String((ex&&ex.peso)||'');
+  return /kg/i.test(p)&&!_mencionaBanda(p)&&parseKg(p)!=null;
+}
+/* Último registro del MISMO ejercicio anterior a hoy, con su referencia de unidades */
+function ultimoRegistro(nombre,antesDe){
+  const nm=_norm(nombre).trim();if(!nm)return null;
+  for(const h of (S.history||[])){
+    if(!h.sets||!h.key||(antesDe&&h.key>=antesDe))continue;
+    const e=h.sets.find(x=>x&&_norm(x.nombre).trim()===nm);
+    if(e&&e.series&&e.series.length)return {fecha:h.key,e};
+  }
+  return null;
+}
+function _fechaCorta(k){try{const d=new Date(k+'T00:00:00');return d.getDate()+'/'+(d.getMonth()+1);}catch(e){return k;}}
+/* ¿Este ejercicio carga una zona con molestia? Coincidencia por nombre sin acentos, en los dos sentidos */
+function _zonasQueCarga(ex,zonas){
+  const n=_norm(ex.nombre);
+  return [...zonas].filter(z=>(RISK_EXCLUDE[z]||[]).some(r=>{const rn=_norm(r);return n.indexOf(rn)>=0||rn.indexOf(n)>=0;}));
+}
+/* Motor de reglas. Devuelve una propuesta por ejercicio afectado. */
+function ajustesDelDia(key,estado){
+  const sess=mainAISess(key);if(!sess||!sess.exercises)return [];
+  estado=estado||{};
+  const props=[];
+  const zonasHoy=new Set((estado.dolor||[]).filter(a=>a!=='otra'));
+  const articularHoy=estado.tipoDolor!=='muscular';
+  const zonas=new Set(recentPainAreas(key,3));          // articular registrado en las últimas 72 h
+  if(articularHoy)zonasHoy.forEach(z=>zonas.add(z));
+  const ayer=new Date(key+'T00:00:00');ayer.setDate(ayer.getDate()-1);
+  const hAyer=(S.history||[]).find(h=>h.key===fmt(ayer)&&h.sets&&h.sets.length);
+  const gruposAyer=new Set(hAyer?hAyer.sets.map(e=>grupoDe({nombre:e.nombre})):[]);
+  sess.exercises.forEach((ex,i)=>{
+    if(isBlock(ex))return;
+    const pr={i,nombre:ex.nombre,cambios:{},motivos:[],avisos:[]};
+    const kgP=_conKg(ex)?parseKg(ex.peso):null;
+    const series=parseInt(ex.series)||0;
+    // --- carga, a partir de lo último registrado de este mismo ejercicio
+    const ur=ultimoRegistro(ex.nombre,key);
+    if(ur&&kgP!=null){
+      const ser=ur.e.series;
+      const kgs=ser.map(x=>toNum(x.kg)).filter(v=>!isNaN(v));
+      const kgL=kgs.length?Math.max(...kgs):null;
+      const rango=repRange(ex.reps);
+      const reps=ser.map(x=>toNum(String(x.reps))).filter(v=>!isNaN(v));
+      const nLim=nAlLimite(ser),conEsf=ser.filter(x=>x&&x.esf).length;
+      const f=_fechaCorta(ur.fecha);
+      if(kgL!=null&&rango&&reps.length){
+        const todoTope=reps.every(r=>r>=rango[1]);
+        const muyCorto=reps.some(r=>r<rango[0]-1);
+        const pasada=conEsf>0&&nLim*2>=conEsf;
+        if(todoTope&&conEsf>0&&!pasada&&kgP<=kgL&&estado.estado==='cansado'){
+          // no se sube carga el día que se llega cansado, aunque los datos den margen
+          pr.avisos.push(`El ${f} tenías margen para subir, pero llegas cansado: hoy mantenemos ${kgP} kg y subimos otro día.`);
+        }else if(todoTope&&conEsf>0&&!pasada&&kgP<=kgL){
+          const up=_stepKg(kgL,+1,ex.peso);
+          if(up!=null){pr.cambios.peso={antes:ex.peso,despues:_pesoCon(ex.peso,up)};
+            pr.motivos.push(`El ${f} cerraste todas las series en el tope del rango con ${kgL} kg y solo ${nLim} de ${conEsf} al límite: hay margen, hoy ${up} kg.`);}
+        }else if((pasada||muyCorto)&&kgP>kgL){
+          pr.cambios.peso={antes:ex.peso,despues:_pesoCon(ex.peso,kgL)};
+          pr.motivos.push(`El ${f} con ${kgL} kg: ${pasada?nLim+' de '+conEsf+' series al límite':'repeticiones por debajo del rango'}. Subir hoy a ${kgP} kg es prematuro: consolida ${kgL} kg.`);
+        }else if(muyCorto&&kgP===kgL){
+          const dn=_stepKg(kgL,-1,ex.peso);
+          if(dn!=null){pr.cambios.peso={antes:ex.peso,despues:_pesoCon(ex.peso,dn)};
+            pr.motivos.push(`El ${f} te quedaste lejos del rango con ${kgL} kg: baja un escalón a ${dn} kg y recupera las repeticiones.`);}
+        }
+      }
+    }
+    // --- molestia articular en una zona que este ejercicio carga
+    const zs=_zonasQueCarga(ex,zonas);
+    if(zs.length){
+      if(series>2)pr.cambios.series={antes:series,despues:series-1};
+      if(kgP!=null&&!pr.cambios.peso){const dn=_stepKg(kgP,-1,ex.peso);
+        if(dn!=null)pr.cambios.peso={antes:ex.peso,despues:_pesoCon(ex.peso,dn)};}
+      else if(pr.cambios.peso){const base=parseKg(pr.cambios.peso.despues);const dn=_stepKg(Math.min(base,kgP),-1,ex.peso);
+        if(dn!=null&&dn<kgP)pr.cambios.peso={antes:ex.peso,despues:_pesoCon(ex.peso,dn)};}
+      pr.motivos.push(`Molestia en ${zs.map(areaLabel).join('/').toLowerCase()}: este ejercicio carga esa zona. Hoy menos volumen y menos carga; si te molesta en el calentamiento, cámbialo por una alternativa desde la pantalla de la sesión.`);
+    }
+    if(!articularHoy&&zonasHoy.size)pr.avisos.push('Agujetas o molestia muscular: no es motivo para cambiar el ejercicio, pero no persigas el fallo en esa zona.');
+    // --- llegas cansado
+    if(estado.estado==='cansado'){
+      if(series>2&&!pr.cambios.series)pr.cambios.series={antes:series,despues:series-1};
+      if(ex.rir){const r=_rirMas1(ex.rir);if(r&&r!==String(ex.rir))pr.cambios.rir={antes:ex.rir,despues:r};}
+      pr.motivos.push('Llegas cansado: una serie menos y una repetición más en reserva. Hoy cuenta más sumar la sesión que exprimirla.');
+    }
+    // --- mismo grupo trabajado ayer
+    if(gruposAyer.has(grupoDe(ex))&&grupoDe(ex)!=='otro')
+      pr.avisos.push(`Ayer ya trabajaste ${grupoDe(ex)}: vigila el RIR y no fuerces si las primeras series pesan más de lo normal.`);
+    if(Object.keys(pr.cambios).length||pr.avisos.length)props.push(pr);
+  });
+  return props;
+}
+function _descCambios(c){
+  const out=[];
+  if(c.nombre)out.push(`cambiar a ${c.nombre.despues}`);
+  if(c.peso){
+    // si solo cambia el número, se dice corto: "16 → 18 kg (por mancuerna, una en cada mano)"
+    const A=String(c.peso.antes||''),B=String(c.peso.despues||'');
+    const a=parseKg(A),b=parseKg(B),rx=/\d+(?:[.,]\d+)?/;
+    if(a!=null&&b!=null&&A.replace(rx,'#')===B.replace(rx,'#')){
+      const resto=A.replace(rx,'').replace(/^\s*kg\s*/i,'').trim();
+      out.push(`carga ${a} → ${b} kg${resto?' ('+resto.replace(/^\(|\)$/g,'')+')':''}`);
+    }else out.push(`carga: ${A} → ${B}`);
+  }
+  if(c.series)out.push(`series ${c.series.antes} → ${c.series.despues}`);
+  if(c.rir)out.push(`RIR ${c.rir.antes} → ${c.rir.despues}`);
+  return out.join(' · ');
+}
+/* --- Pantalla previa: paso 1, cómo llegas --------------------------------------------------- */
+function preSesion(key){
+  const sess=mainAISess(key);if(!sess||!sess.exercises)return;
+  // si ya se revisó hoy, directo a la sesión
+  if(sess.ajusteDia&&sess.ajusteDia.fecha===todayKey()){startPlayer(key);return;}
+  PRE={key,estado:'normal',dolor:[],tipoDolor:'articular',props:null,fuente:'reglas',analisis:''};
+  P={active:false,key:null,setLog:[]};
+  document.getElementById('player').classList.add('show');
+  sincronizarFondo();document.body.style.overflow='hidden';
+  renderPre();
+}
+function preSel(grupo,v,el){
+  if(grupo==='estado'){PRE.estado=v;document.querySelectorAll('.pre-est').forEach(b=>b.classList.toggle('sel',b===el));}
+  else if(grupo==='tipo'){PRE.tipoDolor=v;document.querySelectorAll('.pre-tipo').forEach(b=>b.classList.toggle('sel',b===el));}
+  else if(grupo==='dolor'){
+    const i=PRE.dolor.indexOf(v);if(i>=0)PRE.dolor.splice(i,1);else PRE.dolor.push(v);
+    el.classList.toggle('sel',PRE.dolor.indexOf(v)>=0);
+    const t=document.getElementById('pre-tipo-w');if(t)t.style.display=PRE.dolor.length?'block':'none';
+  }
+}
+function renderPre(){
+  const sess=mainAISess(PRE.key);
+  if(PRE.props==null){
+    plPaint(`<div style="text-align:left;padding:4px 2px 20px">
+      <div class="pl-count">Antes de empezar</div>
+      <div class="pl-name" style="margin-bottom:4px">${esc(sess.title||'Sesión de hoy')}</div>
+      <p class="note mb-11">Tu entrenador revisa la sesión con lo que has registrado estos días y te propone ajustes para hoy. Tú decides cuáles aplicar.</p>
+      <div class="field"><label>¿Cómo llegas hoy?</label><div class="feel">
+        <div class="orden-b pre-est" onclick="preSel('estado','bien',this)">😀 Bien</div>
+        <div class="orden-b pre-est sel" onclick="preSel('estado','normal',this)">🙂 Normal</div>
+        <div class="orden-b pre-est" onclick="preSel('estado','cansado',this)">😓 Cansado</div></div></div>
+      <div class="field"><label>¿Notas alguna molestia ahora?</label><div class="feel">
+        ${PAIN_AREAS.filter(a=>a[0]!=='otra').map(([k,l])=>`<div class="orden-b" onclick="preSel('dolor','${k}',this)">${l}</div>`).join('')}</div>
+        <div id="pre-tipo-w" style="display:none;margin-top:8px"><div class="feel">
+          <div class="orden-b pre-tipo sel" onclick="preSel('tipo','articular',this)">Articular</div>
+          <div class="orden-b pre-tipo" onclick="preSel('tipo','muscular',this)">Agujetas / muscular</div></div></div></div>
+      <button class="btn btn-primary btn-block mt-12" onclick="preRevisar()">Revisar la sesión</button>
+      <button class="btn btn-block mt-8" onclick="preEmpezar(false)">Empezar sin revisar</button>
+    </div>`);
+    return;
+  }
+  const props=PRE.props;
+  const lista=props.length?props.map((p,k)=>{
+    const hay=Object.keys(p.cambios).length;
+    return `<div style="padding:10px 12px;margin-bottom:8px;border-radius:12px;background:var(--surface2);border:1px solid var(--border)">
+      <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer">
+        ${hay?`<input type="checkbox" id="pp-${k}" checked style="margin-top:3px;width:20px;height:20px;flex-shrink:0">`:'<span style="width:20px;flex-shrink:0">ℹ️</span>'}
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700">${esc(p.nombre)}</div>
+          ${hay?`<div style="color:var(--accent);font-weight:600;margin-top:2px">${esc(_descCambios(p.cambios))}</div>`:''}
+          ${p.motivos.map(m=>`<div class="note" style="margin-top:4px">${esc(m)}</div>`).join('')}
+          ${p.avisos.map(m=>`<div class="note" style="margin-top:4px;color:var(--text3)">⚠ ${esc(m)}</div>`).join('')}
+        </div></label></div>`;}).join('')
+    :`<p class="note">Todo cuadra con lo que has registrado: la sesión está bien tal cual.</p>`;
+  const hayCambios=props.some(p=>Object.keys(p.cambios).length);
+  plPaint(`<div style="text-align:left;padding:4px 2px 20px">
+    <div class="pl-count">Revisión de hoy · ${PRE.fuente==='claude'?'propuesta de Claude':'reglas automáticas'}</div>
+    <div class="pl-name" style="margin-bottom:6px">${esc(sess.title||'Sesión de hoy')}</div>
+    ${PRE.analisis?`<p class="note mb-11" style="border-left:3px solid var(--accent)">${esc(PRE.analisis)}</p>`:''}
+    ${lista}
+    ${hayCambios?`<button class="btn btn-primary btn-block mt-12" onclick="preEmpezar(true)">✓ Aplicar lo marcado y empezar</button>`:''}
+    <button class="btn ${hayCambios?'':'btn-primary'} btn-block mt-8" onclick="preEmpezar(false)">${hayCambios?'Empezar sin cambios':'▶ Empezar'}</button>
+    <div style="margin-top:18px;padding-top:12px;border-top:1px solid var(--border)">
+      <div class="pl-count" style="margin-bottom:6px">¿Quieres la opinión de tu entrenador?</div>
+      <p class="note mb-9">Para los casos que las reglas no cubren bien —una molestia que se repite, un día raro— copia la revisión, pégala en tu proyecto de Claude y pega aquí su respuesta.</p>
+      <button class="btn btn-block" onclick="preCopiar()" id="pre-copy">📋 Copiar revisión para Claude</button>
+      <textarea id="pre-resp" placeholder="Pega aquí la respuesta de Claude" class="u-mh60" style="width:100%;margin-top:8px"></textarea>
+      <button class="btn btn-block mt-8" onclick="preLeerClaude()">📥 Leer respuesta de Claude</button>
+      <div id="pre-err" class="note" style="color:var(--danger);margin-top:6px"></div>
+    </div></div>`);
+}
+function preRevisar(){PRE.props=ajustesDelDia(PRE.key,PRE);PRE.fuente='reglas';PRE.analisis='';renderPre();}
+/* --- Aplicar y empezar ----------------------------------------------------------------------- */
+function preEmpezar(aplicar){
+  const sess=mainAISess(PRE.key);if(!sess)return;
+  const cambios=[],rechazados=[];
+  (PRE.props||[]).forEach((p,k)=>{
+    if(!Object.keys(p.cambios).length)return;
+    const cb=document.getElementById('pp-'+k);
+    const ok=aplicar&&cb&&cb.checked;
+    const reg={nombre:p.nombre,desc:_descCambios(p.cambios),motivo:p.motivos.join(' ')};
+    if(!ok){rechazados.push(reg);return;}
+    const ex=sess.exercises[p.i];if(!ex)return;
+    if(!ex._preAjuste)ex._preAjuste={nombre:ex.nombre,peso:ex.peso,series:ex.series,rir:ex.rir};
+    const c=p.cambios;
+    if(c.nombre){
+      const db=EXDB.find(e=>_norm(e.n)===_norm(c.nombre.despues));
+      ex.nombre=c.nombre.despues;
+      if(db){ex.p=db.p;ex.musculos=db.m;ex.descripcion=db.d||descFor(db);ex.errores=ERRORS[figKey(db.n)]||[];}
+      else{ex.p=patFromName(ex.nombre)||ex.p;}
+    }
+    if(c.peso)ex.peso=c.peso.despues;
+    if(c.series)ex.series=c.series.despues;
+    if(c.rir)ex.rir=c.rir.despues;
+    cambios.push(reg);
+  });
+  if(PRE.props!=null){
+    sess.ajusteDia={fecha:todayKey(),estado:PRE.estado,dolor:PRE.dolor.slice(),tipoDolor:PRE.tipoDolor,
+      fuente:PRE.fuente,analisis:cleanMulti(PRE.analisis||'',600),cambios,rechazados};
+    save();
+  }
+  const k=PRE.key;
+  PRE=null;
+  startPlayer(k);
+}
+/* --- Revisión con Claude, por copiar y pegar -------------------------------------------------- */
+function buildDailyPrompt(key,estado){
+  const sess=mainAISess(key);if(!sess)return '';
+  const p=S.profile;
+  const est={bien:'bien',normal:'normal',cansado:'cansado'}[estado.estado]||'normal';
+  const dol=(estado.dolor||[]).length?(estado.dolor.map(areaLabel).join(', ')+' ('+(estado.tipoDolor==='muscular'?'agujetas o molestia muscular':'molestia ARTICULAR')+')'):'ninguna';
+  const prev=sess.exercises.filter(x=>!isBlock(x)).map(x=>`- ${x.nombre}: ${x.series}×${x.reps}${x.peso?' @ '+x.peso:''}${x.rir?' · RIR '+x.rir:''}${x.descanso_seg?' · descanso '+x.descanso_seg+' s':''}`).join('\n');
+  const ult=sess.exercises.filter(x=>!isBlock(x)).map(x=>{const u=ultimoRegistro(x.nombre,key);
+    return u?`- ${x.nombre} (${u.fecha})${refSetsCon(u.e,[x])}: ${fmtSetsDetalladas(u.e)}`:`- ${x.nombre}: sin registros anteriores`;}).join('\n');
+  const desde=new Date(key+'T00:00:00');desde.setDate(desde.getDate()-7);const dk=fmt(desde);
+  const hist=(S.history||[]).filter(h=>h.key&&h.key>=dk&&h.key<key).map(h=>
+    `- ${h.key}: ${h.type||h.title||'Actividad'}${h.duration?', '+h.duration+' min':''}${h.distance?', '+h.distance+' km':''}${h.feeling?', esfuerzo '+h.feeling:''}${h.fatiga&&h.fatiga!=='normal'?', llegaba '+h.fatiga:''}${h.pain&&h.pain.length?', '+(h.painKind==='muscular'?'agujetas en ':'molestia ARTICULAR en ')+h.pain.map(areaLabel).join('/'):''}${h.sets&&h.sets.length?'. Series: '+h.sets.map(e=>e.nombre+refSets(e)+' '+fmtSetsDetalladas(e)).join('; '):''}${h.notes?'. Notas: '+String(h.notes).slice(0,300):''}`).join('\n');
+  const props=ajustesDelDia(key,estado);
+  const pr=props.length?props.map(x=>`- ${x.nombre}: ${_descCambios(x.cambios)||'sin cambio'}. ${x.motivos.concat(x.avisos).join(' ')}`).join('\n'):'- ninguna: las reglas no ven nada que ajustar.';
+  return `Actúa como mi entrenador personal. Voy a empezar la sesión de HOY (${key}, "${sess.title||''}"). Antes de empezar, revísala con lo que he hecho estos días y dime si hay que ajustar algo, como harías al verme llegar al gimnasio.
+Es un AJUSTE DEL DÍA: no replanifiques la semana. Si crees que hace falta replanificarla, dilo en "analisis" y lo haremos en la revisión semanal.
+
+CÓMO LLEGO HOY: ${est}. Molestia ahora: ${dol}.
+PERFIL: ${p.edad||'?'} años, ${p.peso||'?'} kg, nivel ${p.nivel||'?'}. Mancuernas disponibles (kg por mancuerna): ${dumbbellList().join(', ')}.
+
+SESIÓN PREVISTA PARA HOY:
+${prev}
+
+LO ÚLTIMO REGISTRADO DE CADA EJERCICIO (el esfuerzo va serie a serie: fácil = me sobraban 3+ repeticiones, justo = 1-2, al límite = ninguna; los kilos y repeticiones se interpretan con el "pautado"):
+${ult}
+
+ÚLTIMOS 7 DÍAS:
+${hist||'- sin registros'}
+
+PROPUESTA DE LA APP (reglas automáticas; valóralas con criterio: confírmalas, corrígelas o descártalas):
+${pr}
+
+LÍMITES DEL AJUSTE: como máximo un escalón de carga arriba o abajo y una serie más o menos por ejercicio. Usa solo pesos de la lista disponible. Puedes proponer sustituir un ejercicio si hay molestia, con el material disponible. Si no hay nada que ajustar, dilo.
+
+Responde ÚNICAMENTE con un objeto JSON válido, sin texto antes ni después, sin backticks:
+{"analisis":"2-3 frases con tu valoración de hoy","ajustes":[{"ejercicio":"nombre EXACTO de la sesión prevista","peso":"carga inequívoca, p. ej. 18 kg por mancuerna (una en cada mano), o null si no cambia","series":3,"rir":"2-3","sustituir_por":null,"motivo":"1 frase"}]}
+En cada ajuste pon null en lo que no cambie. Si no hay nada que ajustar, "ajustes":[].`;
+}
+function preCopiar(){
+  const t=buildDailyPrompt(PRE.key,PRE);
+  const b=document.getElementById('pre-copy');
+  const ok=()=>{if(b){b.textContent='✓ Copiado: pégalo en Claude';setTimeout(()=>{if(b)b.textContent='📋 Copiar revisión para Claude';},2500);}};
+  try{navigator.clipboard.writeText(t).then(ok,()=>{fallbackCopy(t);ok();});}catch(e){fallbackCopy(t);ok();}
+}
+function fallbackCopy(t){
+  try{const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();}catch(e){}
+}
+/* Convierte la respuesta de Claude en propuestas con el MISMO formato que las reglas, validadas */
+function propsDesdeClaude(json,key){
+  const sess=mainAISess(key);if(!sess)return {props:[],errores:['No hay sesión para hoy.']};
+  const errores=[];
+  if(!json||typeof json!=='object')return {props:[],errores:['La respuesta no es un JSON válido.']};
+  const lista=Array.isArray(json.ajustes)?json.ajustes:[];
+  const escal=new Set(dumbbellList().map(Number));
+  const props=[];
+  lista.forEach(a=>{
+    if(!a||!a.ejercicio)return;
+    const i=sess.exercises.findIndex(x=>!isBlock(x)&&_norm(x.nombre).trim()===_norm(a.ejercicio).trim());
+    if(i<0){errores.push(`"${cleanStr(a.ejercicio,60)}" no está en la sesión de hoy: ignorado.`);return;}
+    const ex=sess.exercises[i];
+    const pr={i,nombre:ex.nombre,cambios:{},motivos:a.motivo?[cleanMulti(a.motivo,400)]:[],avisos:[]};
+    if(a.sustituir_por){const nn=cleanStr(a.sustituir_por,80);if(nn&&_norm(nn)!==_norm(ex.nombre))pr.cambios.nombre={antes:ex.nombre,despues:nn};}
+    if(a.peso){const pz=cleanStr(a.peso,120);
+      if(pz&&pz!==ex.peso){
+        const kg=parseKg(pz);
+        if(kg!=null&&/mancuerna/i.test(pz)&&!escal.has(kg))errores.push(`${ex.nombre}: ${kg} kg no está en tu lista de mancuernas; revísalo antes de aplicarlo.`);
+        pr.cambios.peso={antes:ex.peso||'—',despues:pz};}}
+    const ns=parseInt(a.series);const s0=parseInt(ex.series)||0;
+    if(!isNaN(ns)&&ns>0&&ns!==s0){
+      if(Math.abs(ns-s0)>1)errores.push(`${ex.nombre}: pasa de ${s0} a ${ns} series, más de lo que permite un ajuste del día. Se limita a ${ns>s0?s0+1:s0-1}.`);
+      pr.cambios.series={antes:s0,despues:Math.max(1,Math.min(s0+1,Math.max(s0-1,ns)))};}
+    if(a.rir){const r=cleanStr(a.rir,12);if(r&&r!==String(ex.rir||''))pr.cambios.rir={antes:ex.rir||'—',despues:r};}
+    if(Object.keys(pr.cambios).length||pr.motivos.length)props.push(pr);
+  });
+  return {props,errores,analisis:cleanMulti(json.analisis||'',600)};
+}
+function preLeerClaude(){
+  const t=(document.getElementById('pre-resp')||{}).value||'';
+  const err=document.getElementById('pre-err');
+  let j=null;try{j=looseJSON(t);}catch(e){j=null;}
+  if(!j){if(err)err.textContent='No he podido leer la respuesta. Copia el JSON completo que te ha dado Claude.';return;}
+  const r=propsDesdeClaude(j,PRE.key);
+  PRE.props=r.props;PRE.fuente='claude';PRE.analisis=r.analisis||'';
+  renderPre();
+  const e2=document.getElementById('pre-err');if(e2&&r.errores.length)e2.textContent=r.errores.join(' ');
+}
 function startPlayer(key){
   const sess=mainAISess(key);
   if(!sess||!sess.exercises)return;

@@ -2152,3 +2152,73 @@ Ninguno mostraba nunca a qué se refieren los kilos ni las repeticiones.
 - **254 comprobaciones en verde, 0 fallos**, en cinco zonas horarias.
 - **Contraste con la v85: 14 fallos**, todos de visibilidad.
 - Comprobado con un registro SIN `pesoRef` (anterior a la v85): la referencia se recupera igualmente.
+
+## v87: revisión previa del día — el entrenador te mira al llegar
+
+### El hueco que cubre
+El plan se genera una vez por semana, **antes** de las sesiones que lo componen. Cuando el miércoles
+repites un patrón que hiciste el lunes, la carga del miércoles se fijó sin conocer el resultado del
+lunes. Es un hueco estructural, no un fallo puntual, y es lo que un entrenador presencial corrige al
+verte llegar: «hoy lo dejamos así» o «hoy puedes con más».
+
+### Cómo funciona
+Al pulsar **▶ Empezar** (en Hoy o en la pantalla Sesión) aparece antes una pantalla previa:
+1. **¿Cómo llegas hoy?** Bien / Normal / Cansado, y si notas alguna molestia ahora (zona y si es
+   articular o agujetas). Antes esto solo se preguntaba *después* de entrenar, cuando ya no servía
+   para decidir nada.
+2. **Revisión con reglas locales** (`ajustesDelDia`), ejercicio por ejercicio, contra lo último
+   registrado de ese mismo ejercicio:
+   - **Subir un escalón**: tope del rango en todas las series, menos de la mitad al límite, y hoy
+     pautada esa carga o menos. Solo si hay esfuerzo marcado: sin ese dato no se arriesga.
+   - **Consolidar**: la mitad o más al límite, o repeticiones claramente por debajo, y hoy pautada
+     MÁS carga → se mantiene la que se hizo.
+   - **Bajar un escalón**: misma carga y lejos del rango.
+   - **Molestia articular** hoy o registrada en las últimas 72 h en una zona que el ejercicio carga →
+     una serie menos y un escalón menos. Agujetas → aviso, no se retira el patrón.
+   - **Cansado** → una serie menos (nunca por debajo de 2), RIR +1, y **no se sube carga** aunque
+     los datos den margen.
+   - **Mismo grupo trabajado ayer** → aviso.
+3. **Tú decides**: cada propuesta con su motivo en una frase, marcada por defecto, y la desmarcas si
+   no la quieres. «Aplicar lo marcado y empezar» o «Empezar sin cambios».
+
+### Revisión con Claude, por copiar y pegar (sin API)
+Para lo que las reglas no cubren bien —una molestia que se repite, un día raro—:
+**📋 Copiar revisión para Claude** genera un mensaje con cómo llegas, la sesión prevista, lo último
+de cada ejercicio con esfuerzo por serie y referencia de unidades, los últimos 7 días, la propuesta
+de las reglas para que la valore, y los límites del ajuste. Pides respuesta en JSON y la pegas en
+**📥 Leer respuesta de Claude**. Pasa por los mismos límites: las series se recortan a ±1, los
+ejercicios que no están en la sesión se ignoran, y se avisa si propone un peso que no tienes.
+Tolera las comillas tipográficas de iOS (`looseJSON`).
+
+### Límites, a propósito
+- **Ajustes acotados**: ±1 escalón de carga, ±1 serie, RIR +1. Corrigen el día, no replanifican la
+  semana; si hace falta replanificar, se le pide a Claude que lo diga.
+- **Los marcadores de Apple Salud no intervienen**: son medias mensuales, demasiado lentas para
+  decidir una sesión concreta.
+- **Los umbrales son convenciones de práctica, no puntos de corte validados.** «La mitad o más al
+  límite» es coherente con la regla de la v85, pero ningún estudio fija ese número.
+- **Una revisión por día**: si ya se revisó hoy, Empezar va directo a la sesión.
+- **Cero llamadas a la API.** La convención se mantiene.
+
+### Trazabilidad
+- Cada ejercicio ajustado guarda el original en `_preAjuste` (reversible).
+- La sesión guarda `ajusteDia`: cómo llegabas, molestia, fuente (reglas o Claude), análisis,
+  **lo aplicado y lo rechazado**. Viaja al historial al registrar.
+- El mensaje semanal lo recibe en cada línea del historial, con una regla: si los ajustes se repiten
+  en el mismo sentido, la planificación semanal va desajustada y debe corregirla; si rechazaste uno y
+  la sesión fue bien, que pese tu criterio.
+- En CUMPLIMIENTO REAL, un ejercicio ajustado muestra también el plan semanal original.
+
+### Validación
+- **318 comprobaciones en verde, 0 fallos**, en cinco zonas horarias (`test-v87.js`): 64 nuevas.
+- Playwright a 375×812: la pantalla se pinta sin errores JS ni desbordamiento lateral, el indicador
+  de scroll aparece, y «Aplicar lo marcado y empezar» arranca la sesión con los cambios.
+- Un fallo de lógica encontrado en esa prueba visual y corregido antes de entregar: con «cansado» y
+  margen de subida, las reglas proponían a la vez **subir la carga y quitar una serie**. Contradictorio;
+  ahora el día cansado nunca sube.
+- El indicador de scroll decía «queda técnica y avisos por leer» también en esta pantalla, donde no
+  hay técnica. Ahora dice «hay más abajo».
+- **Pendiente en el iPhone**: pantalla nueva con casillas, botones de selección y un área de texto
+  donde se abre el teclado. Es exactamente el tipo de elemento que ya dio problemas en la v76.
+- El botón «Aplicar» queda bajo la lista: con tres propuestas hay que desplazar (el indicador lo
+  señala). Aceptable para un uso diario; si molesta, se sube arriba.
