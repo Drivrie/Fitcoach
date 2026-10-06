@@ -2222,3 +2222,160 @@ Tolera las comillas tipográficas de iOS (`looseJSON`).
   donde se abre el teclado. Es exactamente el tipo de elemento que ya dio problemas en la v76.
 - El botón «Aplicar» queda bajo la lista: con tres propuestas hay que desplazar (el indicador lo
   señala). Aceptable para un uso diario; si molesta, se sube arriba.
+
+---
+
+## v88: reauditoría con 18 semanas de datos reales — la app medía mal lo que decidía
+
+### De dónde sale esta versión
+Dos auditorías. La primera, de contenido y diseño, sobre el mensaje que la app le manda al
+entrenador. La segunda, sobre la copia de seguridad real: 134 sesiones entre el 7 de junio y el
+6 de octubre de 2026. La segunda corrigió a la primera en tres puntos, que se dejan por escrito:
+
+- **«Marcar "al límite" bloquea la progresión»: era falso.** Las cargas subieron 20 veces desde
+  septiembre. El problema era el contrario: subían a saltos.
+- **«La FC máxima real es más alta que la estimada»: era falso.** Los pulsos registrados no son
+  coherentes entre sí (cinta 129-145 lpm, exterior 160-175, al mismo ritmo).
+- **«La goblet se quedó en 28 kg»: era falso.** Subió a 30 kg el 21/9.
+
+### Lo que dicen los datos (hechos, medidos sobre la copia)
+- Adherencia: 81 de 83 sesiones de fuerza pautadas, y el 100% de las series de las que se hicieron.
+- **243 de 260 series (93%) de septiembre-octubre se cerraron exactamente en el tope del rango.**
+  El tope funcionaba como señal de parada, no como medida de lo que se podía hacer.
+- 80 de 115 prescripciones tenían rangos de 2 repeticiones (8-10) y 24 un número fijo.
+- 20 saltos de carga, de un **+12,7% de media** (entre el 7% y el 25%): el escalón de mancuernas es
+  de 2 kg por mano. Por la fórmula de Epley un rango de 2 repeticiones absorbe un salto de ~6-7%.
+- Tras los saltos, las series «al límite» pasaron del 10% al 47%. Hay un factor de confusión: 9 de
+  esas sesiones venían después de la semana de volumen reducido.
+- De los 3 episodios de molestia, 2 cayeron en la 1.ª o 2.ª sesión tras un salto (rodilla el 21/9,
+  goblet 28→30; hombro el 6/10, press 14→16, al colocar las mancuernas). Con 3 casos no se puede
+  afirmar causalidad; es una asociación a vigilar (inferencia, no hecho).
+- De 40 series marcadas «al límite», 38 iban seguidas de otra «al límite»: el botón venía
+  premarcado con el de la serie anterior.
+- HRV = 44 ms en los 15 registros y sueño = 7 h en todos: valores arrastrados del formulario manual.
+  El entrenador llegó a citar «HRV estable» como señal de que no había fatiga.
+- La semana reducida del 14/9 se justificó en parte con «29 km de carrera»: eran 14,5 km corriendo y
+  14,6 km andando.
+- 110 nombres de ejercicio distintos en 18 semanas. La app pedía rotar («VARIEDAD (anti-monotonía)»).
+- 1RM estimado frente a julio: tren superior al alza (remo +8%, press en suelo +6%, press de hombros
+  +15%); tren inferior plano o a la baja (RDL 0%, zancada −6%, búlgara −12%). Cautela: al parar en el
+  tope, el 1RM estimado es un mínimo, y varios ejercicios cambiaron de variante por el camino.
+- Carrera: ~7,2 km al mismo ritmo durante 18 semanas. Ninguna progresión.
+- Peso: 64 kg redondo en 11 pesajes seguidos. Sin decimales no se ve un cambio de 0,1-0,2 kg/semana.
+
+### Qué cambia
+
+**1. Una sola regla de progresión** (`decisionProgresion`), la misma en el mensaje semanal y en la
+revisión del día.
+- Primero se progresa en repeticiones; la carga sube solo si el salto **cabe** en el rango (con la
+  carga nueva se puede volver a la parte baja con ~1 repetición de margen). Si no cabe, misma carga
+  y rango ampliado por arriba. Tras un salto, parte baja del rango, no el tope.
+- El margen se toma, por orden: de la serie a fallo técnico (dato), del RIR declarado (estimación),
+  o se supone 1 repetición si no hay nada.
+- Desaparecen «sube carga ~2-5%», «tope del rango = subir» y «puedes subir al siguiente escalón».
+- La etiqueta entre corchetes de CUMPLIMIENTO REAL ya trae la decisión calculada con los escalones
+  reales: «sube a 30 kg (+7%) y vuelve a la parte baja del rango (8-10 rep.)» o «misma carga y rango
+  ampliado a 8-13».
+- La revisión del día puede ahora ampliar el rango de repeticiones, y revierte un salto pautado que
+  no cabe aunque no se hubiera cerrado el rango.
+
+**2. Esfuerzo: de tres etiquetas a RIR, y una serie que mide.**
+- Botones `0 · 1 · 2 · 3 o más` con la pregunta «¿Cuántas repeticiones más podrías haber hecho con
+  buena técnica?». **Ya no viene premarcado.**
+- **Última serie a fallo técnico** en ejercicios seguros (monoarticulares y peso corporal; nunca
+  sentadillas, peso muerto, remos, zancadas ni nada que cargue una zona con molestia). El
+  entrenador puede fijarlo por ejercicio con `"fallo_tecnico": true|false`. Las repeticiones no se
+  prellenan y sin ellas no se guarda.
+- **Calibración**: tras la serie a fallo, la app dice cuántas quedaban de verdad frente a lo
+  estimado en la serie anterior, y el mensaje semanal lleva el sesgo de las últimas 6 semanas.
+- Los registros antiguos (`facil/justo/limite`) se siguen leyendo, traducidos a RIR aproximado y
+  marcados como menos fiables.
+
+**3. Datos que engañaban.**
+- **Identidad de ejercicio** (`mismoEjercicio`): «Sentadilla búlgara» y «Sentadilla bulgara con
+  mancuernas» comparten historial; con material distinto no se fusionan.
+- **1RM estimado**: solo las últimas 6 semanas, y declarado como mínimo cuando se para en el tope.
+- **Cardio**: carrera y caminata separadas en Progreso y en el mensaje; la regla del 10% solo sobre
+  km de carrera; «38:28» se lee como 38,47 minutos.
+- **Pulsos incoherentes**: si a ritmos casi iguales la FC media difiere 25 lpm o más, o supera la
+  FC máxima estimada, se avisa y se pide prescribir por ritmo y sensación.
+- **Marcadores a mano**: solo se guarda el campo que se edita. Una serie idéntica en 4 o más
+  registros se marca como dato arrastrado en la gráfica y en el mensaje. Los datos antiguos no se
+  borran.
+- **Peso**: tendencia por fechas (recta de regresión sobre 5 semanas, en kg y en % por semana) en
+  vez de «últimos 7 registros»; aviso si los pesajes van sin decimales.
+- **Peso y cintura** se registran desde Nutrición (nuevo `waistLog`). Viajan en el mensaje aunque no
+  haya datos de Apple Salud; antes el peso solo viajaba si los había.
+- **Contador de bloque**: el entrenador devuelve `mesociclo.semana_en_bloque` y la app se ajusta
+  (`blockStart`, `blockNum`).
+- **Volumen fraccionado**: 1 para el grupo principal, 0,5 para los que ayudan; el recuento en bruto
+  se muestra al lado.
+- **Las series ya no viajan tres veces**: el historial remite a CUMPLIMIENTO REAL y las notas pierden
+  la copia automática (solo si coincide con lo guardado; una línea corregida a mano se conserva).
+
+**4. Mensaje al entrenador.**
+- Ejercicios principales estables todo el bloque, con el mismo nombre. Sustituye a la regla de rotar.
+- Rangos de 4-5 repeticiones de ancho.
+- Fuerza y carrera: separar 3 h o más (antes 6 h), como preferencia.
+- Plan de carrera con estructura y una sola variable en progresión.
+- Coherencia de objetivos: con «perder grasa» e IMC por debajo de 23 se le pide al entrenador que
+  valore mantenimiento o superávit pequeño y lo diga. La nutrición sin conexión ya no aplica déficit
+  en ese caso. Con el perfil actual (64,7 kg, 176 cm, IMC 20,9) el aviso salta.
+- Descansos de 60-90 s en accesorios; posición alargada como criterio de desempate; cómo colocar
+  las mancuernas pesadas; proteína por toma; creatina como opción única y no obligatoria.
+
+**5. Validadores** (`coachingChecks`): rangos de menos de 4 repeticiones en ejercicios con carga,
+menos del 50% de ejercicios repetidos sin cambio de bloque, fallo técnico marcado en un ejercicio de
+riesgo, más de 3 series a fallo por sesión.
+
+**6. Seguridad.** La copia exportada y la del gist ya no incluyen el token de GitHub. Al restaurar se
+conserva el del dispositivo.
+
+**7. Visual.**
+- Texto negro sobre el botón verde: el blanco daba 1,92:1 de contraste; ahora 10,96:1.
+- Texto terciario `#6e6e73 → #98989f`: de 2,75:1 a 4,86:1 sobre las tarjetas internas.
+- 74 tamaños de letra fijos pasan a escalar con el ajuste de tamaño (el perfil usa 130%).
+- Iconos de la barra inferior en SVG: el 📅 de iOS lleva escrito «17 JUL» sea el día que sea.
+- Áreas de texto sin tema (fondo blanco) corregidas. «Punto de partida» plegado al final de Progreso.
+
+### Evidencia añadida (comprobada contra la fuente en octubre de 2026)
+Refalo 2023 (DOI 10.1007/s40279-022-01784-y) · Morán-Navarro 2017 (10.1007/s00421-017-3725-7) ·
+Halperin 2022 (10.1007/s40279-021-01559-x) · Wiedenmann 2026 (10.1186/s13102-026-01997-y) ·
+Plotkin 2022 (10.7717/peerj.14142) · Kassiano 2022 (10.1519/JSC.0000000000004258) · Singer 2024
+(10.3389/fspor.2024.1429789) · Wolf 2023 (10.47206/ijsc.v3i1.182) · Schumann 2022
+(10.1007/s40279-021-01587-7) · Silva Oliveira 2024 (10.1007/s40279-024-02034-z) · Coleman 2024
+(10.7717/peerj.16777) · Kreider 2017 (10.1186/s12970-017-0173-z) · Iraki 2019, Sports 7(7):154
+(**DOI sin comprobar**: la ficha de PubMed no fue accesible).
+
+**No sale de ningún estudio** y así se dice en la app y en el mensaje: «la mitad o más de las series
+a RIR 0 = consolidar», «el salto cabe si queda ~1 repetición de margen en la parte baja», el umbral
+de IMC 23, el máximo de 3 series a fallo por sesión, y la lista de ejercicios seguros para el fallo.
+Epley es una estimación y pierde precisión por encima de ~12 repeticiones.
+
+### Lo que NO se ha incluido, por contradictorio
+- «Quitar el bloqueo por series al límite» (primera auditoría): los datos mostraron que no bloqueaba.
+- «Recalcular la FC máxima al alza» (primera auditoría): el dato de origen no es fiable.
+- Rotar accesorios cada semana (regla anterior) frente a estabilizar ejercicios: gana estabilizar.
+
+### Validación
+- **480 comprobaciones en verde, 0 fallos**, en cinco zonas horarias (`test-v88.js`): 162 nuevas. Sin la copia real, que no va en el repositorio, son 456.
+- Contra la v87 el mismo arnés da 23 fallos y se detiene en la primera función que no existe.
+- **Persistencia**: estado de usuario veterano campo a campo, y además la copia real de 134
+  sesiones: historial, agenda, peso, marcadores, perfil y plan idénticos tras arrancar, guardar y
+  releer. `initState` solo añade `waistLog`, `blockStart` y `blockNum`.
+- Playwright (Chromium) con la copia real, a 375×812 y 390×844, tamaños de letra 100%, 130% y 145%:
+  sin errores de JavaScript ni desbordes laterales en las seis pestañas, la revisión previa y el
+  reproductor.
+- Tres fallos encontrados con los datos reales y corregidos antes de entregar: las series por tiempo
+  (isométricos de 40 s) recibían una decisión de Epley absurda; la serie a fallo seguía diciendo
+  «deja 1-2 en reserva»; y el rango ampliado perdía el «por pierna».
+- 0 llamadas a `api.anthropic.com`. Etiquetas balanceadas. `node --check` correcto.
+
+### Pendiente en el iPhone
+- Los iconos SVG de la barra inferior y los nuevos contrastes no se han visto en un iPhone real.
+- El registro de peso y cintura abre el teclado decimal dentro de Nutrición: probar que no tapa el
+  botón de guardar.
+- La serie a fallo técnico cambia la rutina del reproductor: si resulta pesada en algún ejercicio,
+  el entrenador puede quitarla con `"fallo_tecnico": false`.
+- **El primer mensaje semanal con la v88 es el que hay que mirar con lupa**: los rangos pasarán de
+  8-10 a 8-13 o similares en varios ejercicios. Es lo esperado, no un error.

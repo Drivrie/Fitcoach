@@ -8,14 +8,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="FitCoach">
-<meta name="theme-color" content="#0f1419">
+<meta name="theme-color" content="#000000">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>FitCoach IA</title>
 <style>
 :root{
   --bg:#000000; --surface:#1c1c1e; --surface2:#2c2c2e; --border:#38383a;
-  --text:#ffffff; --text2:#98989f; --text3:#6e6e73;
+  --text:#ffffff; --text2:#aeaeb4; --text3:#98989f;
   --accent:#32d74b; --accent-d:#28b03d; --ai:#0a84ff; --free:#32d74b; --done:#fa114f;
   --ring-move:#fa114f; --ring-ex:#92e82a; --ring-stand:#1ad5cd;
   --danger:#ff453a; --warn:#ffd60a; --radius:16px; --radius-sm:12px;
@@ -34,38 +34,44 @@
 .hero-cta .btn{padding:9px 14px;border-radius:999px}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;
-  background:var(--bg);color:var(--text);font-size:15px;line-height:1.5;
+  background:var(--bg);color:var(--text);font-size:calc(15px*var(--fs));line-height:1.5;
   padding-top:var(--safe-top);overscroll-behavior-y:none;-webkit-font-smoothing:antialiased}
 .app{max-width:480px;margin:0 auto;padding-bottom:calc(76px + var(--safe-bot))}
 .header{padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between;
   position:sticky;top:0;background:rgba(15,20,25,.92);backdrop-filter:blur(12px);z-index:20;border-bottom:1px solid var(--border)}
 .header h1{font-size:18px;font-weight:600;letter-spacing:-.3px;display:flex;align-items:center;gap:7px}
-.header h1 .logo{width:24px;height:24px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px}
-.header .week{font-size:12px;color:var(--text2)}
+.header h1 .logo{width:24px;height:24px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:calc(14px*var(--fs))}
+.header .week{font-size:calc(12px*var(--fs));color:var(--text2)}
 .wk-nav{display:flex;align-items:center;gap:6px}
-.wk-btn{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:14px;display:flex;align-items:center;justify-content:center}
+.wk-btn{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:calc(14px*var(--fs));display:flex;align-items:center;justify-content:center}
 .screen{display:none;padding:14px 16px;animation:fade .25s}
 .screen.active{display:block}
 @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:15px;margin-bottom:11px}
-.card-t{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:11px;display:flex;align-items:center;gap:6px}
-.btn{padding:11px 15px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:7px;transition:transform .1s,opacity .15s;cursor:pointer}
+.card-t{font-size:calc(11px*var(--fs));font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:11px;display:flex;align-items:center;gap:6px}
+.btn{padding:11px 15px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:calc(14px*var(--fs));font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:7px;transition:transform .1s,opacity .15s;cursor:pointer}
 .btn:active{transform:scale(.97);opacity:.85}
-.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#000}
 .btn-block{width:100%}
-.btn-sm{padding:7px 11px;font-size:12.5px}
-.btn-xs{padding:5px 9px;font-size:11.5px;border-radius:8px}
+.btn-sm{padding:7px 11px;font-size:calc(12.5px*var(--fs))}
+.btn-xs{padding:5px 9px;font-size:calc(11.5px*var(--fs));border-radius:8px}
 .field{margin-bottom:11px}
-.field label{font-size:12.5px;color:var(--text2);display:block;margin-bottom:5px;font-weight:500}
+.field label{font-size:calc(12.5px*var(--fs));color:var(--text2);display:block;margin-bottom:5px;font-weight:500}
+/* v88: las áreas de texto que no iban dentro de .field (punto de partida, nota semanal, respuesta
+   de la revisión del día) salían con el estilo del navegador: fondo blanco sobre la app oscura. */
+textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:16px;line-height:1.5;
+  background:var(--surface2);color:var(--text);font-family:inherit;-webkit-appearance:none}
+textarea:focus{outline:none;border-color:var(--accent)}
+textarea::placeholder,input::placeholder{color:var(--text3);opacity:1}
 .field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);
   font-size:16px;background:var(--surface2);color:var(--text);font-family:inherit;-webkit-appearance:none}
 .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--accent)}
 .field textarea{min-height:72px;resize:vertical;line-height:1.5}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
-.chip{display:inline-flex;align-items:center;gap:4px;padding:7px 13px;border-radius:18px;font-size:13px;font-weight:600;
+.chip{display:inline-flex;align-items:center;gap:4px;padding:7px 13px;border-radius:18px;font-size:calc(13px*var(--fs));font-weight:600;
   border:1px solid var(--border);background:var(--surface2);color:var(--text2);margin:3px 3px 3px 0;cursor:pointer;transition:all .12s}
-.chip.sel{background:var(--accent);color:#fff;border-color:var(--accent)}
+.chip.sel{background:var(--accent);color:#000;border-color:var(--accent)}
 .chip.ai-c{border-color:#4a3fb0;color:#a99af9}.chip.ai-c.sel{background:var(--ai);color:#fff;border-color:var(--ai)}
 .chip.ai-c.sel.brief{background:#0a5a8f;border-color:#0a84ff}
 .chip.free-c{border-color:#1f7a5a;color:#5ee0b0}.chip.free-c.sel{background:var(--free);color:#04261b;border-color:var(--free)}
@@ -73,13 +79,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
 .cal-day{min-height:62px;border-radius:11px;border:1px solid var(--border);padding:5px 3px;background:var(--surface);cursor:pointer;transition:all .12s;position:relative;display:flex;flex-direction:column;align-items:center}
 .cal-day.today{border-color:var(--accent)}
 .cal-day.sel{border-color:var(--accent);background:var(--surface2);box-shadow:0 0 0 1px var(--accent)}
-.cal-dl{font-size:9.5px;color:var(--text3);font-weight:600}
-.cal-dn{font-size:13px;font-weight:600;margin:2px 0 4px}
+.cal-dl{font-size:calc(9.5px*var(--fs));color:var(--text3);font-weight:600}
+.cal-dn{font-size:calc(13px*var(--fs));font-weight:600;margin:2px 0 4px}
 .cal-dots{display:flex;gap:3px}
 .dot{width:6px;height:6px;border-radius:50%}
 .dot.ai{background:var(--ai)}.dot.free{background:var(--free)}.dot.done{background:var(--done)}
 .legend{display:flex;gap:14px;margin-bottom:13px;flex-wrap:wrap}
-.legend span{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text2)}
+.legend span{display:inline-flex;align-items:center;gap:5px;font-size:calc(11.5px*var(--fs));color:var(--text2)}
 .legend .d{width:8px;height:8px;border-radius:50%}
 .sess{border:1px solid var(--border);border-radius:11px;padding:11px 13px;margin-bottom:8px;cursor:pointer;transition:background .12s;background:var(--surface)}
 .sess:active{background:var(--surface2)}
@@ -87,41 +93,42 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
 .sess.done{border-left:3px solid var(--done);opacity:.7}.sess.rest{border-left:3px solid var(--border)}
 .sess.skipped{border-left:3px solid var(--text3);opacity:.6}.sess.skipped .sess-tt{text-decoration:line-through}
 .sess-h{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.sess-tt{font-size:14px;font-weight:600}
-.sess-m{font-size:11.5px;color:var(--text2);margin-top:3px}
-.badge{padding:3px 9px;border-radius:11px;font-size:10.5px;font-weight:700;white-space:nowrap}
+.sess-tt{font-size:calc(14px*var(--fs));font-weight:600}
+.sess-m{font-size:calc(11.5px*var(--fs));color:var(--text2);margin-top:3px}
+.badge{padding:3px 9px;border-radius:11px;font-size:calc(10.5px*var(--fs));font-weight:700;white-space:nowrap}
 .b-ai{background:#2a2466;color:#a99af9}.b-free{background:#0d3d2c;color:#5ee0b0}
 .b-done{background:#3d3410;color:#fbbf24}.b-rest{background:var(--surface2);color:var(--text3)}
 .stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:11px}
 .stat{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:13px 6px;text-align:center;min-width:0}
-.stat-v{font-size:21px;font-weight:700;overflow-wrap:break-word;word-break:break-word;line-height:1.2}.stat-l{font-size:10.5px;color:var(--text2);margin-top:2px;overflow-wrap:break-word}
+.stat-v{font-size:21px;font-weight:700;overflow-wrap:break-word;word-break:break-word;line-height:1.2}.stat-l{font-size:calc(10.5px*var(--fs));color:var(--text2);margin-top:2px;overflow-wrap:break-word}
 .prog{margin-bottom:10px}
-.prog-r{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;font-size:12.5px}
+.prog-r{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;font-size:calc(12.5px*var(--fs))}
 .prog-bar{height:6px;background:var(--surface2);border-radius:4px;flex:1;margin:0 11px;overflow:hidden}
 .prog-fill{height:100%;background:var(--accent);border-radius:4px;transition:width .4s}
 .ex{border:1px solid var(--border);border-radius:11px;overflow:hidden;margin-bottom:8px;background:var(--surface)}
 .ex-h{padding:11px 13px;display:flex;align-items:flex-start;gap:10px;cursor:pointer}
 .ex-n{margin-top:2px}
 .ex-h:active{background:var(--surface2)}
-.ex-n{width:26px;height:26px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
-.ex-nm{font-size:14px;font-weight:600}
-.ex-mt{font-size:11.5px;color:var(--text2);margin-top:2px}
+.ex-n{width:26px;height:26px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:calc(12px*var(--fs));font-weight:700;flex-shrink:0}
+.ex-nm{font-size:calc(14px*var(--fs));font-weight:600}
+.ex-mt{font-size:calc(11.5px*var(--fs));color:var(--text2);margin-top:2px}
 .ex-b{display:none;border-top:1px solid var(--border)}
 .ex-b.open{display:block}
 .yt{position:relative;padding-bottom:56.25%;height:0;overflow:hidden;background:#000}
 .yt iframe{position:absolute;inset:0;width:100%;height:100%;border:none}
-.ex-d{padding:11px 13px;font-size:12.5px}
-.ex-tag{display:inline-block;font-size:11px;color:#a99af9;margin-top:5px}
+.ex-d{padding:11px 13px;font-size:calc(12.5px*var(--fs))}
+.ex-tag{display:inline-block;font-size:calc(11px*var(--fs));color:#a99af9;margin-top:5px}
 .meal{border:1px solid var(--border);border-radius:11px;padding:11px 13px;margin-bottom:8px;background:var(--surface)}
-.meal-t{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)}
-.meal-n{font-size:14px;font-weight:600;margin:3px 0}
-.meal-m{font-size:12px;color:var(--text2)}
-.tabbar{position:fixed;bottom:0;left:0;right:0;background:rgba(26,32,41,.96);backdrop-filter:blur(14px);
+.meal-t{font-size:calc(10px*var(--fs));font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)}
+.meal-n{font-size:calc(14px*var(--fs));font-weight:600;margin:3px 0}
+.meal-m{font-size:calc(12px*var(--fs));color:var(--text2)}
+.tabbar{position:fixed;bottom:0;left:0;right:0;background:rgba(22,22,24,.94);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
   border-top:1px solid var(--border);display:flex;padding-bottom:var(--safe-bot);z-index:30;max-width:480px;margin:0 auto}
-.tabbar .t{flex:1;min-width:0;padding:9px 2px 8px;text-align:center;color:var(--text3);font-size:9.5px;font-weight:600;cursor:pointer;
+.tabbar .t{flex:1;min-width:0;padding:8px 2px 7px;text-align:center;color:var(--text3);font-size:10px;font-weight:600;cursor:pointer;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tabbar .t.active{color:var(--accent)}
-.tabbar .t .ic{font-size:21px;display:block;margin-bottom:2px;line-height:1}
+.tabbar .t .ic{display:block;width:24px;height:24px;margin:0 auto 3px;line-height:1}
+.tabbar .t .ic svg{width:24px;height:24px;display:block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 /* v77: mientras hay una hoja abierta se congela el fondo. En iOS, si no se hace, el gesto de
    scroll dentro del panel "se escapa" a la página de debajo cuando el panel llega a su tope: la
    pantalla anterior se mueve por detrás, el panel parece flotar y uno pierde la referencia de qué
@@ -144,7 +151,7 @@ body.teclado-abierto .sheet{max-height:100%;height:100%;border-radius:0;max-widt
 .feel{display:flex;gap:8px;flex-wrap:wrap}
 .feel-b{flex:1;padding:11px 4px;border-radius:11px;border:1px solid var(--border);background:var(--surface2);font-size:22px;text-align:center;cursor:pointer;transition:all .12s}
 .feel-b.sel{border-color:var(--accent);background:var(--bg);transform:scale(1.05)}
-.fatiga-b,.pain-b{flex:1;min-width:64px;padding:9px 6px;border-radius:11px;border:1px solid var(--border);background:var(--surface2);font-size:12px;text-align:center;cursor:pointer;transition:all .12s}
+.fatiga-b,.pain-b{flex:1;min-width:64px;padding:9px 6px;border-radius:11px;border:1px solid var(--border);background:var(--surface2);font-size:calc(12px*var(--fs));text-align:center;cursor:pointer;transition:all .12s}
 /* Utilidades v56: para ir sustituyendo estilos inline repetidos sin arriesgar los que ya
    combinan class+style en la misma etiqueta (fusionarlos requiere revisión caso a caso). */
 .mt-6{margin-top:6px}.mt-8{margin-top:8px}.mt-9{margin-top:9px}.mt-10{margin-top:10px}
@@ -155,7 +162,7 @@ body.teclado-abierto .sheet{max-height:100%;height:100%;border-radius:0;max-widt
 .timer.show{display:block}
 .timer-r{display:flex;align-items:center;justify-content:space-between;color:#fff}
 .timer-c{font-size:25px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-1px}
-.timer-l{font-size:11px;opacity:.85}
+.timer-l{font-size:calc(11px*var(--fs));opacity:.85}
 .timer-pf{height:3px;background:rgba(255,255,255,.3);border-radius:2px;margin-top:7px;overflow:hidden}
 .timer-pi{height:100%;background:#fff;border-radius:2px;transition:width .5s linear}
 .spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .6s linear infinite}
@@ -164,17 +171,18 @@ body.teclado-abierto .sheet{max-height:100%;height:100%;border-radius:0;max-widt
 @keyframes exB{0%,40%{opacity:0}50%,90%{opacity:1}100%{opacity:0}}
 .exfa{animation:exA 2.4s infinite}.exfb{animation:exB 2.4s infinite}
 @media(prefers-reduced-motion:reduce){.exfa{animation:none;opacity:1}.exfb{animation:none;opacity:0}}
-.note{font-size:12px;color:var(--text2);line-height:1.6;background:var(--surface2);border-radius:10px;padding:11px 12px}
+.note{font-size:calc(12px*var(--fs));color:var(--text2);line-height:1.6;background:var(--surface2);border-radius:10px;padding:11px 12px}
+.note:empty{display:none}
 .bridge-steps{counter-reset:s}
 .bridge-step{display:flex;gap:11px;margin-bottom:13px;align-items:flex-start}
-.bridge-step .num{width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.bridge-step .tx{font-size:13px;color:var(--text);line-height:1.5}
-.install-banner{background:var(--surface2);border:1px solid var(--accent);border-radius:12px;padding:13px;margin-bottom:11px;font-size:12.5px;line-height:1.6;color:var(--text2)}
+.bridge-step .num{width:24px;height:24px;border-radius:50%;background:var(--accent);color:#000;font-size:calc(12px*var(--fs));font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.bridge-step .tx{font-size:calc(13px*var(--fs));color:var(--text);line-height:1.5}
+.install-banner{background:var(--surface2);border:1px solid var(--accent);border-radius:12px;padding:13px;margin-bottom:11px;font-size:calc(12.5px*var(--fs));line-height:1.6;color:var(--text2)}
 .divider{height:1px;background:var(--border);margin:13px 0}
-.pill{display:inline-block;padding:3px 9px;border-radius:11px;font-size:11px;font-weight:600;background:var(--surface2);color:var(--text2);border:1px solid var(--border)}
+.pill{display:inline-block;padding:3px 9px;border-radius:11px;font-size:calc(11px*var(--fs));font-weight:600;background:var(--surface2);color:var(--text2);border:1px solid var(--border)}
 .empty{text-align:center;padding:28px 16px;color:var(--text2)}
 .empty .ic{font-size:34px;display:block;margin-bottom:9px;opacity:.5}
-.empty p{font-size:13px}
+.empty p{font-size:calc(13px*var(--fs))}
 textarea.bridge-out{font-family:'SF Mono',ui-monospace,monospace;font-size:11px;min-height:120px;background:var(--bg)}
 /* v68: en iOS el teclado NO encoge el viewport de diseño, así que un overlay fijo con inset:0
    deja los campos debajo del teclado. Se usa la altura de la ventana VISIBLE (--vvh, que
@@ -182,7 +190,7 @@ textarea.bridge-out{font-family:'SF Mono',ui-monospace,monospace;font-size:11px;
 .player{display:none;position:fixed;top:var(--vvt,0px);left:0;right:0;height:var(--vvh,100%);z-index:60;background:var(--bg);flex-direction:column;padding-top:var(--safe-top)}
 .player.show{display:flex}
 .pl-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)}
-.pl-top h3{font-size:14px;font-weight:600}
+.pl-top h3{font-size:calc(14px*var(--fs));font-weight:600}
 .pl-rec{margin-top:12px;padding:10px 8px;border-radius:14px;background:rgba(255,255,255,.07)}
 .pl-rec-row{display:flex;gap:8px;justify-content:center;align-items:center}
 .pl-step{width:46px;height:46px;flex-shrink:0;border-radius:12px;border:1px solid rgba(255,255,255,.25);
@@ -196,6 +204,9 @@ textarea.bridge-out{font-family:'SF Mono',ui-monospace,monospace;font-size:11px;
   touch-action:manipulation}
 .esf-b:active{background:rgba(255,255,255,.24)}
 .esf-b.esf-on{background:rgba(255,255,255,.38);border-color:#fff}
+/* v88: aviso de la serie a fallo técnico y de la calibración del esfuerzo */
+.pl-fallo{margin-top:10px;padding:9px 11px;border-radius:12px;background:rgba(255,214,10,.12);
+  border:1px solid rgba(255,214,10,.35);color:#fff;font-size:calc(12.5px*var(--fs));line-height:1.45;text-align:left}
 /* v82: en el iPhone, la ficha técnica y los avisos quedaban por debajo del corte sin ninguna
    señal de que hubiera más. Medido a 375x812: 319 px de contenido fuera de pantalla con la fuente
    normal. Este indicador aparece solo cuando de verdad hay algo debajo. */
@@ -212,24 +223,24 @@ textarea.bridge-out{font-family:'SF Mono',ui-monospace,monospace;font-size:11px;
 .orden-b{flex:1;min-width:0;padding:9px 4px;border-radius:11px;border:1px solid var(--border);
   background:var(--surface2);color:var(--text2);font-size:calc(11.5px*var(--fs));font-weight:600;
   text-align:center;cursor:pointer;-webkit-user-select:none;user-select:none;touch-action:manipulation}
-.orden-b.sel{background:var(--accent);border-color:transparent;color:#fff}
+.orden-b.sel{background:var(--accent);border-color:transparent;color:#000}
 .pl-nav{display:flex;gap:8px;margin-top:14px}
 .pl-nav .btn{background:rgba(255,255,255,.12);border-color:transparent;color:#fff}
 .pl-nav .btn[disabled]{opacity:.35}
 #player-body{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:18px 18px 8px;display:flex;flex-direction:column}
 .pl-prog{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-bottom:14px}
 .pl-prog-i{height:100%;background:var(--accent);border-radius:3px;transition:width .4s}
-.pl-count{font-size:12px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.pl-count{font-size:calc(12px*var(--fs));color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
 .pl-name{font-size:24px;font-weight:700;margin:3px 0 8px;letter-spacing:-.4px}
 /* v68: 'safe center' evita que, al encoger el alto por el teclado, el contenido centrado
    se desborde por arriba y quede inalcanzable; min-height:0 permite que el hijo encoja
    y sea el contenedor el que haga scroll. */
 .pl-mid{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:safe center;text-align:center}
-.pl-phase{font-size:13px;font-weight:700;letter-spacing:2px;margin-bottom:6px}
+.pl-phase{font-size:calc(13px*var(--fs));font-weight:700;letter-spacing:2px;margin-bottom:6px}
 .pl-timer{font-size:68px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-3px;line-height:1}
 .pl-reps{font-size:20px;font-weight:600}
-.pl-next{font-size:14px;color:var(--text2);margin-top:8px}
-.pl-cue{font-size:13px;color:var(--text2);line-height:1.5}
+.pl-next{font-size:calc(14px*var(--fs));color:var(--text2);margin-top:8px}
+.pl-cue{font-size:calc(13px*var(--fs));color:var(--text2);line-height:1.5}
 #player-music{padding:0 14px 14px}
 #player-music:empty{display:none}
 
@@ -327,16 +338,6 @@ body{font-size:calc(15px*var(--fs))}
   <div id="s-prog" class="screen">
     <div class="stat-grid" id="stats"></div>
     <div class="card">
-      <div class="card-t">🏁 Punto de partida (entrenamiento previo)</div>
-      <p class="note mb-9">Describe lo que ya venías haciendo para que la progresión arranque desde tu nivel real, no desde cero. Ej: "Circuito cuerpo completo con banda, 40 min, 40s trabajo / 20s descanso" o "Press mancuerna 12kg 3×10, sentadilla goblet 16kg 3×12". Es la referencia de partida: cuando lleves varias semanas registrando sesiones, Claude prioriza esas; actualiza o vacía este texto si tu rutina cambia.</p>
-      <textarea id="baseline-in" rows="10" style="min-height:220px;font-size:15px;line-height:1.6" placeholder="Tu entrenamiento de las últimas semanas: ejercicios, kilos, series, estructura, duración..."></textarea>
-      <div class="flexrow gap8 mt-8">
-        <button class="btn flex1" onclick="saveBaseline()">💾 Guardar</button>
-        <button class="btn" onclick="openBaselineFull()">⛶ Pantalla completa</button>
-      </div>
-      <div id="baseline-saved" style="font-size:12px;color:var(--free);margin-top:6px"></div>
-    </div>
-    <div class="card">
       <div class="card-t">📈 Esta semana</div>
       <div id="wk-prog"></div>
       <div class="divider"></div>
@@ -365,7 +366,7 @@ body{font-size:calc(15px*var(--fs))}
     </div>
     <div class="card" id="prog-ex-card" style="display:none">
       <div class="card-t">📊 Progresión de carga</div>
-      <select id="prog-ex-select" onchange="renderLoadProgression()" style="width:100%;padding:9px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;margin-bottom:8px"></select>
+      <select id="prog-ex-select" onchange="renderLoadProgression()" style="width:100%;padding:9px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:max(16px,calc(13px*var(--fs)));margin-bottom:8px"></select>
       <div id="prog-ex-chart"></div>
       <p class="note mt-8">Carga máxima registrada por sesión (kg), de las series que anotas en el reproductor guiado. Cada ejercicio aparece en la lista en cuanto registras carga una vez; la gráfica de evolución se dibuja a partir de la segunda sesión.</p>
     </div>
@@ -373,6 +374,18 @@ body{font-size:calc(15px*var(--fs))}
       <div class="card-t">📋 Historial</div>
       <div id="history" style="max-height:360px;overflow-y:auto;-webkit-overflow-scrolling:touch"></div>
     </div>
+    <details class="card" style="padding:0" id="baseline-card">
+      <summary style="padding:14px;font-size:calc(11px*var(--fs));font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;cursor:pointer;list-style:none">🏁 Punto de partida (entrenamiento previo) · tocar para abrir</summary>
+      <div style="padding:0 14px 14px">
+      <p class="note mb-9">Describe lo que ya venías haciendo para que la progresión arranque desde tu nivel real, no desde cero. Ej: "Circuito cuerpo completo con banda, 40 min, 40s trabajo / 20s descanso" o "Press mancuerna 12kg 3×10, sentadilla goblet 16kg 3×12". Es la referencia de partida: cuando lleves varias semanas registrando sesiones, Claude prioriza esas; actualiza o vacía este texto si tu rutina cambia.</p>
+      <textarea id="baseline-in" rows="8" style="min-height:160px;line-height:1.6" placeholder="Tu entrenamiento de las últimas semanas: ejercicios, kilos, series, estructura, duración..."></textarea>
+      <div class="flexrow gap8 mt-8">
+        <button class="btn flex1" onclick="saveBaseline()">💾 Guardar</button>
+        <button class="btn" onclick="openBaselineFull()">⛶ Pantalla completa</button>
+      </div>
+      <div id="baseline-saved" style="font-size:calc(12px*var(--fs));color:var(--free);margin-top:6px"></div>
+      </div>
+    </details>
   </div>
 
   <!-- NUTRICIÓN -->
@@ -403,16 +416,16 @@ body{font-size:calc(15px*var(--fs))}
     </div>
     <div class="card">
       <div class="card-t">Estructura semanal</div>
-      <label style="font-size:11px;font-weight:600;color:#a99af9;text-transform:uppercase;letter-spacing:.5px">Días con sesión IA</label>
+      <label style="font-size:calc(11px*var(--fs));font-weight:600;color:#a99af9;text-transform:uppercase;letter-spacing:.5px">Días con sesión IA</label>
       <div id="ai-days" style="margin:6px 0 4px"></div>
       <p class="note" style="margin:0 0 12px;font-size:calc(11px*var(--fs))">Toca un día para alternar: <b>completo</b> (fuerza de ~50 min) → <b>·breve</b> (fuerza corta de 15-20 min para días con carrera, p. ej. martes y jueves) → quitar.</p>
-      <label style="font-size:11px;font-weight:600;color:#5ee0b0;text-transform:uppercase;letter-spacing:.5px">Días de entrenamiento libre</label>
+      <label style="font-size:calc(11px*var(--fs));font-weight:600;color:#5ee0b0;text-transform:uppercase;letter-spacing:.5px">Días de entrenamiento libre</label>
       <div id="free-days" style="margin-top:6px"></div>
     </div>
     <div class="card">
       <div class="card-t">Objetivo (puedes elegir varios)</div>
       <div id="obj-chips" style="margin-bottom:4px"></div>
-      <div id="obj-note" style="font-size:12px;color:var(--text2);margin-top:6px"></div>
+      <div id="obj-note" style="font-size:calc(12px*var(--fs));color:var(--text2);margin-top:6px"></div>
     </div>
     <div class="card">
       <div class="card-t">🩹 Limitaciones y lesiones</div>
@@ -473,15 +486,19 @@ body{font-size:calc(15px*var(--fs))}
        que todo el JavaScript que los usa sigue funcionando igual. -->
   <div id="s-set" class="screen">
     <details class="card" style="padding:0">
-      <summary style="padding:14px;font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;cursor:pointer;list-style:none">📚 Base científica del plan</summary>
-      <div style="padding:0 14px 14px;font-size:12.5px;color:var(--text2);line-height:1.6">
+      <summary style="padding:14px;font-size:calc(11px*var(--fs));font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;cursor:pointer;list-style:none">📚 Base científica del plan</summary>
+      <div style="padding:0 14px 14px;font-size:calc(12.5px*var(--fs));color:var(--text2);line-height:1.6">
         Los parámetros siguen evidencia actual:
         <ul style="padding-left:16px;margin:7px 0">
           <li><b>Fuerza:</b> cargas ≥80% 1RM, 2-3 series/ejercicio, descansos 2-3 min.</li>
           <li><b>Hipertrofia:</b> ~10+ series por grupo muscular/semana, cerca del fallo (1-3 RIR), no al fallo absoluto. En fuerza no hace falta acercarse tanto: con más margen (RIR 3-4) el resultado es similar y la fatiga menor.</li>
           <li><b>Frecuencia:</b> lo que más manda es el volumen semanal; repartirlo en 2 o más días por grupo lo facilita, pero no es una regla rígida. Peso corporal y bandas son eficaces.</li>
           <li><b>Proteína:</b> ~1,6 g/kg/día es donde deja de aumentar la ganancia de masa magra; hasta 2,2 g/kg cubre el margen del intervalo y el déficit calórico.</li>
-          <li><b>Progresión:</b> sobrecarga progresiva con doble progresión; el volumen y la intensidad se autorregulan cada semana según tu registro real (sin descargas forzadas).</li>
+          <li><b>Progresión:</b> primero repeticiones, después carga. La carga sube solo cuando el salto cabe en el rango (con el peso nuevo se puede volver a la parte baja con una repetición de margen); si no cabe, se amplía el rango. Progresar repeticiones o carga da resultados parecidos (Plotkin 2022).</li>
+          <li><b>Esfuerzo:</b> se marca en repeticiones en reserva (RIR). Como esa estimación falla en torno a una repetición (Halperin 2022), la última serie de algunos ejercicios seguros se lleva a fallo técnico para medirlo; el resto se queda a 1-3 del fallo, que rinde igual y se recupera antes (Refalo 2023; Morán-Navarro 2017).</li>
+          <li><b>Ejercicios estables:</b> los principales se mantienen todo el bloque; variar al azar puede frenar la ganancia (Kassiano 2022).</li>
+          <li><b>Volumen fraccionado:</b> cada serie cuenta 1 para el músculo principal y 0,5 para los que ayudan (Pelland 2025).</li>
+          <li><b>Fuerza y carrera:</b> no se estorban para ganar músculo ni fuerza máxima; mejor separadas 3 h o más si se busca potencia (Schumann 2022).</li>
           <li><b>Lo que más pesa (ACSM 2026):</b> la constancia y el esfuerzo por encima del plan "perfecto". Bandas, peso corporal y rutinas en casa son plenamente eficaces; llegar al fallo, el tipo de material o la periodización compleja no son imprescindibles en el adulto sano.</li>
         </ul>
         Fuentes (comprobadas contra su DOI en agosto de 2026):
@@ -491,25 +508,41 @@ body{font-size:calc(15px*var(--fs))}
           <li><b>Pelland et al.</b>, Sports Med 56(2):481-505 (en línea 4-12-2025). DOI 10.1007/s40279-025-02344-w. 67 estudios, 2.058 participantes: volumen y frecuencia siguen curvas distintas.</li>
           <li><b>Morton et al. 2018</b>, Br J Sports Med 52(6):376-384. DOI 10.1136/bjsports-2017-097608. La masa magra deja de aumentar por encima de ~1,62 g/kg/día (IC 1,03-2,20).</li>
         </ul>
-        <div style="margin-top:8px;color:var(--text3)">Información orientativa, no sustituye consejo médico. Ante dudas de técnica con cargas altas, revisa con un profesional.</div>
+        Añadidas en la versión 88 (octubre de 2026):
+        <ul style="padding-left:16px;margin:7px 0">
+          <li><b>Refalo et al. 2023</b>, Sports Med 53(3):649-665. DOI 10.1007/s40279-022-01784-y.</li>
+          <li><b>Morán-Navarro et al. 2017</b>, Eur J Appl Physiol 117(12):2387-2399. DOI 10.1007/s00421-017-3725-7.</li>
+          <li><b>Halperin et al. 2022</b>, Sports Med 52:377-390. DOI 10.1007/s40279-021-01559-x.</li>
+          <li><b>Wiedenmann et al. 2026</b>, BMC Sports Sci Med Rehabil 18:375. DOI 10.1186/s13102-026-01997-y.</li>
+          <li><b>Plotkin et al. 2022</b>, PeerJ 10:e14142. DOI 10.7717/peerj.14142.</li>
+          <li><b>Kassiano et al. 2022</b>, J Strength Cond Res 36(6):1753-1762. DOI 10.1519/JSC.0000000000004258.</li>
+          <li><b>Singer et al. 2024</b>, Front Sports Act Living 6:1429789. DOI 10.3389/fspor.2024.1429789.</li>
+          <li><b>Wolf et al. 2023</b>, Int J Strength Cond 3(1). DOI 10.47206/ijsc.v3i1.182.</li>
+          <li><b>Schumann et al. 2022</b>, Sports Med 52:601-612. DOI 10.1007/s40279-021-01587-7.</li>
+          <li><b>Silva Oliveira et al. 2024</b>, Sports Med 54:2071-2095. DOI 10.1007/s40279-024-02034-z.</li>
+          <li><b>Coleman et al. 2024</b>, PeerJ 12:e16777. DOI 10.7717/peerj.16777.</li>
+          <li><b>Iraki et al. 2019</b>, Sports 7(7):154 (revisión narrativa; DOI sin comprobar).</li>
+          <li><b>Kreider et al. 2017</b>, J Int Soc Sports Nutr 14:18. DOI 10.1186/s12970-017-0173-z.</li>
+        </ul>
+        <div style="margin-top:8px;color:var(--text3)">Los umbrales que usa la app para decidir (qué es «la mitad de las series sin margen», cuándo «cabe» un salto, IMC 23) son convenciones de práctica, no puntos de corte sacados de un estudio. Información orientativa, no sustituye consejo médico. Ante dudas de técnica con cargas altas, revisa con un profesional.</div>
       </div>
     </details>
     <div class="card">
       <div class="card-t">🍎 Apple Health</div>
       <div onclick="document.getElementById('hf').click()" style="border:1px dashed var(--border);border-radius:11px;padding:14px;text-align:center;cursor:pointer">
         <div style="font-size:24px;margin-bottom:4px">⬆️</div>
-        <div style="font-size:13px;color:var(--text2)">Importar datos de Salud</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:2px">export.xml o JSON (últimos 30 días)</div>
+        <div style="font-size:calc(13px*var(--fs));color:var(--text2)">Importar datos de Salud</div>
+        <div style="font-size:calc(11px*var(--fs));color:var(--text3);margin-top:2px">export.xml o JSON (últimos 30 días)</div>
       </div>
       <input type="file" id="hf" accept=".xml,.zip,.json,application/json" style="display:none" onchange="parseHealth(event)">
-      <div id="h-status" style="margin-top:7px;font-size:12px;color:var(--text2)"></div>
-      <div id="h-lastimport" style="margin-top:5px;font-size:12px"></div>
+      <div id="h-status" style="margin-top:7px;font-size:calc(12px*var(--fs));color:var(--text2)"></div>
+      <div id="h-lastimport" style="margin-top:5px;font-size:calc(12px*var(--fs))"></div>
       <details class="mt-10">
-        <summary style="cursor:pointer;font-size:13px;color:var(--accent)">Formatos admitidos (XML o JSON)</summary>
+        <summary style="cursor:pointer;font-size:calc(13px*var(--fs));color:var(--accent)">Formatos admitidos (XML o JSON)</summary>
         <p class="note my-8">El export.xml nativo de Salud contiene años de datos y puede ser enorme o fallar. Como alternativa más ligera puedes subir un <b>JSON de los últimos 30 días</b>:<br>
         • Apps como <b>Health Auto Export</b> o <b>Health Export Kit</b> generan ese JSON automáticamente.<br>
         • O un JSON simple con esta forma:</p>
-        <pre style="font-size:11px;background:var(--surface2);padding:10px;border-radius:8px;overflow:auto;line-height:1.4">{
+        <pre style="font-size:calc(11px*var(--fs));background:var(--surface2);padding:10px;border-radius:8px;overflow:auto;line-height:1.4">{
   "markers": {
     "restingHR": 58, "hrv": 45, "vo2max": 44,
     "bodyFat": 18, "weight": 64, "height": 176,
@@ -523,8 +556,9 @@ body{font-size:calc(15px*var(--fs))}
         <p class="note my-8">Todos los campos son opcionales: incluye solo los que tengas.</p>
       </details>
       <details class="mt-10">
-        <summary style="cursor:pointer;font-size:13px;color:var(--accent)">✏️ Introducir / actualizar marcadores a mano (medias del mes)</summary>
+        <summary style="cursor:pointer;font-size:calc(13px*var(--fs));color:var(--accent)">✏️ Introducir / actualizar marcadores a mano (medias del mes)</summary>
         <p class="note my-8">La forma recomendada. En la app Salud abre cada dato, filtra por mes (pestaña <b>M</b>) y apunta el <b>PROMEDIO</b>; para VO₂max y % grasa usa el valor más reciente. Rutas: FC reposo, HRV y VO₂max → Examinar → Corazón. Pasos y energía activa → Examinar → Actividad. % grasa → Examinar → Medidas corporales. Déjalo en blanco si no lo tienes; se prellenan tus valores anteriores para que solo cambies lo necesario.</p>
+        <p class="note my-8" style="border-left:3px solid var(--warn)"><b>Solo se guarda lo que edites.</b> Los valores que aparecen ya escritos son los de la última vez: si no los tocas, no cuentan como medición nueva. Si un dato repite de verdad, vuelve a escribirlo.</p>
         <div class="row2">
           <div class="field"><label>FC reposo (lpm)</label><input type="text" id="m-rhr" inputmode="decimal" placeholder="58"></div>
           <div class="field"><label>HRV / VFC (ms)</label><input type="text" id="m-hrv" inputmode="decimal" placeholder="45"></div>
@@ -568,7 +602,7 @@ body{font-size:calc(15px*var(--fs))}
       <input type="file" id="restore-file" accept="application/json,.json" style="display:none" onchange="restoreData(event)">
       <button class="btn btn-block mt-8" onclick="document.getElementById('restore-file').click()">⬆️ Restaurar copia de seguridad</button>
       <button class="btn btn-block" style="margin-top:8px;border-color:var(--danger);color:var(--danger)" onclick="confirmDeleteAll()">🗑️ Eliminar todos mis datos</button>
-      <div id="data-status" style="margin-top:7px;font-size:12px"></div>
+      <div id="data-status" style="margin-top:7px;font-size:calc(12px*var(--fs))"></div>
       <details class="mt-12">
         <summary style="font-size:calc(13px*var(--fs));font-weight:600;cursor:pointer">☁️ Copia automática en la nube (opcional)</summary>
         <p class="note mt-8">Sube una copia a un <b>gist secreto</b> de tu cuenta de GitHub. Sirve para recuperar todo en un móvil nuevo sin depender de un archivo. Léelo antes de activarlo:</p>
@@ -590,11 +624,11 @@ body{font-size:calc(15px*var(--fs))}
           <button class="btn btn-sm flex1" onclick="setGistId()">Enlazar un gist existente</button>
           <button class="btn btn-sm flex1" onclick="cloudForget()">Desconectar</button>
         </div>
-        <div id="cloud-status" style="margin-top:7px;font-size:12px"></div>
+        <div id="cloud-status" style="margin-top:7px;font-size:calc(12px*var(--fs))"></div>
       </details>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">FitCoach IA · versión 87</div>
-    <div id="sw-status" style="text-align:center;font-size:11px;color:var(--warn);margin-top:4px;display:none"></div>
+    <div style="text-align:center;font-size:calc(11px*var(--fs));color:var(--text3);margin-top:16px">FitCoach IA · versión 88</div>
+    <div id="sw-status" style="text-align:center;font-size:calc(11px*var(--fs));color:var(--warn);margin-top:4px;display:none"></div>
     <div style="text-align:center;margin-top:8px">
       <button class="btn btn-xs" onclick="checkForUpdate()">🔄 Buscar actualización</button>
       <div id="upd-status" class="note mt-6" style="display:none"></div>
@@ -625,12 +659,12 @@ body{font-size:calc(15px*var(--fs))}
 </div>
 
 <div class="tabbar">
-  <div class="t active" data-s="cal" onclick="tab('cal')"><span class="ic">📅</span>Calendario</div>
-  <div class="t" data-s="sess" onclick="tab('sess')"><span class="ic">🏋</span>Sesión</div>
-  <div class="t" data-s="prog" onclick="tab('prog')"><span class="ic">📈</span>Progreso</div>
-  <div class="t" data-s="nutri" onclick="tab('nutri')"><span class="ic">🥗</span>Nutrición</div>
-  <div class="t" data-s="prof" onclick="tab('prof')"><span class="ic">👤</span>Perfil</div>
-  <div class="t" data-s="set" onclick="tab('set')"><span class="ic">⚙️</span>Ajustes</div>
+  <div class="t active" data-s="cal" onclick="tab('cal')"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></span>Calendario</div>
+  <div class="t" data-s="sess" onclick="tab('sess')"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12h2M19.5 12h2M4.5 8.5v7M7.5 6.5v11M16.5 6.5v11M19.5 8.5v7M7.5 12h9"/></svg></span>Sesión</div>
+  <div class="t" data-s="prog" onclick="tab('prog')"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 20.5h17M5.5 16l4.5-5.5 4 3 4.5-7.5"/><path d="M15 6h3.5v3.5"/></svg></span>Progreso</div>
+  <div class="t" data-s="nutri" onclick="tab('nutri')"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.2c-2.6-2-7-.6-7 4.4 0 4 2.4 7.9 4.9 7.9 1 0 1.3-.5 2.1-.5s1.1.5 2.1.5c2.5 0 4.9-3.9 4.9-7.9 0-5-4.4-6.4-7-4.400z"/><path d="M12 8.200c0-2 1-3.8 3-4.7"/></svg></span>Nutrición</div>
+  <div class="t" data-s="prof" onclick="tab('prof')"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20.500c0-4.4 3.5-6.5 8-6.500s8 2.1 8 6.5"/></svg></span>Perfil</div>
+  <div class="t" data-s="set" onclick="tab('set')"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M18.5 7h1.500M4 17h1.500M11 17h9"/><circle cx="15.8" cy="7" r="2.5"/><circle cx="8.2" cy="17" r="2.5"/></svg></span>Ajustes</div>
 </div>
 
 <!-- LOG SHEET -->
@@ -694,7 +728,7 @@ body{font-size:calc(15px*var(--fs))}
     <div class="field"><label>Tiempo disponible: <span id="gen-min-out" class="u-fw6t">45</span> min</label>
       <input type="range" id="gen-min" min="15" max="120" step="5" value="45" style="width:100%"></div>
     <div class="field"><label>¿Qué hacer con esta sesión?</label><div id="gen-mode"></div></div>
-    <label style="display:flex;align-items:center;gap:8px;margin:2px 0 12px;font-size:13px;color:var(--text2)"><input type="checkbox" id="gen-hist" checked style="width:auto"> Complementar mi entrenamiento reciente (priorizar grupos menos trabajados)</label>
+    <label style="display:flex;align-items:center;gap:8px;margin:2px 0 12px;font-size:calc(13px*var(--fs));color:var(--text2)"><input type="checkbox" id="gen-hist" checked style="width:auto"> Complementar mi entrenamiento reciente (priorizar grupos menos trabajados)</label>
     <div class="field"><label>💬 Instrucciones adicionales (opcional)</label>
       <textarea id="gen-note" placeholder='Ej: "algo suave de movilidad", "solo tren superior", "que incluya core al final"…' class="u-mh60"></textarea>
       <div id="gen-note-hint" class="note mt-6"></div></div>
@@ -859,11 +893,8 @@ const GOAL_LABELS={fuerza:'Fuerza',musculo:'Ganar músculo',grasa:'Perder grasa'
 function primaryGoal(objs){for(const g of GOAL_PRIORITY)if(objs&&objs.includes(g))return g;return 'bienestar';}
 function nutriPlan(objs,tdee,kg){
   const fat=objs.includes('grasa'), mus=objs.includes('musculo')||objs.includes('fuerza');
-  let kcal,prot,mode;
-  if(fat&&mus){kcal=tdee*0.9;prot=2.2;mode='recomposición (déficit ligero, proteína alta)';}
-  else if(fat){kcal=tdee*0.8;prot=2.0;mode='déficit para perder grasa';}
-  else if(mus){kcal=tdee*1.1;prot=2.0;mode='superávit ligero para ganar músculo';}
-  else{kcal=tdee;prot=1.6;mode='mantenimiento';}
+  const ec=estrategiaCalorica(objs); // v88: depende también del punto de partida (IMC)
+  const kcal=tdee*ec.f,prot=ec.prot,mode=ec.mode;
   const center=Math.round(kcal/10)*10;
   // v55: rango en vez de cifra fija (±7%, redondeado a 10): un objetivo cerrado a un único número
   // invita a tratarlo como aprobado/suspenso; un rango dice mejor lo que es, una estimación.
@@ -1011,6 +1042,14 @@ function initState(){
   if(S.profile.limitacionesNota==null)S.profile.limitacionesNota='';
   // v55: histórico de peso para calcular tendencia semanal (independiente de S.profile.peso, que es solo el valor actual)
   if(!S.weightLog)S.weightLog=[];
+  // v88: cintura (cm), el único indicador de composición que se puede medir en casa sin báscula
+  // de bioimpedancia. Sin él, una recomposición con el peso estable no se puede evaluar.
+  if(!S.waistLog)S.waistLog=[];
+  // v88: inicio y número del bloque que DECIDE EL ENTRENADOR. Antes el bloque se contaba por
+  // calendario fijo desde el primer registro, y el entrenador tenía que corregir a la app
+  // («aunque la app marque semana 1, este bloque empezó el 21/9»). Vacío = cálculo antiguo.
+  if(S.blockStart==null)S.blockStart='';
+  if(S.blockNum==null)S.blockNum=0;
   /* v80: la nota semanal vivía SOLO en el textarea. Si iOS descartaba la PWA en segundo plano o
      entraba una versión nueva del service worker, la instrucción del usuario desaparecía sin
      avisar y el mensaje para Claude salía sin ella. Ahora se persiste. */
@@ -1054,9 +1093,20 @@ function programWeekFor(dateStr){
   if(d==null)return null;
   return Math.floor(d/7)+1;
 }
-function mesoInfo(weekNum){
+function mesoInfo(weekNum,dateStr){
   if(!weekNum||weekNum<1)return null;
   const len=S.mesoLen||4;
+  /* v88: si el entrenador ha dicho en qué semana del bloque estamos, manda eso. Antes el bloque era
+     un calendario fijo desde el primer registro: tras una semana reducida fuera de sitio o un
+     bloque alargado, la app decía «semana 1» y el entrenador tenía que corregirla en su análisis. */
+  if(S.blockStart&&dateStr){
+    const ref=weekKeyOf(dateStr),ini=weekKeyOf(S.blockStart);
+    const dias=(ref&&ini)?daysBetween(ini,ref):null;
+    if(dias!=null&&dias>=0){
+      const dentro=Math.floor(dias/7);
+      return {weekNum,block:(S.blockNum||1)+Math.floor(dentro/len),wInBlock:(dentro%len)+1,len,focus:S.mesoFocus,ancla:true};
+    }
+  }
   const block=Math.floor((weekNum-1)/len)+1;
   const wInBlock=((weekNum-1)%len)+1;
   return {weekNum,block,wInBlock,len,focus:S.mesoFocus};
@@ -1405,7 +1455,7 @@ function buildSessionOffline(equip,objetivo,nivel,minutos,dayCode,seed,isDeload,
   const exs=pickExercises(equip,objetivo,+minutos,seed,opts);
   const setBase=Math.round((g.sets[0]+g.sets[1])/2*mult);
   // v75: y el volumen progresa dentro del bloque en vez de repetirse igual cada semana
-  const mi=mesoInfo(programWeekFor(todayKey()));
+  const mi=mesoInfo(programWeekFor(todayKey()),todayKey());
   const rampa=(mi&&mi.len>1&&mi.wInBlock>=Math.ceil(mi.len*0.75))?1:0;
   const sets=isDeload?Math.max(2,setBase-1)
     :fatLvl===2?Math.max(2,setBase-1)
@@ -1549,7 +1599,7 @@ function buildWeekOffline(){
     }
   });
   S.nutri=buildNutriOffline();
-  const mi=mesoInfo(programWeekFor(fmt(dates[0])));
+  const mi=mesoInfo(programWeekFor(fmt(dates[0])),fmt(dates[0]));
   if(mi)S.insight=`Semana ${mi.weekNum} del programa · bloque ${mi.block}, semana ${mi.wInBlock} de ${mi.len}${mi.focus?' ('+mi.focus+')':''}. Progresión continua, sin descarga programada. Pulsa "Adaptar con Claude" para que tu entrenador fije la fase del bloque.`;
   save();renderCal();renderNutri();renderProg();
   tab('cal');
@@ -1642,7 +1692,7 @@ function renderTodayHero(){
           if(hPlan&&hPlan.ai.includes(code)&&!hasAI)ai++;
           if(hPlan&&hPlan.free.includes(code)&&!hasFree)fr++;});
         return `${done} de ${plan} completadas · ${aiDone}/${ai} IA, ${frDone}/${fr} libres`;
-      })()}${(()=>{const mi=mesoInfo(programWeekFor(dates[0]));return mi?` · semana ${mi.weekNum} del programa`:'';})()}</div>
+      })()}${(()=>{const mi=mesoInfo(programWeekFor(dates[0]),dates[0]);return mi?` · semana ${mi.weekNum} del programa`:'';})()}</div>
       ${cta}
     </div>
   </div>${sundayRitualHtml(dates,todayKey)}`;
@@ -1705,7 +1755,7 @@ function selDay(key,idx,keep){
   S.selDay=key;if(!keep){save();renderCal();}
   const dates=weekDates(S.currentWeek);
   const code=DAYS[idx];const sess=S.schedule[key]||[];
-  let h=`<div style="font-size:15px;font-weight:600;margin-bottom:9px">${DAY_NAMES[idx]} · ${fLabel(dates[idx])}</div>`;
+  let h=`<div style="font-size:calc(15px*var(--fs));font-weight:600;margin-bottom:9px">${DAY_NAMES[idx]} · ${fLabel(dates[idx])}</div>`;
   if(sess.length===0){
     // v67: se usa la previsión de ESTA semana. En semanas pasadas sin previsión guardada no se
     // proyecta la distribución actual del perfil (falsearía lo que estaba planificado entonces).
@@ -2200,15 +2250,15 @@ function blockCard(ex,i){
   const movs=(ex.movimientos||[]).map(m=>`
     <div style="display:flex;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
       <div style="width:60px;height:48px;flex-shrink:0">${exSVG(m.nombre,m.p)}</div>
-      <div class="flex1"><div style="font-size:14px;font-weight:600">${esc(m.nombre)}</div>
-        <div style="font-size:12px;color:var(--text2)">${esc(m.reps)||''}</div></div></div>`).join('');
+      <div class="flex1"><div style="font-size:calc(14px*var(--fs));font-weight:600">${esc(m.nombre)}</div>
+        <div style="font-size:calc(12px*var(--fs));color:var(--text2)">${esc(m.reps)||''}</div></div></div>`).join('');
   return `<div class="ex"><div class="ex-h" onclick="toggleEx(${i})">
       <div class="ex-n" style="background:var(--free)">⚡</div>
       <div class="flex1"><div class="ex-nm">${esc(ex.nombre)}</div>
         <div class="ex-mt">${label}${ex.descanso_seg?` · descanso ${esc(ex.descanso_seg)}s tras el bloque`:''}</div></div>
     </div><div class="ex-b" id="exb-${i}">
       <div style="padding:11px 13px">
-        ${ex.descripcion?`<div style="font-size:13px;color:var(--text2);margin-bottom:8px">${esc(ex.descripcion)}</div>`:''}
+        ${ex.descripcion?`<div style="font-size:calc(13px*var(--fs));color:var(--text2);margin-bottom:8px">${esc(ex.descripcion)}</div>`:''}
         ${movs}
       </div></div></div>`;
 }
@@ -2218,7 +2268,7 @@ function showSess(key){
   S.viewKey=key;
   const riskNames=riskExcludeNames(activeRiskAreas()); // v56: para marcar ⚠ en el buscador de sustitución
   let h=`<div class="card"><div style="font-size:16px;font-weight:600">${esc(sess.title)}</div>
-    <div style="font-size:12px;color:var(--text2);margin-top:3px">${esc(sess.meta)||''}</div>
+    <div style="font-size:calc(12px*var(--fs));color:var(--text2);margin-top:3px">${esc(sess.meta)||''}</div>
     <button class="btn btn-primary btn-block mt-12" onclick="preSesion('${key}')">▶ Empezar sesión guiada</button></div>`;
   if(sess.userNote)h+=`<div class="note mb-11" style="border-left:3px solid var(--accent)">💬 <b>Tu nota para esta sesión:</b> ${esc(sess.userNote)}</div>`;
   if(sess.warmup)h+=`<div class="note mb-11">🔥 <b>Calentamiento:</b> ${esc(sess.warmup)}</div>`;
@@ -2231,7 +2281,7 @@ function showSess(key){
       const opts=[(ex._orig?{nombre:ex._orig.nombre}:{nombre:ex.nombre})].concat(alts);
       const curName=ex.nombre;
       altHtml=`<div class="pad-exsec">
-        <div style="font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">⇄ Alternativas con tu material (elige una; por defecto la propuesta)</div>
+        <div style="font-size:calc(11px*var(--fs));font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">⇄ Alternativas con tu material (elige una; por defecto la propuesta)</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">
         ${opts.map((o,oi)=>`<span class="chip${o.nombre===curName?' sel':''}" onclick="event.stopPropagation();swapExercise('${key}',${i},${oi})">${oi===0?'★ ':''}${esc(o.nombre)}</span>`).join('')}
         </div></div>`;
@@ -2245,7 +2295,7 @@ function showSess(key){
     const searchHtml=compat.length?`<div class="pad-exsec">
         <button class="btn btn-xs" onclick="event.stopPropagation();toggleSearch(${i})">🔍 Buscar otro ejercicio (${mismos.length})</button>
         <div id="srch-${i}" style="display:none;margin-top:8px">
-          <select onchange="event.stopPropagation();swapToName('${key}',${i},this.value)" onclick="event.stopPropagation()" style="width:100%;padding:9px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px">
+          <select onchange="event.stopPropagation();swapToName('${key}',${i},this.value)" onclick="event.stopPropagation()" style="width:100%;padding:9px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:max(16px,calc(13px*var(--fs)))">
             <option value="">Elige un ejercicio…</option>
             ${mismos.length?`<optgroup label="Mismo grupo muscular (${esc(grpEx)})">${mismos.map(opt).join('')}</optgroup>`:''}
             ${otrosG.length?`<optgroup label="Otro grupo muscular · cambia lo que entrenas">${otrosG.map(opt).join('')}</optgroup>`:''}
@@ -2263,12 +2313,12 @@ function showSess(key){
     </div><div class="ex-b" id="exb-${i}">
       <div style="display:flex;gap:11px;padding:11px 13px">
         <div style="width:96px;height:76px;flex-shrink:0">${exSVG(ex.nombre,ex.p)}</div>
-        <div style="flex:1;font-size:12.5px">${esc(ex.descripcion)||''}<div style="color:var(--text2);margin-top:5px">💪 ${esc(ex.musculos)||''}</div>
+        <div style="flex:1;font-size:calc(12.5px*var(--fs))">${esc(ex.descripcion)||''}<div style="color:var(--text2);margin-top:5px">💪 ${esc(ex.musculos)||''}</div>
         ${ex.nota_progresion?`<div class="ex-tag">📈 ${esc(ex.nota_progresion)}</div>`:''}</div>
       </div>
       ${altHtml}
       ${searchHtml}
-      ${errs.length?`<div class="pad-exsec"><div style="font-size:11px;font-weight:600;color:var(--danger);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">⚠ Errores a evitar</div><ul style="margin:0;padding-left:16px;font-size:12px;color:var(--text2);line-height:1.6">${errs.map(e=>`<li>${esc(e)}</li>`).join('')}</ul></div>`:''}
+      ${errs.length?`<div class="pad-exsec"><div style="font-size:calc(11px*var(--fs));font-weight:600;color:var(--danger);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">⚠ Errores a evitar</div><ul style="margin:0;padding-left:16px;font-size:calc(12px*var(--fs));color:var(--text2);line-height:1.6">${errs.map(e=>`<li>${esc(e)}</li>`).join('')}</ul></div>`:''}
       </div></div>`;
   });
   if(sess.cooldown)h+=`<div class="note" style="margin:11px 0">🧘 <b>Vuelta a la calma:</b> ${esc(sess.cooldown)}</div>`;
@@ -2499,11 +2549,11 @@ function renderProg(){
      enorme en cada toque. Se pintan las últimas 50 y el resto bajo demanda. */
   const _tope=S._histShown||50;
   const _lista=S.history.slice(0,_tope);
-  if(!S.history.length){hl.innerHTML='<p style="font-size:13px;color:var(--text2)">Sin sesiones registradas.</p>';}
+  if(!S.history.length){hl.innerHTML='<p style="font-size:calc(13px*var(--fs));color:var(--text2)">Sin sesiones registradas.</p>';}
   else hl.innerHTML=_lista.map(h=>`
     <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border)">
-      <div class="flex1"><div style="font-size:13px;font-weight:600">${esc(h.title)}</div>
-        <div style="font-size:11px;color:var(--text2)">${esc(h.key)} · ${esc(h.duration)}min${h.distance?' · '+esc(h.distance)+'km':''}</div>
+      <div class="flex1"><div style="font-size:calc(13px*var(--fs));font-weight:600">${esc(h.title)}</div>
+        <div style="font-size:calc(11px*var(--fs));color:var(--text2)">${esc(h.key)} · ${esc(h.duration)}min${h.distance?' · '+esc(h.distance)+'km':''}</div>
         ${h.notes?recorteExpandible(esc(h.notes),70,'var(--text3)'):''}
         ${h.sets&&h.sets.length?(()=>{const t=h.sets.map(e=>e.nombre+refSets(e)+' '+fmtSetsDetalladas(e)).join(' · ');return recorteExpandible('🏋 '+esc(t),90,'var(--ai)');})():''}</div>
       <span style="font-size:19px;margin-left:8px">${esc(h.feeling)||'💪'}</span></div>`).join('')
@@ -2521,31 +2571,35 @@ function renderVolume(){
   const max=Math.max(10,...MG_ORDER.map(g=>Math.max(act.vol[g],real.vol[g])));
   const filas=MG_ORDER.filter(g=>act.vol[g]||real.vol[g]).map(g=>{
     const p=Math.round(act.vol[g]/max*100),pr=Math.round(real.vol[g]/max*100);
-    const flojo=act.vol[g]>0&&act.vol[g]<10;
+    const flojo=act.bruto[g]>0&&act.bruto[g]<10; // la referencia de ~10 se formuló con el recuento bruto
     return `<div style="margin-bottom:9px">
       <div style="display:flex;justify-content:space-between;font-size:calc(12px*var(--fs))">
         <span>${MG_LABEL[g]}</span>
-        <span class="fw6"${flojo?' style="color:var(--warn)"':''}>${act.vol[g]} series</span></div>
+        <span class="fw6"${flojo?' style="color:var(--warn)"':''}>${_nSer(act.vol[g])} series${act.bruto[g]!==act.vol[g]?` <span style="font-weight:400;color:var(--text3)">(${act.bruto[g]} en bruto)</span>`:''}</span></div>
       <div class="prog-bar" style="margin-top:3px"><div class="prog-fill" style="width:${p}%"></div></div>
-      <div style="font-size:calc(10px*var(--fs));color:var(--text3);margin-top:2px">semana pasada, realizadas: ${real.vol[g]}</div>
+      <div style="font-size:calc(11px*var(--fs));color:var(--text3);margin-top:2px">semana pasada, realizadas: ${_nSer(real.vol[g])}</div>
       <div class="prog-bar" style="height:3px;margin-top:2px"><div class="prog-fill" style="width:${pr}%;background:var(--text3)"></div></div>
     </div>`;
   }).join('');
   b.innerHTML=filas
-    ? filas+`<p class="note mt-8">Series de esta semana (planificadas o ya hechas) frente a las realizadas la semana pasada. La referencia habitual para crecer es del orden de <b>10 series semanales por grupo</b>; por debajo aparece en ámbar. Es una <b>estimación</b>: cada serie se cuenta para todos los grupos que participan, así que los básicos suman en varios a la vez, y los grupos se deducen del nombre y de los músculos declarados de cada ejercicio.</p>`
+    ? filas+`<p class="note mt-8">Series de esta semana (planificadas o ya hechas) frente a las realizadas la semana pasada. Recuento <b>fraccionado</b>: cada serie cuenta 1 para el grupo principal del ejercicio y 0,5 para los que ayudan (un press suma 1 a pecho y 0,5 a hombro y a tríceps). Entre paréntesis, el recuento en bruto, en el que cada serie cuenta entera para todos. La referencia divulgada de <b>~10 series semanales por grupo</b> se formuló en bruto: aparece en ámbar el grupo que no llega a 10 ni así. Es una <b>estimación</b>: los grupos se deducen del nombre y de los músculos declarados de cada ejercicio.</p>`
     : '<p class="note">Genera o registra sesiones de fuerza para ver el reparto de volumen por grupo muscular.</p>';
 }
 function renderCardio(){
   const b=document.getElementById('cardio-body');if(!b)return;
-  const a=cardioWeek(S.currentWeek),pr=cardioWeek(S.currentWeek-1);
+  const a=cardioWeek(S.currentWeek,'carrera'),pr=cardioWeek(S.currentWeek-1,'carrera');
+  const ca=cardioWeek(S.currentWeek,'caminata'),cpr=cardioWeek(S.currentWeek-1,'caminata');
   const hz=hrZones();
   const linea=(t,c)=>`<div class="prog-r"><span style="color:var(--text2)">${t}</span><span class="fw6">${c.n?`${c.km} km · ${c.min} min${c.ritmo?' · '+c.ritmo:''}`:'sin sesiones'}</span></div>`;
-  let h=linea('Esta semana',a)+linea('Semana pasada',pr);
+  let h=`<div class="fw6" style="font-size:calc(13px*var(--fs));margin-bottom:4px">🏃 Carrera</div>`+linea('Esta semana',a)+linea('Semana pasada',pr);
   if(a.km&&pr.km){
     const d=Math.round((a.km-pr.km)*10)/10;
     const sube=d/pr.km;
-    h+=`<div class="note mt-6">${d>=0?'+':''}${d} km respecto a la semana pasada${sube>0.10?' — <b style="color:var(--warn)">es más de un 10% de subida</b>: es el tramo donde más lesiones por sobreuso aparecen, considera moderarlo':''}.</div>`;
+    h+=`<div class="note mt-6">${d>=0?'+':''}${d} km de carrera respecto a la semana pasada${sube>0.10?' — <b style="color:var(--warn)">es más de un 10% de subida</b>: es el tramo donde más lesiones por sobreuso aparecen, considera moderarlo':''}.</div>`;
   }
+  if(ca.n||cpr.n)h+=`<div class="fw6" style="font-size:calc(13px*var(--fs));margin:10px 0 4px">🚶 Caminata</div>`+linea('Esta semana',ca)+linea('Semana pasada',cpr);
+  const coh=hrCoherencia();
+  if(coh&&coh.incoherente)h+=`<div class="note mt-8" style="border-left:3px solid var(--warn)">⚠ <b>Tus pulsos no son coherentes</b>: ${esc(coh.texto)}. Suele pasar con el pulso de muñeca en exterior o con la cinta mal calibrada. Mientras tanto, guíate por ritmo y sensación (poder hablar = suave) más que por las zonas de abajo.</div>`;
   if(hz&&hz.zonas){
     h+=`<div class="mt-12"><div class="fw6" style="font-size:calc(13px*var(--fs));margin-bottom:6px">Tus zonas de pulso</div>`+
       Object.entries(hz.zonas).map(([z,r])=>`<div class="prog-r"><span style="color:var(--text2)">${z}${z==='Z2'?' · base aeróbica':z==='Z4'?' · umbral':''}</span><span class="fw6">${r} lpm</span></div>`).join('')+
@@ -2587,7 +2641,7 @@ function renderBadges(){
 function sparkline(values,labels,goodDown){
   const w=300,hh=64,pad=6;
   const vals=values.filter(v=>v!=null);
-  if(vals.length<2)return '<div style="font-size:11px;color:var(--text3);padding:6px 0">Necesita al menos 2 actualizaciones para mostrar tendencia.</div>';
+  if(vals.length<2)return '<div style="font-size:calc(11px*var(--fs));color:var(--text3);padding:6px 0">Necesita al menos 2 actualizaciones para mostrar tendencia.</div>';
   const min=Math.min(...vals),max=Math.max(...vals);
   const span=(max-min)||1;
   const pts=values.map((v,i)=>{
@@ -2620,39 +2674,40 @@ function renderMarkerCharts(){
     const vals=log.map(s=>s[k]!=null?s[k]:null);
     if(vals.filter(v=>v!=null).length<2)return;
     const cur=vals.filter(v=>v!=null).slice(-1)[0];
+    const nn=vals.filter(v=>v!=null);
+    const fijo=nn.length>=4&&nn.every(v=>String(v)===String(nn[0])); // v88
     h+=`<div style="margin-bottom:14px">
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px">
         <span style="font-size:calc(12px*var(--fs));color:var(--text2)">${lab}</span>
         <span style="font-size:calc(14px*var(--fs));font-weight:700">${cur}</span></div>
-      ${sparkline(vals,labels,goodDown)}</div>`;
+      ${sparkline(vals,labels,goodDown)}
+      ${fijo?`<div style="font-size:calc(11px*var(--fs));color:var(--warn);margin-top:2px">⚠ Mismo valor en los ${nn.length} registros: es el dato de la primera vez, arrastrado. No dice nada de tu evolución; actualízalo o ignóralo.</div>`:''}</div>`;
   });
   c.innerHTML=h||'<p class="note">Aún no hay dos meses del mismo marcador para comparar.</p>';
 }
 
 /* --- NUTRICIÓN --- */
+function notaTendenciaPeso(){
+  const t=weightTrend();const obj=ritmoObjetivoPeso();
+  if(!t)return `<div class="note mt-8">Con 3 o más pesajes repartidos en al menos dos semanas aparecerá aquí tu ritmo real frente al objetivo.</div>`;
+  const signo=v=>(v>0?'+':'')+String(v).replace('.',',');
+  let veredicto='';
+  if(obj){
+    if(t.pctSem<obj.min)veredicto=` Por debajo de lo buscado (${obj.txt}).`;
+    else if(t.pctSem>obj.max)veredicto=` Por encima de lo buscado (${obj.txt}).`;
+    else veredicto=` Dentro de lo buscado (${obj.txt}).`;
+  }
+  return `<div class="note mt-8">⚖️ Ritmo de las últimas ${Math.max(2,Math.round(t.dias/7))} semanas: <b>${signo(t.kgSem)} kg/semana</b> (${signo(t.pctSem)}% del peso).${veredicto}${t.enteros?' <b>Tus pesajes van sin decimales</b>: redondeando al kilo no se ve un cambio de 0,1-0,2 kg por semana, que es justo el que importa.':''}</div>`;
+}
 function renderNutri(){
   const n=S.nutri;const c=document.getElementById('nutri-content');
-  if(!n){c.innerHTML='<div class="empty"><span class="ic">🥗</span><p>Genera tu semana para ver las recomendaciones nutricionales.</p></div>';return;}
+  if(!n){c.innerHTML='<div class="empty"><span class="ic">🥗</span><p>Genera tu semana para ver las recomendaciones nutricionales.</p></div>'+pesoRapidoHTML()+notaTendenciaPeso();return;}
   const hasRange=n.calorias_min!=null&&n.calorias_max!=null;
   const kcalDisplay=hasRange?`${esc(n.calorias_min)}–${esc(n.calorias_max)}`:esc(n.calorias_diarias);
-  const trend=weightTrend();
   const {pct}=weekAdherencePct();
-  const fat=(S.profile.objetivos||[]).includes('grasa'),mus=(S.profile.objetivos||[]).includes('musculo')||(S.profile.objetivos||[]).includes('fuerza');
-  let trendNote='';
-  if(trend&&trend.dir!=='estable'){
-    const wantsDown=fat&&!mus, wantsUp=mus&&!fat;
-    const aligned=(wantsDown&&trend.dir==='bajando')||(wantsUp&&trend.dir==='subiendo');
-    const off=(wantsDown&&trend.dir==='subiendo')||(wantsUp&&trend.dir==='bajando');
-    const dirTxt=trend.dir==='subiendo'?'subiendo':'bajando';
-    let hint='';
-    if(off)hint=' — si quieres, prueba unos días hacia el extremo '+(wantsDown?'bajo':'alto')+' del rango y revisa en 1-2 semanas más, sin prisa.';
-    else if(aligned)hint=' — va en línea con tu objetivo actual; no hace falta tocar nada.';
-    trendNote=`<div class="note mt-8">📉 Tu peso lleva una tendencia ${dirTxt} esta semana (${Math.abs(trend.diff)} kg de media vs. la semana anterior).${hint}</div>`;
-  } else if(!trend){
-    trendNote=`<div class="note mt-8">Registra tu peso unas cuantas veces (se guarda solo al tocar "Guardar" en Datos personales) para ver aquí la tendencia y poder afinar el rango.</div>`;
-  }
+  const trendNote=notaTendenciaPeso();
   c.innerHTML=`<div class="card"><div class="card-t">🍽 Objetivos diarios</div>
-    ${n.modo?`<div style="font-size:12px;color:var(--text2);margin:-4px 0 10px">Enfoque: ${esc(n.modo)}</div>`:''}
+    ${n.modo?`<div style="font-size:calc(12px*var(--fs));color:var(--text2);margin:-4px 0 10px">Enfoque: ${esc(n.modo)}</div>`:''}
     <div class="stat-grid">
       <div class="stat"><div class="stat-v" style="${hasRange?'font-size:calc(15px*var(--fs))':''}">${kcalDisplay}</div><div class="stat-l">kcal/día${hasRange?' (rango)':''}</div></div>
       <div class="stat"><div class="stat-v">${esc(n.proteina_g)}g</div><div class="stat-l">proteína</div></div>
@@ -2662,10 +2717,11 @@ function renderNutri(){
       <div class="meal-n">${esc(m.plato)}</div><div class="meal-m">${esc(m.kcal)} kcal · ${esc(m.proteina_g)}g proteína</div></div>`).join('')}
     <p class="note">Valores orientativos calculados desde tu gasto energético${hasRange?' (el rango es a propósito: no lo tomes como un objetivo exacto a cumplir)':''}. Ajusta según tu evolución y consulta a un profesional para necesidades específicas.</p>
     <div class="card mt-12">
-      <div class="card-t">📅 Revisión semanal</div>
+      <div class="card-t">📝 Revisión semanal</div>
       <div class="note">Adherencia de esta semana: <b style="color:var(--text)">${pct}%</b>.</div>
       ${trendNote}
-    </div>`;
+    </div>
+    ${pesoRapidoHTML()}`;
 }
 
 /* ============================================================
@@ -2779,11 +2835,28 @@ function muscleGroupsOf(ex){
   }
   return [...out];
 }
-/* Series por grupo y semana. Se cuenta cada serie para CADA grupo implicado (recuento "total", no
-   fraccionado): un press cuenta serie para pecho, hombro y tríceps. Es el criterio más común en las
-   recomendaciones divulgadas, y por eso las cifras salen algo generosas en los básicos. */
+/* v88 · Series por grupo y semana, recuento FRACCIONADO: el grupo principal del ejercicio cuenta 1
+   y los que ayudan cuentan 0,5. Hasta la v87 cada serie contaba 1 para todos los grupos implicados,
+   de modo que un press sumaba una serie entera a pecho, a hombro y a tríceps. En la metarregresión
+   de Pelland et al. (2025) el recuento fraccionado es el que mejor se ajusta a los resultados. Se
+   conserva además el recuento bruto (`bruto`), que es con el que se formularon las referencias
+   divulgadas de «~10 series por grupo».
+   El grupo principal es el primero que aparece en los músculos declarados del ejercicio (la ficha o
+   el entrenador los listan por orden de importancia) o, si no hay, el que sale del nombre. */
+function gruposPonderados(ex){
+  if(!ex)return [];
+  const gs=muscleGroupsOf(ex);
+  if(gs.length<2)return gs.map(g=>({g,w:1}));
+  const nm=_norm(ex.nombre||'');
+  const ficha=EXDB.find(e=>_norm(e.n)===nm);
+  const pos=txt=>{let best=null;
+    MG_RULES.forEach(([g,re])=>{const m=re.exec(txt);if(m&&gs.indexOf(g)>=0&&(best==null||m.index<best.i))best={g,i:m.index};});
+    return best?best.g:null;};
+  const prim=pos(_norm(ex.musculos||''))||pos(_norm(ficha?ficha.m:''))||pos(nm)||gs[0];
+  return gs.map(g=>({g,w:g===prim?1:0.5}));
+}
 function weeklyVolumeByGroup(weekOffset,soloRealizadas){
-  const vol={};MG_ORDER.forEach(g=>vol[g]=0);
+  const vol={},bruto={};MG_ORDER.forEach(g=>{vol[g]=0;bruto[g]=0;});
   let sesiones=0;
   weekDates(weekOffset).map(fmt).forEach(k=>{
     (S.schedule[k]||[]).forEach(s=>{
@@ -2794,22 +2867,24 @@ function weeklyVolumeByGroup(weekOffset,soloRealizadas){
         if(isBlock(ex)){
           (ex.movimientos||[]).forEach(m=>{
             const rondas=Math.max(1,Math.min(10,+(ex.rondas||ex.duracion_min||3)));
-            muscleGroupsOf(m).forEach(g=>{if(vol[g]!=null)vol[g]+=Math.round(rondas/3);});
+            gruposPonderados(m).forEach(({g,w})=>{if(vol[g]!=null){vol[g]+=Math.round(rondas/3)*w;bruto[g]+=Math.round(rondas/3);}});
           });
           return;
         }
         const hechas=(s.sets||[]).find(e=>_norm(e.nombre)===_norm(ex.nombre));
         const n=(s.done&&hechas&&hechas.series&&hechas.series.length)?hechas.series.length:(+ex.series||0);
         if(!n)return;
-        muscleGroupsOf(ex).forEach(g=>{if(vol[g]!=null)vol[g]+=n;});
+        gruposPonderados(ex).forEach(({g,w})=>{if(vol[g]!=null){vol[g]+=n*w;bruto[g]+=n;}});
       });
     });
   });
-  return {vol,sesiones};
+  MG_ORDER.forEach(g=>{vol[g]=Math.round(vol[g]*2)/2;});
+  return {vol,bruto,sesiones};
 }
+function _nSer(v){return String(v).replace('.',',');}
 function volumeSummaryText(weekOffset,soloRealizadas){
-  const {vol}=weeklyVolumeByGroup(weekOffset,soloRealizadas);
-  return MG_ORDER.filter(g=>vol[g]>0).map(g=>`${MG_LABEL[g]} ${vol[g]}`).join(', ')||'sin datos';
+  const {vol,bruto}=weeklyVolumeByGroup(weekOffset,soloRealizadas);
+  return MG_ORDER.filter(g=>vol[g]>0).map(g=>`${MG_LABEL[g]} ${_nSer(vol[g])}${bruto[g]!==vol[g]?' ('+bruto[g]+' en bruto)':''}`).join(', ')||'sin datos';
 }
 
 /* --- Fuerza estimada (e1RM) --------------------------------------------------------------
@@ -2821,11 +2896,11 @@ function e1rm(kg,reps){
   if(!k||!r||r<1||r>12)return null;
   return Math.round(k*(1+r/30)*10)/10;
 }
-function e1rmProgressionFor(nombre){
-  const nm=_norm(nombre||'');const pts=[];
+function e1rmProgressionFor(nombre,desde){
+  const pts=[];
   (S.history||[]).forEach(h=>{
-    if(!h.sets)return;
-    const f=h.sets.find(e=>_norm(e.nombre)===nm);
+    if(!h.sets||(desde&&h.key<desde))return;
+    const f=h.sets.find(e=>mismoEjercicio(e.nombre,nombre)); // v88: misma identidad, no mismo texto
     if(!f||!f.series)return;
     const vals=f.series.map(x=>e1rm(x.kg,x.reps)).filter(v=>v!=null);
     if(vals.length)pts.push({date:h.key,v:Math.max(...vals)});
@@ -2833,9 +2908,16 @@ function e1rmProgressionFor(nombre){
   pts.sort((a,b)=>a.date<b.date?-1:1);
   return {dates:pts.map(p=>p.date),values:pts.map(p=>p.v)};
 }
+/* v88: el resumen ordenaba por nº de sesiones en TODO el historial, así que salían ejercicios de
+   hace dos meses (la goblet con kettlebell de agosto, «plana» en 11,2 kg porque 8 kg era el techo
+   del material) y faltaban los básicos actuales. El propio entrenador lo detectó como artefacto.
+   Ahora solo cuenta lo registrado en las últimas 6 semanas y la tendencia se mide dentro de esa
+   ventana. */
 function e1rmTopSummary(n){
-  return exercisesWithLoggedSets().slice(0,n||5).map(nom=>{
-    const {dates,values}=e1rmProgressionFor(nom);
+  const desdeD=new Date(todayKey()+'T00:00:00');desdeD.setDate(desdeD.getDate()-42);
+  const desde=fmt(desdeD);
+  return exercisesWithLoggedSets(desde).slice(0,n||5).map(nom=>{
+    const {dates,values}=e1rmProgressionFor(nom,desde);
     if(!values.length)return null;
     const ini=values[0],fin=values[values.length-1];
     const dif=values.length>1?Math.round((fin-ini)*10)/10:0;
@@ -2853,13 +2935,102 @@ function repRange(reps){
   const one=String(reps||'').match(/(\d+)/);
   return one?[+one[1],+one[1]]:null;
 }
+/* v88 · UNA sola regla de progresión, la misma para el mensaje semanal y para la revisión del día.
+   Qué falló en 18 semanas de datos reales:
+   · El 93% de las series de septiembre-octubre se cerraron EXACTAMENTE en el tope del rango: el tope
+     funcionaba como señal de parada, no como medida de lo que se podía hacer. Con «todas en el tope»
+     la app decía «sube carga» sin saber cuánto margen había.
+   · Los rangos eran de 2 repeticiones (8-10) o fijos, y el escalón de mancuernas es de 2 kg por mano:
+     20 saltos de carga, +12,7% de media (del 7% al 25%). Con la fórmula de Epley un rango de 2
+     repeticiones absorbe un salto de ~6-7%; el resto obliga a rozar el fallo o a salirse del rango.
+     Tras los saltos, las series sin margen pasaron del 10% al 47%.
+   La regla: se progresa primero en REPETICIONES (Plotkin 2022: progresar repeticiones y progresar
+   carga dan resultados parecidos) y la carga solo sube cuando el salto CABE en el rango, es decir,
+   cuando con la carga nueva se puede volver a la parte baja del rango con ~1 repetición de margen.
+   Si no cabe, no se salta: se amplía el rango por arriba con la misma carga.
+   El margen se toma, por orden de fiabilidad: (1) de la serie a fallo técnico, que es un dato y no
+   una estimación; (2) del RIR declarado; (3) si no hay nada, se supone 1 repetición.
+   Los umbrales son convenciones de práctica, no puntos de corte validados por un estudio. */
+function _rirDe(x){
+  if(!x)return null;
+  if(x.fallo)return 0;
+  if(x.rir!=null&&x.rir!==''&&!isNaN(+x.rir))return +x.rir;
+  return x.esf==='facil'?3:x.esf==='justo'?1:x.esf==='limite'?0:null;
+}
+// repeticiones al fallo esperables tras subir la carga una fracción s, si antes eran R (Epley)
+function repsTrasSalto(R,s){return (1+R/30)/(1+s)*30-30;}
+function decisionProgresion(ex,ser,kgPlan){
+  const rango=repRange(ex&&ex.reps);
+  if(!rango||!ser||!ser.length)return null;
+  if(parseReps(ex.reps))return null; // series por tiempo (isométricos, intervalos): Epley no aplica
+  const [lo,hi]=rango;
+  const val=ser.map(x=>({r:toNum(String(x.reps)),m:_rirDe(x),f:!!x.fallo,kg:toNum(x.kg),num:x.rir!=null&&x.rir!==''})).filter(x=>!isNaN(x.r));
+  if(!val.length)return null;
+  const kgs=val.map(x=>x.kg).filter(v=>!isNaN(v)&&v>0);
+  const kgL=kgs.length?Math.max(...kgs):null;
+  const norm=val.filter(x=>!x.f),fal=val.filter(x=>x.f);
+  const conEsf=norm.filter(x=>x.m!=null).length,nLim=norm.filter(x=>x.m===0).length;
+  const d={accion:'reps',kgL,lo,hi,nLim,conEsf,up:null,pct:null,tope:null,alc:null,R:null,fuente:''};
+  if(val.some(x=>x.r<lo)){
+    d.accion=norm.some(x=>x.r<lo-1)?'bajar':'corto';
+    d.texto='por debajo del rango en alguna serie → mantener o bajar';
+    return d;
+  }
+  const todoTope=(norm.length?norm.every(x=>x.r>=hi):true)&&fal.every(x=>x.r>=hi);
+  const sobrado=conEsf>0&&conEsf===norm.length&&norm.every(x=>x.m>=3)&&!fal.length;
+  if(!todoTope&&!sobrado){
+    d.texto=`dentro del rango → misma carga y suma repeticiones hasta cerrar todas las series en ${hi}`;
+    if(kgPlan!=null&&kgL!=null&&kgPlan>kgL){ // ¿cabe el salto que ya viene pautado?
+      d.R=Math.min(...val.map(x=>x.r+(x.f?0:(x.m!=null?x.m:1))));
+      d.up=kgPlan;d.s=(kgPlan-kgL)/kgL;d.pct=Math.round(d.s*100);
+      d.alc=Math.floor(repsTrasSalto(d.R,d.s)+1e-9)-1;d.cabe=d.alc>=lo;
+    }
+    return d;
+  }
+  if(todoTope&&!fal.length&&conEsf>0&&nLim*2>=conEsf){
+    d.accion='consolidar';
+    d.texto=`tope del rango pero ${nLim} de ${conEsf} series sin margen (RIR 0) → consolidar esta carga, no subir todavía`;
+    return d;
+  }
+  // repeticiones al fallo que se le suponen con la carga actual
+  if(fal.length){d.R=Math.min(...fal.map(x=>x.r));d.fuente=`serie a fallo técnico: ${d.R} rep.`;}
+  else if(conEsf>0){const c=norm.filter(x=>x.m!=null);d.R=Math.min(...c.map(x=>x.r+x.m));const mn=Math.min(...c.map(x=>x.m));
+    d.fuente=c.some(x=>x.num)?`RIR declarado, el más justo: ${mn}${c.every(x=>x.m>=3)?' o más':''}`:`etiquetas antiguas de esfuerzo, la más justa ≈ RIR ${mn}`;}
+  else{d.R=Math.min(...norm.map(x=>x.r))+1;d.fuente='sin dato de esfuerzo: se supone 1 rep. de margen';}
+  const pref=todoTope?'tope del rango':'dentro del rango y con margen de sobra';
+  if(kgL==null){
+    d.accion='variante';
+    d.texto=ser.some(x=>x&&x.banda)
+      ?`${pref} → progresa con más tensión (acorta el agarre o pasa a la banda siguiente), más repeticiones o un tempo más lento`
+      :`${pref} → progresa con más repeticiones, un tempo más lento o una variante más difícil`;
+    return d;
+  }
+  const up=(kgPlan!=null&&kgPlan>kgL)?kgPlan:_stepKg(kgL,+1,ex.peso);
+  if(up==null){
+    d.accion='sin_escalon';d.tope=Math.min(20,hi+2);
+    d.texto=`${pref} y no hay una carga más pesada disponible → progresa con repeticiones (${lo}-${d.tope}), tempo o versión a una mano/pierna`;
+    return d;
+  }
+  d.up=up;d.s=(up-kgL)/kgL;d.pct=Math.round(d.s*100);
+  d.alc=Math.floor(repsTrasSalto(d.R,d.s)+1e-9)-1;      // repeticiones con ~1 de margen tras el salto
+  if(d.alc>=lo){
+    d.accion='subir';d.obj=`${lo}-${Math.max(lo+1,Math.min(hi,d.alc))}`;
+    d.texto=`${pref} con margen (${d.fuente}) → sube a ${up} kg (+${d.pct}%) y vuelve a la parte baja del rango (${d.obj} rep.)`;
+    return d;
+  }
+  // el salto no cabe: ¿hasta dónde hay que llegar con la carga actual para que quepa?
+  const Rnec=(lo+1+30)*(1+d.s)-30;
+  d.accion='ampliar';d.tope=Math.min(20,Math.max(hi+2,Math.min(hi+5,Math.ceil(Rnec-1e-9)-1)));
+  d.texto=`${pref} (${d.fuente}), pero el siguiente escalón (${up} kg, +${d.pct}%) te dejaría en ~${Math.max(0,d.alc)} rep., por debajo del rango → misma carga y rango ampliado a ${lo}-${d.tope}; el salto llega al cerrar ${d.tope}`;
+  return d;
+}
 function complianceFor(key){
   const sess=mainAISess(key);
   if(!sess||!sess.done||!sess.exercises)return null;
   const filas=[];
   sess.exercises.forEach(ex=>{
     if(isBlock(ex))return;
-    const plan=`${ex.series||'?'}×${ex.reps||'?'}${ex.peso?' @ '+ex.peso:''}${ex._preAjuste?` (ajustado ese día; plan semanal: ${ex._preAjuste.series}×${ex.reps}${ex._preAjuste.peso?' @ '+ex._preAjuste.peso:''})`:''}`;
+    const plan=`${ex.series||'?'}×${ex.reps||'?'}${ex.peso?' @ '+ex.peso:''}${ex._preAjuste?` (ajustado ese día; plan semanal: ${ex._preAjuste.series}×${ex._preAjuste.reps||ex.reps}${ex._preAjuste.peso?' @ '+ex._preAjuste.peso:''})`:''}`;
     const hecho=(sess.sets||[]).find(e=>_norm(e.nombre)===_norm(ex.nombre));
     if(!hecho||!hecho.series||!hecho.series.length){
       filas.push({nombre:ex.nombre,plan,real:'sin registrar',estado:'sin dato'});
@@ -2869,31 +3040,18 @@ function complianceFor(key){
     const real=ser.map(x=>`${x.kg!=null&&x.kg!==''?x.kg+'kg':(x.banda?'banda '+x.banda:'pc')}×${x.reps}`).join(', ');
     const rango=repRange(ex.reps);
     const reps=ser.map(x=>toNum(String(x.reps))).filter(v=>!isNaN(v));
-    const esf=esfResumen(ser);
-    const nLim=nAlLimite(ser);                          // v85
-    const conEsf=ser.filter(x=>x&&x.esf).length;
     let estado='completado';
     if(ser.length<(+ex.series||ser.length))estado=`series incompletas (${ser.length}/${ex.series})`;
     else if(rango&&reps.length){
-      if(reps.every(r=>r>=rango[1])){
-        /* v85: antes bastaba UNA serie al límite para bloquear la subida, porque solo llegaba la
-           etiqueta agregada. Ahora se mira cuántas: que cueste la última es lo normal en una serie
-           bien puesta; que cuesten la mitad o más dice que la carga está pasada. */
-        if(conEsf&&nLim*2>=conEsf)
-          estado=`tope del rango pero ${nLim} de ${conEsf} series al límite → consolidar esta carga, no subir todavía`;
-        else if(nLim)
-          estado=`tope del rango y solo ${nLim} de ${conEsf} series al límite (las últimas) → puedes subir al siguiente escalón`;
-        else
-          estado='tope del rango en todas las series → toca subir carga';
-      }
-      else if(reps.some(r=>r<rango[0]))estado='por debajo del rango en alguna serie → mantener o bajar';
-      else if(esf==='fácil')estado='dentro del rango y con margen de sobra → puedes subir carga o repeticiones';
+      // v88: la decisión sale de decisionProgresion, la misma que usa la revisión del día
+      const d=decisionProgresion(ex,ser,null);
+      if(d&&d.texto)estado=d.texto;
     }
     filas.push({nombre:ex.nombre,plan,real:real+esfDetalle(ser),estado});
   });
   return filas.length?{key,titulo:sess.title,filas}:null;
 }
-function complianceLines(dias){
+function complianceList(dias){
   const lim=dias||21;
   const hoy=todayKey();
   const out=[];
@@ -2901,22 +3059,35 @@ function complianceLines(dias){
     const d=daysBetween(k,hoy);
     if(d==null||d<0||d>lim)return;
     const c=complianceFor(k);
-    if(!c)return;
-    out.push(`- ${k} · ${c.titulo}\n`+c.filas.map(f=>`    · ${f.nombre}: pautado ${f.plan} → realizado ${f.real} [${f.estado}]`).join('\n'));
+    if(c)out.push(c);
   });
-  return out.slice(0,12).join('\n');
+  return out.slice(0,14); // v88: 12 dejaban fuera sesiones de la 3.ª semana entrenando 4-5 días
+}
+function complianceLines(dias){
+  return complianceList(dias).map(c=>`- ${c.key} · ${c.titulo}\n`+c.filas.map(f=>`    · ${f.nombre}: pautado ${f.plan} → realizado ${f.real} [${f.estado}]`).join('\n')).join('\n');
 }
 
 /* --- Cardio ------------------------------------------------------------------------------ */
 function esCardio(h){
   return (parseFloat(h.distance)>0)||/carrera|correr|paseo|caminata|andar|bici|ciclis|nataci|nadar|remo erg|el[ií]ptica|cardio|trote|running/i.test(h.title||'');
 }
-function cardioWeek(weekOffset){
+/* v88: carrera y paseo se sumaban como si fueran lo mismo. «4 sesiones, 29,1 km, 7:09/km, FC 126»
+   eran 14,5 km corriendo a 5:30 y 14,6 km andando a 9:17, y la regla del 10% comparaba una semana
+   de carrera con una de paseo. La semana de volumen reducido del 14/9 se justificó en parte con
+   «el volumen de carrera subió a 29 km». Ahora se separan por tipo. */
+function tipoCardio(h){
+  const t=String((h&&(h.title||h.type))||'');
+  if(/carrera|correr|trote|running|cinta/i.test(t))return 'carrera';
+  if(/paseo|caminata|andar|senderismo|marcha|camin/i.test(t))return 'caminata';
+  return 'otro';
+}
+function cardioWeek(weekOffset,tipo){
   const dates=weekDates(weekOffset).map(fmt);
   let km=0,min=0,n=0,minConKm=0;const fcs=[];
   (S.history||[]).forEach(h=>{
     if(!dates.includes(h.key)||!esCardio(h))return;
-    const dkm=parseFloat(h.distance)||0,dmin=parseFloat(h.duration)||0;
+    if(tipo&&tipoCardio(h)!==tipo)return; // v88
+    const dkm=parseFloat(String(h.distance||'').replace(',','.'))||0,dmin=minutosDe(h.duration); // v88: «38:28» son 38,47 min, no 38
     n++;km+=dkm;min+=dmin;
     if(dkm>0)minConKm+=dmin; // el ritmo solo puede salir de lo que tiene distancia: un paseo de
                              // 60 min sin km registrados falsearía el min/km de toda la semana
@@ -2926,6 +3097,41 @@ function cardioWeek(weekOffset){
   return {n,km:Math.round(km*10)/10,min:Math.round(min),
     ritmo:ritmo?`${Math.floor(ritmo)}:${String(Math.round((ritmo%1)*60)).padStart(2,'0')}/km`:null,
     fcMedia:fcs.length?Math.round(fcs.reduce((a,b)=>a+b,0)/fcs.length):null};
+}
+function minutosDe(v){
+  const t=String(v==null?'':v).trim();
+  const m=t.match(/^(\d+):(\d{1,2})(?::(\d{1,2}))?$/);
+  if(m)return m[3]!=null?(+m[1])*60+(+m[2])+(+m[3])/60:(+m[1])+(+m[2])/60;
+  const n=parseFloat(t.replace(',','.'));return isNaN(n)?0:n;
+}
+/* v88 · ¿son fiables los pulsos registrados? En 18 semanas de carreras casi idénticas (~7,2 km a
+   5:05-5:45/km) la FC media va de 127 a 175: a un mismo ritmo, 45 lpm de diferencia. La cinta da
+   129-145 y el exterior 160-175. Con esa dispersión unas zonas por pulso no orientan nada, y antes
+   la app las mandaba como si fueran ciertas. Se compara cada carrera con las de ritmo parecido
+   (±15 s/km) en las últimas 8 semanas. */
+function hrCoherencia(){
+  const desdeD=new Date(todayKey()+'T00:00:00');desdeD.setDate(desdeD.getDate()-56);
+  const desde=fmt(desdeD);
+  const runs=(S.history||[]).filter(h=>h.key>=desde&&tipoCardio(h)==='carrera').map(h=>{
+    const km=parseFloat(String(h.distance||'').replace(',','.'))||0,min=minutosDe(h.duration),hr=toNum(h.hr);
+    return (km>0&&min>0&&!isNaN(hr)&&hr>0)?{key:h.key,ritmo:min*60/km,hr,cinta:/cinta/i.test(h.title||h.type||'')}:null;
+  }).filter(Boolean);
+  if(runs.length<3)return null;
+  let peor=null;
+  for(let i=0;i<runs.length;i++)for(let j=i+1;j<runs.length;j++){
+    if(Math.abs(runs[i].ritmo-runs[j].ritmo)>15)continue;
+    const d=Math.abs(runs[i].hr-runs[j].hr);
+    if(!peor||d>peor.d)peor={d,a:runs[i],b:runs[j]};
+  }
+  const hz=hrZones();
+  const sobreMax=hz?runs.filter(r=>r.hr>=hz.fcMax-2):[];
+  const fmtR=s=>`${Math.floor(s/60)}:${String(Math.round(s%60)).padStart(2,'0')}/km`;
+  const incoherente=(peor&&peor.d>=25)||sobreMax.length>0;
+  return {incoherente,n:runs.length,peor,sobreMax:sobreMax.length,
+    texto:incoherente
+      ? (peor&&peor.d>=25?`a ritmos casi iguales (${fmtR(peor.a.ritmo)} y ${fmtR(peor.b.ritmo)}) la FC media registrada va de ${Math.min(peor.a.hr,peor.b.hr)} a ${Math.max(peor.a.hr,peor.b.hr)} lpm`:'')+
+        (sobreMax.length?`${peor&&peor.d>=25?'; además, ':''}${sobreMax.length} carrera(s) con FC MEDIA igual o superior a la FCmáx estimada (${hz.fcMax}), cosa imposible si la estimación fuera buena`:'')
+      : ''};
 }
 /* Zonas por reserva de frecuencia cardiaca (Karvonen), con FCmáx estimada por la fórmula de Tanaka
    (208 − 0,7 × edad), más precisa en adultos que la clásica 220 − edad. Es una ESTIMACIÓN: sin
@@ -2984,6 +3190,90 @@ function fatigueLevel(){
   return 0;
 }
 function fatigueLabel(l){return l===2?'alta':l===1?'moderada':'normal';}
+/* v88 · ¿cuánto se repite de una semana a la siguiente? En 18 semanas hubo 110 nombres de ejercicio
+   distintos, y semanas en las que solo se repetía 1 de cada 5. Sin repetir no hay progresión que
+   medir. La app pedía ROTAR; ahora pide lo contrario y lo comprueba. */
+function nombresSemana(weekOffset){
+  const out=[];
+  weekDates(weekOffset).map(fmt).forEach(k=>(S.schedule[k]||[]).forEach(s=>{
+    if(s.type!=='ai'||!s.exercises||s.skipped)return;
+    s.exercises.forEach(e=>{if(!isBlock(e)&&e.nombre&&!out.some(n=>mismoEjercicio(n,e.nombre)))out.push(e.nombre);});
+  }));
+  return out;
+}
+function rotacionEntre(nuevos,previos){
+  if(!nuevos||!previos||!nuevos.length||!previos.length)return null;
+  const rep=nuevos.filter(n=>previos.some(q=>mismoEjercicio(q,n))).length;
+  return {total:nuevos.length,repetidos:rep,pct:Math.round(rep/nuevos.length*100)};
+}
+function imcPerfil(){
+  const kg=toNum(S.profile.peso),cm=toNum(S.profile.altura);
+  if(isNaN(kg)||isNaN(cm)||kg<=0||cm<=0)return null;
+  return Math.round(kg/Math.pow(cm/100,2)*10)/10;
+}
+/* v88: la app mandaba «músculo + grasa = recomposición: déficit ligero» como regla fija, sin mirar
+   de dónde se parte. Con 64 kg y 176 cm (IMC 20,7) un déficit compite con el objetivo de ganar
+   músculo. El umbral de IMC 23 es una convención de la app, no un punto de corte de un estudio, y
+   el IMC no distingue músculo de grasa: por eso se le pide al entrenador que decida y lo diga. */
+function coherenciaObjetivosTxt(){
+  const o=S.profile.objetivos||[];const imc=imcPerfil();
+  const fat=o.includes('grasa'),mus=o.includes('musculo')||o.includes('fuerza');
+  const bf=(S.health&&S.health.bodyFat)?`, % de grasa medido ${S.health.bodyFat}%`:'';
+  let t=`Si se combinan varios objetivos, prioriza un esquema de fuerza/hipertrofia para el entrenamiento y resuelve la composición corporal con la nutrición. NO apliques una regla fija del tipo «músculo + grasa = déficit»: decide TÚ la estrategia calórica con mis datos (IMC ${imc!=null?String(imc).replace('.',','):'sin calcular'}${bf}, nivel ${S.profile.nivel||'?'}, y el ritmo real de peso y cintura si aparecen más abajo) y justifícala.`;
+  if(fat&&imc!=null&&imc<23)
+    t+=` AVISO DE COHERENCIA: he marcado «perder grasa» con un IMC de ${String(imc).replace('.',',')}, en la parte baja-media del normopeso. Con tan poco margen, un déficit calórico compite directamente con ganar músculo${mus?', que también te he pedido':''}. Valora si me conviene más mantenimiento o un superávit pequeño (en principiantes e intermedios, ganar del orden de un 0,25-0,5% del peso por semana, y más despacio en avanzados; Iraki 2019, revisión narrativa) y vigilar la cintura en vez del peso, y DÍMELO con claridad aunque contradiga lo que he marcado. El IMC no distingue músculo de grasa: si mi % de grasa o mi cintura dicen otra cosa, mandan ellos.`;
+  else if(fat&&mus)
+    t+=` Orientación: si hay grasa de sobra que perder, déficit ligero con proteína alta; si hay poca, mantenimiento.`;
+  return t;
+}
+function estrategiaCalorica(objs){
+  const fat=objs.includes('grasa'),mus=objs.includes('musculo')||objs.includes('fuerza');
+  const imc=imcPerfil();const delgado=imc!=null&&imc<23;
+  if(fat&&mus)return delgado?{f:1,prot:2.0,mode:'recomposición a mantenimiento (proteína alta)'}:{f:0.9,prot:2.2,mode:'recomposición (déficit ligero, proteína alta)'};
+  if(fat)return delgado?{f:0.9,prot:2.0,mode:'déficit ligero (tienes poco margen que perder)'}:{f:0.8,prot:2.0,mode:'déficit para perder grasa'};
+  if(mus)return {f:1.1,prot:2.0,mode:'superávit ligero para ganar músculo'};
+  return {f:1,prot:1.6,mode:'mantenimiento'};
+}
+/* Resumen de las últimas carreras: para que se vea si llevan semanas siendo la misma */
+function resumenCarreras(dias){
+  const desdeD=new Date(todayKey()+'T00:00:00');desdeD.setDate(desdeD.getDate()-(dias||56));
+  const desde=fmt(desdeD);
+  const r=(S.history||[]).filter(h=>h.key>=desde&&tipoCardio(h)==='carrera').map(h=>{
+    const km=parseFloat(String(h.distance||'').replace(',','.'))||0,min=minutosDe(h.duration);
+    return km>0&&min>0?{km,ritmo:min*60/km}:null;}).filter(Boolean);
+  if(r.length<4)return '';
+  const f=s=>`${Math.floor(s/60)}:${String(Math.round(s%60)).padStart(2,'0')}`;
+  const kms=r.map(x=>x.km),rs=r.map(x=>x.ritmo);
+  const a=Math.min(...kms),b=Math.max(...kms),c=Math.min(...rs),d=Math.max(...rs);
+  const plano=(b-a)<=1.5&&(d-c)<=45;
+  return `Mis ${r.length} carreras de las últimas ${Math.round((dias||56)/7)} semanas: entre ${String(a).replace('.',',')} y ${String(b).replace('.',',')} km, a ritmos entre ${f(c)} y ${f(d)}/km.${plano?' Son prácticamente LA MISMA salida repetida: no hay progresión de carrera. Estructúrala (ver PLAN DE CARRERA).':''}`;
+}
+/* v88: lo escrito a mano en las notas, sin la copia automática de las series. El formulario de
+   registro vuelca en las notas una copia de las series («Curl [pautado: …]: 12 kg × 12 (justo) · …»);
+   esas mismas series viajaban además en «CARGAS REALES» y en «CUMPLIMIENTO REAL»: tres veces el
+   mismo dato. Solo se quita la línea si coincide con lo guardado; si la corregí a mano, se queda. */
+function notasLibres(x){
+  const t=String((x&&x.notes)||'');
+  if(!t||!x.sets||!x.sets.length)return t;
+  const auto=new Map(x.sets.map(e=>[_norm(e.nombre).trim(),_norm(fmtSetsDetalladas(e)).replace(/\s+/g,' ').trim()]));
+  return t.split(/\n/).filter(l=>{
+    const n=_norm(l).replace(/ \[pautado:[^\]]*\]/,'').replace(/\s+/g,' ').trim();
+    if(!n)return false;
+    if(/^\(cargas y esfuerzo registrados serie a serie/.test(n))return false;
+    const i=n.indexOf(': ');
+    if(i>0){const nm=n.slice(0,i).trim(),resto=n.slice(i+2).trim();if(auto.has(nm)&&auto.get(nm)===resto)return false;}
+    return true;
+  }).join(' ').trim();
+}
+function cargasHist(x,cmpKeys){
+  if(!x||!x.sets||!x.sets.length)return '';
+  const fmtE=e=>e.nombre+refSets(e)+' '+fmtSets(e.series)+esfDetalle(e.series);
+  const c=(cmpKeys&&cmpKeys.has(x.key))?complianceFor(x.key):null;
+  if(!c)return ' CARGAS REALES serie a serie: '+x.sets.map(fmtE).join('; ')+'.';
+  const enPlan=c.filas.filter(f=>f.estado!=='sin dato').map(f=>_norm(f.nombre));
+  const extra=x.sets.filter(e=>enPlan.indexOf(_norm(e.nombre))<0);
+  return ' Series: detalladas arriba, en CUMPLIMIENTO REAL.'+(extra.length?' Además, fuera de lo pautado: '+extra.map(fmtE).join('; ')+'.':'');
+}
 function coachExtrasFor(equipos,beforeKey){
   let t=`\n- ACTÚA COMO ENTRENADOR PROFESIONAL: en "descripcion" de cada ejercicio explica en 1-2 frases la técnica clave Y por qué está en esta sesión (qué aporta al objetivo). En "meta" resume en una frase el propósito de la sesión.`;
   if((equipos||[]).includes('bandas')){
@@ -2994,7 +3284,9 @@ function coachExtrasFor(equipos,beforeKey){
   }
   const rot=beforeKey?[...recentExerciseNames(beforeKey,21)]:[];
   if(rot.length){
-    t+=`\n- VARIEDAD (anti-monotonía): estos ejercicios se han usado en las últimas ~3 semanas: ${rot.slice(0,25).join(', ')}. Mantén 2-3 básicos estables para poder progresar en carga, pero ROTA los accesorios eligiendo variantes distintas de la misma familia (p. ej. cambia el ángulo, el agarre, unilateral/bilateral o el material).`;
+    /* v88: esto era «VARIEDAD (anti-monotonía): … ROTA los accesorios». Se cumplió demasiado bien. */
+    const rr=rotacionEntre(nombresSemana(S.currentWeek-1),nombresSemana(S.currentWeek-2));
+    t+=`\n- EJERCICIOS ESTABLES DENTRO DEL BLOQUE: sin repetir un ejercicio no hay progresión que medir ni técnica que asentar, y variar los ejercicios al azar puede comprometer la ganancia (Kassiano 2022). Elige 5-7 ejercicios PRINCIPALES para todo el bloque —uno por patrón: rodilla, cadera, empuje horizontal, empuje vertical, tirón horizontal, tirón vertical— y mantenlos TODAS las semanas del bloque con el MISMO NOMBRE, letra por letra: la app enlaza el historial por nombre y un cambio de variante o de material abre un historial nuevo. Los accesorios pueden cambiar, como mucho 1-2 por semana. Cambia un principal solo por cambio de bloque, molestia articular, falta de material o 1RM estimado plano 3+ semanas, y dilo en "nota_progresion". Lo que has pautado en las últimas ~3 semanas: ${rot.slice(0,30).join(', ')}.${rr?` La semana pasada se repitieron ${rr.repetidos} de ${rr.total} ejercicios respecto a la anterior (${rr.pct}%)${rr.pct<50?': es demasiado poco para progresar; corrígelo':''}.`:''}`;
   }
   return t;
 }
@@ -3036,12 +3328,12 @@ Días de entrenamiento libre (cardio/paseo): ${conFecha(freeOrd)||'ninguno'}.
 - ESTRUCTURA DE LA SEMANA (decídela TÚ): elige el esquema de los días completos —cuerpo entero, superior/inferior, empuje-tirón-pierna u otro— según cuántos días son, los minutos disponibles y mi objetivo, y justifícalo en "mesociclo.justificacion". Con 3 días completos o menos, prioriza cuerpo entero. Con 4 o más, valora repartir por bloques en vez de tocar todos los grupos todos los días. Fíjate en las FECHAS de arriba: si hay días consecutivos, no repitas en ellos los mismos grupos con carga alta; deja ~48 h entre estímulos fuertes del mismo grupo.
 - ORDEN DENTRO DE LA SESIÓN: primero los básicos multiarticulares y lo más técnico o exigente; después accesorios y core. Lo unilateral, después de su equivalente bilateral. Nunca dejes para el final el ejercicio en el que espero progresar en carga.
 - PRESUPUESTO DE TIEMPO (obligatorio; la app lo comprueba y me avisa si no cuadra): la sesión tiene que CABER en los minutos indicados. Estímalo así: minutos ≈ calentamiento + Σ(series × (duración de la serie + descanso_seg)) / 60, contando ~3,5 s por repetición. Si no cabe, quita ejercicios, baja series o acorta descansos; no me entregues una sesión que se pase más de un 10%.
-Para los días de fuerza breve: 3-4 ejercicios enfocados y de menor volumen, pensados para hacerse el mismo día que la carrera; prioriza tren superior o core y evita cargar piernas en exceso si ese día hay carrera intensa. Di además en "meta" si conviene hacer la fuerza ANTES o DESPUÉS de la carrera y cuánta separación recomiendas: si la prioridad de ese día es la carrera, primero la carrera; si la prioridad es la fuerza, primero la fuerza; y siempre que se pueda, sepáralas 6 h o más.
-Si se combinan varios objetivos, prioriza un esquema de fuerza/hipertrofia para el entrenamiento y ajusta SOLO la nutrición para el componente de composición corporal (p. ej. músculo+grasa = recomposición: déficit ligero con proteína alta; grasa = déficit; músculo/fuerza = superávit ligero).`;
+Para los días de fuerza breve: 3-4 ejercicios enfocados y de menor volumen, pensados para hacerse el mismo día que la carrera; prioriza tren superior o core y evita cargar piernas en exceso si ese día hay carrera intensa. Di además en "meta" si conviene hacer la fuerza ANTES o DESPUÉS de la carrera y cuánta separación recomiendas: si la prioridad de ese día es la carrera, primero la carrera; si la prioridad es la fuerza, primero la fuerza; y siempre que se pueda, sepáralas 3 h o más: en el metaanálisis de Schumann 2022 entrenar fuerza y resistencia a la vez no perjudicó ni la hipertrofia ni la fuerza máxima, pero sí la fuerza explosiva, y sobre todo cuando iban en la misma sesión en vez de separadas 3 h o más. Si no puedo separarlas, dímelo como preferencia y no como norma.
+${coherenciaObjetivosTxt()}`;
   // contexto de mesociclo (semana del programa que se va a planificar)
   let mesoTxt='';
   const targetWeek=programWeekFor(fmt(weekDates(S.currentWeek)[0]));
-  const mi=mesoInfo(targetWeek);
+  const mi=mesoInfo(targetWeek,fmt(weekDates(S.currentWeek)[0]));
   if(mi){
     const wd0=weekDates(S.currentWeek);
     const rango=fmt(wd0[0])+' a '+fmt(wd0[6]);
@@ -3051,7 +3343,8 @@ Si se combinan varios objetivos, prioriza un esquema de fuerza/hipertrofia para 
 - ACTÚA COMO ENTRENADOR PROFESIONAL: TÚ decides el enfoque del mesociclo en función de mi objetivo global y mi progreso; no me lo preguntes. Devuélvelo en el campo "mesociclo".
 - Si sigo dentro del mismo bloque (semana ${mi.wInBlock} de ${mi.len}), mantén el enfoque y progresa el volumen/carga de forma ascendente respecto a la semana anterior.
 - Si he llegado al final del bloque (semana ${mi.wInBlock} = ${mi.len}, o si el progreso/fatiga lo aconsejan), propón el enfoque del SIGUIENTE bloque, explicándolo en "mesociclo.justificacion".
-- SEMANAS DE VOLUMEN REDUCIDO: no programes NUNCA una semana de descanso ni de "no entrenar": entreno todas las semanas, sin excepción. Sí puedes —y debes, si está indicado— programar una semana de VOLUMEN REDUCIDO: mismos días y mismos patrones, carga igual o algo menor, pero un 40-50% menos de series y RIR 3-4. Indicaciones: fatiga alta sostenida dos semanas o más, 1RM estimado plano o a la baja durante 3+ semanas en varios ejercicios, molestia ARTICULAR repetida en la misma zona, o FC en reposo al alza / sueño por debajo de ~7 h de forma mantenida. Si no se cumple ninguna, progresa con normalidad.
+- CONTADOR DE BLOQUE: la cuenta de arriba ${mi.ancla?'parte de la semana que tú fijaste':'es un calendario automático desde mi primer registro y puede no coincidir con el bloque que tú llevas'}. Devuelve SIEMPRE en "mesociclo.semana_en_bloque" qué semana del bloque es la que planificas (1 = empieza un bloque nuevo): la app ajusta su contador a lo que tú digas, y así no tienes que corregirla en el análisis.
+- SEMANAS DE VOLUMEN REDUCIDO: no programes NUNCA una semana de descanso ni de "no entrenar": entreno todas las semanas, sin excepción. Sí puedes —y debes, si está indicado— programar una semana de VOLUMEN REDUCIDO: mismos días y mismos patrones, carga igual o algo menor, pero un 40-50% menos de series y RIR 3-4. Indicaciones: fatiga alta sostenida dos semanas o más, 1RM estimado plano o a la baja durante 3+ semanas en varios ejercicios, molestia ARTICULAR repetida en la misma zona, o FC en reposo al alza / sueño por debajo de ~7 h de forma mantenida. Para valorar la carga de carrera mira los kilómetros de CARRERA, no la suma con las caminatas. Un marcador que la app señale como «valor idéntico en todos los registros» no es una señal: no lo cites como prueba de nada. Si no se cumple ninguna indicación, progresa con normalidad. (Por qué reducir y no parar: en Coleman 2024, una semana sin entrenar fuerza a mitad de un programa de 9 no cambió la hipertrofia y dejó algo peor la fuerza del tren inferior.)
 - AUTORIDAD DE ENTRENADOR: yo te voy a pedir no bajar el ritmo. Si los datos dicen que toca reducir, redúcelo IGUALMENTE y explícame en "mesociclo.justificacion" por qué mi preferencia me está perjudicando, qué gano con esta semana y cuándo volvemos a subir. Lo mismo vale para cualquier otra preferencia mía que vaya contra un buen progreso o contra la prevención de lesiones: dilo y corrígelo, con argumentos. Prefiero que me contradigas a que me des la razón.`;
   }
   let histTxt='';
@@ -3062,30 +3355,62 @@ Si se combinan varios objetivos, prioriza un esquema de fuerza/hipertrofia para 
     // v75: lo pautado frente a lo realizado, ejercicio a ejercicio. Es el dato que permite decidir
     // si toca subir, mantener o bajar; sin él, las cargas sueltas no dicen nada.
     const cmp=complianceLines(21);
-    if(cmp)histTxt+='\n\nCUMPLIMIENTO REAL (lo que te pauté frente a lo que hice, últimas 3 semanas). Úsalo como base de la progresión: "tope del rango en todas las series" = subir carga; "series incompletas" o "por debajo del rango" = mantener o bajar y revisar por qué. El "esfuerzo por serie" es lo que marqué yo al cerrar CADA serie, en orden (s1, s2, s3…): fácil = me sobraban 3+ repeticiones, justo = 1-2 de margen, al límite = sin margen. Léelo como una curva, no como una etiqueta: que solo las últimas salgan al límite es una progresión sana y puedes subir; que la mitad o más salgan al límite dice que la carga está pasada y toca consolidar o quitar una serie. Si una serie pone "sin marcar", no supongas nada de ella.\nAVISO SOBRE LAS UNIDADES: los kilos y las repeticiones que registro son NÚMEROS, sin unidad implícita. Su significado es el del campo "pautado" que acompaña a cada ejercicio: si pautaste "16 kg por mancuerna" y "8-10 por pierna", entonces "16 kg × 10" significa 16 kg en cada mano y 10 repeticiones POR PIERNA, no en total. Interpreta siempre el registro con esa referencia, y si en algún ejercicio no aparece el campo "pautado", dilo en "meta" en vez de suponer:\n'+cmp;
+    const cmpKeys=new Set(complianceList(21).map(c=>c.key)); // v88: para no mandar las series dos veces
+    if(cmp)histTxt+='\n\nCUMPLIMIENTO REAL (lo que te pauté frente a lo que hice, últimas 3 semanas). Es la base de la progresión. La etiqueta entre corchetes al final de cada ejercicio es la DECISIÓN que sale de aplicar la regla de PROGRESIÓN a esos datos; la app la calcula con la fórmula de Epley y con mis escalones de carga reales: «sube a X kg y vuelve a la parte baja del rango», «misma carga y rango ampliado a A-B», «suma repeticiones», «consolidar», «mantener o bajar». Síguela salvo que tengas un motivo, y si te apartas dilo en "nota_progresion". El "esfuerzo por serie" es lo que marqué al cerrar CADA serie, en orden (s1, s2, s3…): «RIR n» = repeticiones que creo que me quedaban (3+ = tres o más); «a fallo técnico» = esa serie la llevé hasta no poder hacer otra repetición con buena técnica, así que sus repeticiones son un dato y no una estimación. En registros anteriores a la v88: fácil ≈ RIR 3 o más, justo ≈ RIR 1-2, al límite ≈ RIR 0; ojo, esas etiquetas antiguas venían premarcadas con la de la serie anterior y tienden a repetirse, así que dales menos peso que a un RIR numérico. Si una serie pone "sin marcar", no supongas nada de ella.\nAVISO SOBRE LAS UNIDADES: los kilos y las repeticiones que registro son NÚMEROS, sin unidad implícita. Su significado es el del campo "pautado" que acompaña a cada ejercicio: si pautaste "16 kg por mancuerna" y "8-10 por pierna", entonces "16 kg × 10" significa 16 kg en cada mano y 10 repeticiones POR PIERNA, no en total. Interpreta siempre el registro con esa referencia, y si en algún ejercicio no aparece el campo "pautado", dilo en "meta" en vez de suponer:\n'+cmp;
     const h=S.history.slice(0,38); // ~4 semanas completas con margen, a tu ritmo (hasta 9 ses./sem)
     histTxt+='\n\nHISTORIAL DE SESIONES COMPLETADAS (hasta ~4 semanas, más reciente primero; da más peso a la última semana para decidir la carga inmediata, y usa el conjunto para ver la trayectoria del mesociclo: si progreso, me estanco o acumulo fatiga):\n'+
-      (h.length?h.map(x=>`- ${x.key}: ${x.title}, ${x.duration}min${x.distance?' '+x.distance+'km':''}${x.kcal?' · '+x.kcal+' kcal':''}${x.hr?' · FC media '+x.hr:''}, esfuerzo ${x.feeling}${x.fatiga&&x.fatiga!=='normal'?' · llegaba '+x.fatiga:''}${x.pain&&x.pain.length?' · '+(x.painKind==='muscular'?'agujetas/molestia muscular en ':'molestia ARTICULAR en ')+x.pain.map(areaLabel).join('/'):''}${x.orden?' · esta actividad fue '+(x.orden==='antes'?'ANTES':'DESPUÉS')+' de la otra del día'+(x.sepH!=null?' ('+x.sepH+' h de separación)':' (separación sin anotar)'):''}. ${x.notes||''}${x.ajusteDia&&((x.ajusteDia.cambios||[]).length||(x.ajusteDia.rechazados||[]).length)?' AJUSTE DEL DÍA ('+(x.ajusteDia.fuente==='claude'?'revisado con Claude':'reglas de la app')+', llegaba '+x.ajusteDia.estado+(x.ajusteDia.dolor&&x.ajusteDia.dolor.length?', molestia '+x.ajusteDia.dolor.map(areaLabel).join('/'):'')+'): '+((x.ajusteDia.cambios||[]).length?'aplicado '+x.ajusteDia.cambios.map(c=>c.nombre+' ['+c.desc+']').join('; '):'nada aplicado')+((x.ajusteDia.rechazados||[]).length?'; rechacé '+x.ajusteDia.rechazados.map(c=>c.nombre+' ['+c.desc+']').join('; '):'')+'.':''}${x.sets&&x.sets.length?' CARGAS REALES serie a serie: '+x.sets.map(e=>e.nombre+refSets(e)+' '+fmtSets(e.series)+esfDetalle(e.series)).join('; ')+'.':''}`).join('\n'):'(ninguna registrada)');
+      (h.length?h.map(x=>`- ${x.key}: ${x.title}, ${x.duration}min${x.distance?' '+x.distance+'km':''}${x.kcal?' · '+x.kcal+' kcal':''}${x.hr?' · FC media '+x.hr:''}, esfuerzo ${x.feeling}${x.fatiga&&x.fatiga!=='normal'?' · llegaba '+x.fatiga:''}${x.pain&&x.pain.length?' · '+(x.painKind==='muscular'?'agujetas/molestia muscular en ':'molestia ARTICULAR en ')+x.pain.map(areaLabel).join('/'):''}${x.orden?' · esta actividad fue '+(x.orden==='antes'?'ANTES':'DESPUÉS')+' de la otra del día'+(x.sepH!=null?' ('+x.sepH+' h de separación)':' (separación sin anotar)'):''}. ${notasLibres(x)}${x.ajusteDia&&((x.ajusteDia.cambios||[]).length||(x.ajusteDia.rechazados||[]).length)?' AJUSTE DEL DÍA ('+(x.ajusteDia.fuente==='claude'?'revisado con Claude':'reglas de la app')+', llegaba '+x.ajusteDia.estado+(x.ajusteDia.dolor&&x.ajusteDia.dolor.length?', molestia '+x.ajusteDia.dolor.map(areaLabel).join('/'):'')+'): '+((x.ajusteDia.cambios||[]).length?'aplicado '+x.ajusteDia.cambios.map(c=>c.nombre+' ['+c.desc+']').join('; '):'nada aplicado')+((x.ajusteDia.rechazados||[]).length?'; rechacé '+x.ajusteDia.rechazados.map(c=>c.nombre+' ['+c.desc+']').join('; '):'')+'.':''}${cargasHist(x,cmpKeys)}`).join('\n'):'(ninguna registrada)');
   }
   // v75 · volumen semanal por grupo muscular, fuerza estimada, cardio y memoria del entrenador
   let coachTxt='';
   const volAct=volumeSummaryText(S.currentWeek-1,true), volPrev=volumeSummaryText(S.currentWeek-2,true);
   if(volAct!=='sin datos'||volPrev!=='sin datos'){
-    coachTxt+=`\n\nVOLUMEN SEMANAL POR GRUPO MUSCULAR (series realizadas; recuento total: cada serie cuenta para todos los grupos implicados, así que los básicos inflan la cifra. Es una estimación a partir del nombre y los músculos declarados de cada ejercicio):\n- Semana pasada: ${volAct}\n- Semana anterior: ${volPrev}\nAjusta el reparto de la semana que planificas para acercar cada grupo a un volumen suficiente y corregir los que se han quedado cortos. Dime en "analisis_progreso" qué grupo has reforzado y cuál has recortado.`;
+    coachTxt+=`\n\nVOLUMEN SEMANAL POR GRUPO MUSCULAR (series realizadas; recuento FRACCIONADO: 1 por serie para el grupo principal del ejercicio y 0,5 para los que ayudan, que es el recuento que mejor se ajusta a los datos en Pelland 2025. Entre paréntesis, el recuento en bruto —cada serie entera para todos los grupos—, que es con el que se formuló la referencia de ~10 series. Es una estimación a partir del nombre y los músculos declarados de cada ejercicio):\n- Semana pasada: ${volAct}\n- Semana anterior: ${volPrev}\nAjusta el reparto de la semana que planificas para acercar cada grupo a un volumen suficiente y corregir los que se han quedado cortos. Dime en "analisis_progreso" qué grupo has reforzado y cuál has recortado.`;
   }
   const e1=e1rmTopSummary(6);
   if(e1.length){
-    coachTxt+=`\n\nFUERZA ESTIMADA (1RM calculado con la fórmula de Epley a partir de mis series reales, solo hasta 12 repeticiones; es una estimación, no una marca medida):\n- ${e1.join('\n- ')}\nSi el 1RM estimado sube, la progresión funciona aunque el peso en la barra parezca el mismo. Si lleva 3+ semanas plano en un ejercicio, cambia algo (rango de repeticiones, variante o volumen) y explícalo.`;
+    coachTxt+=`\n\nFUERZA ESTIMADA (1RM calculado con la fórmula de Epley a partir de mis series reales, solo hasta 12 repeticiones; es una estimación, no una marca medida):\n- ${e1.join('\n- ')}\nSolo entran ejercicios registrados en las últimas 6 semanas, agrupados por ejercicio aunque el nombre varíe un poco. OJO: cuando paro en el tope del rango con repeticiones de margen, este número es un MÍNIMO y no mi fuerza real; solo es comparable entre semanas si el esfuerzo fue parecido, y las series a fallo técnico dan el valor más fiable. Si el 1RM estimado sube, la progresión funciona aunque el peso en la barra parezca el mismo. Si lleva 3+ semanas plano en un ejercicio, cambia algo (rango de repeticiones, variante o volumen) y explícalo.`;
   }
   const cw=cardioWeek(S.currentWeek-1),cw2=cardioWeek(S.currentWeek-2);
   const hz=hrZones();
+  const coh=hrCoherencia(); // v88
   if(cw.n||cw2.n||hz){
     const linea=c=>c.n?`${c.n} ${c.n===1?'sesión':'sesiones'}, ${c.km} km, ${c.min} min${c.ritmo?', ritmo medio '+c.ritmo:''}${c.fcMedia?', FC media '+c.fcMedia:''}`:'sin sesiones registradas';
-    coachTxt+=`\n\nCARDIO REGISTRADO:\n- Semana pasada: ${linea(cw)}\n- Semana anterior: ${linea(cw2)}`;
+    // v88: carrera y caminata por separado. Sumadas, una semana de paseos parecía una subida de carrera.
+    const porTipo=w=>{const r=cardioWeek(w,'carrera'),c=cardioWeek(w,'caminata'),o=cardioWeek(w,'otro');
+      return `CARRERA ${linea(r)} · CAMINATA ${linea(c)}${o.n?' · OTRO '+linea(o):''}`;};
+    coachTxt+=`\n\nCARDIO REGISTRADO (carrera y caminata por separado; la regla del ~10% semanal se aplica a los km de CARRERA, nunca a la suma):\n- Semana pasada: ${porTipo(S.currentWeek-1)}\n- Semana anterior: ${porTipo(S.currentWeek-2)}`;
+    const rc=resumenCarreras(56);
+    if(rc)coachTxt+=`\n${rc}`;
+    coachTxt+=`\nPLAN DE CARRERA: en "recomendacion_cardio" no me des la misma salida todas las semanas. Dale estructura —la mayor parte del volumen suave, a ritmo de poder hablar; una salida algo más larga; y, si la fuerza de esa semana lo permite, una parte pequeña de trabajo intenso (cambios de ritmo o series cortas)— y progresa una sola cosa cada vez: distancia de la salida larga, o número de repeticiones intensas, no las dos. Repartir así la intensidad dio una ventaja pequeña en VO2pico frente a otras distribuciones, sin diferencias claras en atletas de nivel medio ni en programas de 12 semanas o más (Oliveira 2024): es una orientación razonable, no una garantía. Colócala respecto a las sesiones de pierna para no hacer el trabajo intenso el día siguiente a la pierna pesada.`;
+
     if(hz&&hz.zonas){
-      coachTxt+=`\nMIS ZONAS DE FRECUENCIA CARDIACA (método Karvonen sobre FC en reposo ${hz.fcRep} y FCmáx estimada ${hz.fcMax} por la fórmula de Tanaka 208−0,7×edad; es una ESTIMACIÓN, puede desviarse ±10 lpm): Z1 ${hz.zonas.Z1} · Z2 ${hz.zonas.Z2} · Z3 ${hz.zonas.Z3} · Z4 ${hz.zonas.Z4} · Z5 ${hz.zonas.Z5} lpm.\nUSA ESTAS CIFRAS en "recomendacion_cardio": prescribe tipo de sesión, duración y la zona CON SU RANGO DE PULSACIONES concreto, y progresa el volumen semanal de carrera de forma prudente (no más de ~10% de km por semana) teniendo en cuenta la carga de fuerza.`;
+      coachTxt+=`\nMIS ZONAS DE FRECUENCIA CARDIACA (método Karvonen sobre FC en reposo ${hz.fcRep} y FCmáx estimada ${hz.fcMax} por la fórmula de Tanaka 208−0,7×edad; es una ESTIMACIÓN, puede desviarse ±10 lpm): Z1 ${hz.zonas.Z1} · Z2 ${hz.zonas.Z2} · Z3 ${hz.zonas.Z3} · Z4 ${hz.zonas.Z4} · Z5 ${hz.zonas.Z5} lpm.\n${coh&&coh.incoherente
+        ?`⚠ PULSOS NO FIABLES: ${coh.texto}. Suele deberse al sensor de muñeca en exterior o a una cinta mal calibrada. NO saques conclusiones de mi FC media de carrera ni la compares entre cinta y exterior. En "recomendacion_cardio" prescribe la intensidad por RITMO y por sensación (poder hablar = suave) y da el rango de pulsaciones solo como referencia secundaria.`
+        :`USA ESTAS CIFRAS en "recomendacion_cardio": prescribe tipo de sesión, duración y la zona CON SU RANGO DE PULSACIONES concreto.`} Progresa el volumen semanal de CARRERA de forma prudente (no más de ~10% de km por semana) teniendo en cuenta la carga de fuerza.`;
     }else if(hz){
       coachTxt+=`\nFCmáx estimada ${hz.fcMax} lpm (Tanaka). No tengo FC en reposo importada, así que no puedo dar zonas por reserva: prescribe la intensidad por sensación (conversación) además de por pulso.`;
+    }
+  }
+  // v88 · calibración del RIR con las series a fallo técnico
+  const cal=calibracionReciente(42);
+  if(cal){
+    const ult=cal.casos.slice(0,6).map(c=>`${c.nombre} (${c.fecha}): dije RIR ${c.estimadas>=3?'3+':c.estimadas} y a fallo salieron ${c.hechasDeMas} más`).join('; ');
+    coachTxt+=`\n\nCALIBRACIÓN DE MI RIR (${cal.n} ${cal.n===1?'serie':'series'} a fallo técnico en 6 semanas): la serie a fallo dice cuántas repeticiones quedaban de verdad respecto a lo que estimé en la serie anterior con la misma carga. Sesgo mediano: ${cal.mediana>0?'me quedaban al menos '+cal.mediana+' más de las que creía (me quedo corto)':cal.mediana<0?'estimé '+Math.abs(cal.mediana)+' de más':'estimación ajustada'}. Casos: ${ult}. Es un mínimo, porque la serie a fallo va después y con más fatiga. Tenlo en cuenta al leer mis RIR: si me quedo corto de forma sistemática, mis «RIR 1» son en realidad más margen.`;
+  }
+  // v88 · peso y cintura, con su ritmo real (antes solo viajaban si había datos de Apple Salud)
+  {
+    const wl=(S.weightLog||[]).slice(-8);const wt=weightTrend();const ro=ritmoObjetivoPeso();
+    const cin=(S.waistLog||[]).slice(-6);
+    if(wl.length>=2||cin.length){
+      const sg=v=>(v>0?'+':'')+String(v).replace('.',',');
+      coachTxt+=`\n\nPESO Y CINTURA:`;
+      if(wl.length>=2)coachTxt+=`\n- PESO REGISTRADO: ${wl.map(x=>`${x.date} ${x.kg} kg`).join(' → ')}.`;
+      if(wt)coachTxt+=`\n- Ritmo de las últimas ${Math.max(2,Math.round(wt.dias/7))} semanas (recta de regresión sobre ${wt.n} pesajes): ${sg(wt.kgSem)} kg/semana, ${sg(wt.pctSem)}% del peso por semana.${ro?' Referencia para mis objetivos marcados: '+ro.txt+'.':''}`;
+      else if(wl.length>=2)coachTxt+=`\n- Aún no hay 3 pesajes repartidos en 2 semanas dentro de las últimas 5: no se puede calcular un ritmo fiable. Dilo en vez de tocar las calorías a ciegas.`;
+      if(wl.length>=4&&wl.every(x=>Number.isInteger(+x.kg)))coachTxt+=`\n- ⚠ Mis pesajes van redondeados al kilo: con esa resolución no se ve un cambio de 0,1-0,3 kg por semana. No interpretes «peso estable» como dato; pídeme pesarme con decimales.`;
+      if(cin.length)coachTxt+=`\n- CINTURA (cm, a la altura del ombligo): ${cin.map(x=>`${x.date} ${x.cm}`).join(' → ')}. Con el peso estable es el indicador que dice si la composición mejora.`;
+      else coachTxt+=`\n- Cintura: sin registros. Pídeme medirla una vez al mes: sin ella no se puede evaluar una recomposición.`;
     }
   }
   const cl=coachLogLines(4);
@@ -3118,38 +3443,45 @@ Si se combinan varios objetivos, prioriza un esquema de fuerza/hipertrofia para 
         const serie=(lab,campo,uni)=>{
           const pts=ult.filter(x=>x[campo]!=null);
           if(pts.length<2)return null;
-          return `${lab}: ${pts.map(x=>`${x.date} ${x[campo]}${uni||''}`).join(' → ')}`;
+          // v88: la HRV fue 44 en los 15 registros y el sueño 7 h en todos: valores arrastrados del
+          // formulario manual, que el entrenador leyó como «HRV estable»
+          const todos=log.filter(x=>x[campo]!=null);
+          const fijo=todos.length>=4&&todos.every(x=>String(x[campo])===String(todos[0][campo]));
+          return `${lab}: ${pts.map(x=>`${x.date} ${x[campo]}${uni||''}`).join(' → ')}${fijo?` ⚠ VALOR IDÉNTICO en los ${todos.length} registros: casi seguro es un dato arrastrado y no una medición. NO lo uses como señal ni lo cites como «estable».`:''}`;
         };
         const lineas=[serie('FC en reposo','restingHR',' lpm'),serie('HRV','hrv',' ms'),
           serie('VO2max','vo2max',''),serie('% grasa','bodyFat','%'),
           serie('Pasos/día','avgSteps',''),serie('Sueño','avgSleepH',' h')].filter(Boolean);
-        if(lineas.length)trend=`\nTRAYECTORIA de los últimos meses (cada punto es la media mensual):\n- ${lineas.join('\n- ')}`;
+        if(lineas.length)trend=`\nTRAYECTORIA (cada punto es un registro: media mensual si viene de Apple Salud, o el valor que escribí a mano ese día):\n- ${lineas.join('\n- ')}`;
       }
       // peso corporal: la serie más fina que tenemos, y la que gobierna el ajuste calórico
       const wl=(S.weightLog||[]).slice(-8);
       let pesoTxt='';
-      if(wl.length>=2){
-        const dif=Math.round((wl[wl.length-1].kg-wl[0].kg)*10)/10;
-        const sem=daysBetween(wl[0].date,wl[wl.length-1].date);
-        pesoTxt=`\nPESO REGISTRADO: ${wl.map(x=>`${x.date} ${x.kg} kg`).join(' → ')}. Variación total ${dif>=0?'+':''}${dif} kg en ${sem!=null?sem:'?'} días.`;
-      }
-      healthTxt=`\n\nMARCADORES DE ESTADO (medias mensuales de Apple Salud; valora mi recuperación y ajusta en consecuencia):\n- ${parts.join('\n- ')}${trend}${pesoTxt}
-Cómo interpretarlo: lo que informa es el CAMBIO respecto a mi propia línea de base, no el valor absoluto ni compararme con nadie. FC en reposo al alza o HRV a la baja de forma sostenida sugieren fatiga acumulada o estrés → recorta volumen o aleja del fallo esa semana. Un sueño medio por debajo de ~7 h limita la recuperación → no subas volumen. Un VO2max estable o al alza indica que la base aeróbica aguanta más acondicionamiento; si cae mientras el volumen de carrera sube, algo no cuadra. Cautela: son medias MENSUALES, así que son una señal lenta y de trazo grueso para decidir una semana concreta; úsalas junto a lo que yo haya registrado de fatiga y esfuerzo, que es información más fresca. Menciona en el análisis cualquier tendencia que veas. No hagas diagnósticos médicos ni interpretaciones clínicas: trátalo como contexto de entrenamiento.`;
+      // v88: el peso viaja en su propio bloque (PESO Y CINTURA), haya o no datos de Apple Salud
+      healthTxt=`\n\nMARCADORES DE ESTADO (${H.manual?'introducidos a mano por mí; desde la v88 solo se guarda el marcador que actualizo ese día':'medias mensuales de Apple Salud'}; valora mi recuperación y ajusta en consecuencia):\n- ${parts.join('\n- ')}${trend}${pesoTxt}
+Cómo interpretarlo: lo que informa es el CAMBIO respecto a mi propia línea de base, no el valor absoluto ni compararme con nadie. FC en reposo al alza o HRV a la baja de forma sostenida sugieren fatiga acumulada o estrés → recorta volumen o aleja del fallo esa semana. Un sueño medio por debajo de ~7 h limita la recuperación → no subas volumen. Un VO2max estable o al alza indica que la base aeróbica aguanta más acondicionamiento; si cae mientras el volumen de carrera sube, algo no cuadra. Cautela: ${H.manual?'son valores que anoto a mano de vez en cuando':'son medias MENSUALES'}, así que son una señal lenta y de trazo grueso para decidir una semana concreta; úsalas junto a lo que yo haya registrado de fatiga y esfuerzo, que es información más fresca. Menciona en el análisis cualquier tendencia que veas. No hagas diagnósticos médicos ni interpretaciones clínicas: trátalo como contexto de entrenamiento.`;
     }
   }
 
   const adaptRules=mode==='adapt'?`
 REGLAS DE ADAPTACIÓN (basadas en evidencia):
 - El PUNTO DE PARTIDA es la referencia del nivel inicial. Cuando existan sesiones recientes registradas, PRIORÍZALAS para decidir la progresión y trata el punto de partida solo como contexto de origen, no como el plan a repetir.
-- Sobrecarga progresiva: si el esfuerzo fue 💪/🔥 y completó las sesiones, sube carga ~2-5% o añade 1 serie/repeticiones (doble progresión).
-- Cuando una sesión del historial incluya "CARGAS REALES serie a serie", esos kg×reps son el dato MÁS fiable: úsalos como referencia principal para fijar el peso de la semana siguiente (doble progresión: si alcanzó el tope del rango de reps en todas las series, sube al siguiente escalón de mancuerna disponible; si se quedó lejos, mantén o baja).
+- PROGRESIÓN (regla única; sustituye a cualquier otra idea de «subir un 2-5%» o «subir al llegar al tope»):
+  1. Se progresa primero en REPETICIONES con la misma carga, hasta cerrar todas las series en el tope del rango con margen. Progresar repeticiones y progresar carga dan resultados parecidos (Plotkin 2022).
+  2. La carga sube solo cuando el salto CABE en el rango: con la carga nueva tengo que poder volver a la parte baja del rango con ~1 repetición de margen. Con mancuernas el escalón es fijo, así que el salto puede ser de un 7% o de un 25% según el peso; un rango de 2 repeticiones solo absorbe ~6-7%. La app ya hace esa cuenta con mis escalones reales y te la da en la etiqueta entre corchetes de CUMPLIMIENTO REAL.
+  3. Si el salto no cabe, NO lo fuerces: misma carga y rango ampliado por arriba, como diga la etiqueta. El salto llega cuando cierre el rango ampliado.
+  4. La semana en que sube una carga, pauta la parte baja del rango y RIR 2 en ese ejercicio: el objetivo del primer día no es el tope. No subas en la misma semana la carga de más de la mitad de los ejercicios principales, ni la de un ejercicio que cargue una zona con molestia articular en los últimos 14 días.
+  5. «Consolidar» (la mitad o más de las series a RIR 0) = misma carga y mismo rango una semana más, o una serie menos. «Por debajo del rango» = mantener o bajar, y revisar por qué.
+  6. Si no hay una carga más pesada disponible: más repeticiones, tempo más lento, pausa en el punto difícil o versión a una mano/pierna.
+  Los puntos 4-6 y los umbrales son convenciones de práctica, no puntos de corte validados por un estudio.
+- Las series reales (kg × repeticiones, con su esfuerzo) son el dato MÁS fiable que tienes. Están en CUMPLIMIENTO REAL; el HISTORIAL remite allí para no repetirlas.
 - Si predominó 😓/😴 o faltaron sesiones, reduce volumen y prioriza recuperación.
 - Nunca una semana de descanso: entreno siempre. Si hay fatiga (😓/😴, marcadores peores, molestia articular repetida), puedes bajar a una semana de VOLUMEN REDUCIDO (40-50% menos series, misma frecuencia, carga similar, RIR 3-4) y decirlo con claridad en "analisis_progreso" y en "mesociclo.justificacion".
-- ESFUERZO REAL DE LAS SERIES: cuando el cumplimiento indique "esfuerzo al límite", NO subas carga aunque haya llegado al tope del rango; consolida esa carga una semana más o reduce una serie. Subir sobre series que ya se hacen al fallo es la forma más rápida de estancarse y de acumular fatiga.
+- ESFUERZO REAL DE LAS SERIES: no subas carga sobre series que ya se cierran sin margen, aunque hayan llegado al tope del rango. Subir sobre series a RIR 0 es la forma más rápida de estancarse y de acumular fatiga.
 - AJUSTES DEL DÍA: antes de cada sesión la app revisa lo previsto con lo último registrado y me propone ajustes acotados (±1 escalón de carga, −1 serie, RIR +1); el historial dice cuáles apliqué y cuáles rechacé, y si los revisé contigo. Si se repiten en el mismo sentido (siempre bajando la carga que pautaste, o siempre subiéndola), es que tu planificación semanal va desajustada: corrígela y dilo en "analisis_progreso". Si rechacé un ajuste y la sesión fue bien, dale peso a mi criterio; si fue mal, dímelo.
 - ORDEN FUERZA / CARDIO REALIZADO: en los días con las dos cosas, el historial dice cuál hice ANTES y con cuánta separación. Compáralo con lo que recomendaste la semana pasada: si lo hice al revés y el rendimiento en fuerza cayó, dilo y explica por qué el orden importa; si lo hice como dijiste y funcionó, mantenlo; si funcionó igual del otro modo, reconócelo y adáptate a lo que me resulte más fácil de cumplir. Si no hay dato de orden, no supongas: pídemelo en "meta".
 - En "nota_progresion" de cada ejercicio, explica el cambio concreto frente a la semana anterior.
-- Varía algún ejercicio si lleva 2+ semanas idéntico, para evitar estancamiento.
+- NO cambies un ejercicio principal por llevar varias semanas igual: repetirlo es lo que permite progresar. Cámbialo solo por los motivos de «EJERCICIOS ESTABLES DENTRO DEL BLOQUE».
 - En "analisis_progreso" resume en 3-4 frases qué has ajustado y por qué.`:'';
 
   /* v80: la nutrición se generaba sin saber nada de lo que como o no puedo comer, así que el
@@ -3159,16 +3491,34 @@ REGLAS DE ADAPTACIÓN (basadas en evidencia):
     ? `- ALIMENTACIÓN, restricciones y preferencias (respétalas SIEMPRE en "menu_dia"): "${_dieta}". No propongas alimentos excluidos ni platos que no encajen con esto. Si alguna restricción dificulta llegar a la proteína objetivo, dilo y propón cómo cubrirla.\n`
     : `- ALIMENTACIÓN: no he indicado restricciones. Cocina sencilla y variada, sin suplementos ni alimentos difíciles de encontrar.\n`;
   const evidence=`
-PRINCIPIOS BASADOS EN EVIDENCIA (referencias comprobadas una a una contra su DOI; si citas evidencia en tus explicaciones usa SOLO referencias reales, y NUNCA inventes ni "actualices" citas):
+PRINCIPIOS BASADOS EN EVIDENCIA (referencias comprobadas una a una; si citas evidencia en tus explicaciones usa SOLO las de esta lista, y NUNCA inventes ni "actualices" citas. Lo que aquí se marca como «convención de práctica» no sale de un estudio: no lo presentes como si saliera):
   · ACSM 2026 Position Stand, "Resistance Training Prescription for Muscle Function, Hypertrophy, and Physical Performance in Healthy Adults", Med Sci Sports Exerc 58(4):851-872, abril 2026, DOI 10.1249/MSS.0000000000003897. Síntesis de 137 revisiones sistemáticas y >30.000 participantes; actualiza el Position Stand de 2009. Subraya que la constancia y el esfuerzo pesan más que el plan perfecto, que bandas, peso corporal y rutinas en casa son plenamente eficaces, y que llegar al fallo, el material concreto y la periodización compleja no son imprescindibles en el adulto sano.
   · Robinson et al. 2024, Sports Med 54(9):2209-2231, DOI 10.1007/s40279-024-02069-2. Meta-regresiones sobre proximidad al fallo: la hipertrofia mejora cuanto más cerca del fallo se termina la serie, mientras que la fuerza apenas se ve afectada por ese factor.
   · Pelland et al., Sports Med 56(2):481-505 (publicado en línea el 4-12-2025), DOI 10.1007/s40279-025-02344-w. 67 estudios, 2.058 participantes: volumen y frecuencia tienen curvas dosis-respuesta distintas, y la fuerza muestra rendimientos decrecientes más marcados que la hipertrofia.
   · Morton et al. 2018, Br J Sports Med 52(6):376-384, DOI 10.1136/bjsports-2017-097608. 49 estudios, 1.863 participantes: la ganancia de masa magra deja de aumentar por encima de ~1,62 g de proteína/kg/día (IC 95% 1,03-2,20).
+  · Refalo et al. 2023, Sports Med 53(3):649-665, DOI 10.1007/s40279-022-01784-y. Entrenar hasta el fallo no dio más hipertrofia que quedarse cerca.
+  · Morán-Navarro et al. 2017, Eur J Appl Physiol 117(12):2387-2399, DOI 10.1007/s00421-017-3725-7. Llegar al fallo retrasa la recuperación 24-48 h frente a dejar repeticiones en reserva con el mismo volumen.
+  · Halperin et al. 2022, Sports Med 52:377-390, DOI 10.1007/s40279-021-01559-x. Al estimar las repeticiones que quedan, de media se subestiman en ~1; se acierta más cerca del fallo y en series de 12 repeticiones o menos.
+  · Wiedenmann et al. 2026, BMC Sports Sci Med Rehabil 18:375, DOI 10.1186/s13102-026-01997-y. La estimación del RIR se entrena: mejora practicando con series llevadas al fallo real.
+  · Plotkin et al. 2022, PeerJ 10:e14142, DOI 10.7717/peerj.14142. Progresar añadiendo repeticiones o añadiendo carga dio adaptaciones parecidas.
+  · Kassiano et al. 2022, J Strength Cond Res 36(6):1753-1762, DOI 10.1519/JSC.0000000000004258. Algo de variación de ejercicios puede ayudar; la variación excesiva o al azar puede comprometer las ganancias.
+  · Singer et al. 2024, Front Sports Act Living 6:1429789, DOI 10.3389/fspor.2024.1429789. Para hipertrofia, descansar más de 60 s entre series da un beneficio modesto, y no se aprecia más por encima de ~90 s.
+  · Wolf et al. 2023, Int J Strength Cond 3(1), DOI 10.47206/ijsc.v3i1.182. Recorrido completo frente a parcial: diferencias triviales; trabajar en la posición alargada del músculo podría dar una ventaja pequeña e incierta.
+  · Schumann et al. 2022, Sports Med 52:601-612, DOI 10.1007/s40279-021-01587-7. Fuerza y resistencia a la vez: sin interferencia en hipertrofia ni en fuerza máxima; sí en fuerza explosiva, sobre todo en la misma sesión.
+  · Silva Oliveira et al. 2024, Sports Med 54:2071-2095, DOI 10.1007/s40279-024-02034-z. Distribución polarizada de la intensidad: ventaja pequeña en VO2pico, sin diferencias claras en atletas de nivel medio ni en intervenciones de 12 semanas o más.
+  · Coleman et al. 2024, PeerJ 12:e16777, DOI 10.7717/peerj.16777. Una semana sin entrenar fuerza a mitad de un programa de 9: misma hipertrofia y algo menos de fuerza en el tren inferior.
+  · Iraki et al. 2019, Sports 7(7):154 (revisión narrativa; DOI no comprobado). Fuera de temporada: superávit ligero, ganar ~0,25-0,5% del peso por semana en principiantes e intermedios y más despacio en avanzados, proteína 1,6-2,2 g/kg/día repartida en tomas de 0,40-0,55 g/kg.
+  · Kreider et al. 2017, J Int Soc Sports Nutr 14:18, DOI 10.1186/s12970-017-0173-z. Posición de la ISSN sobre la creatina monohidrato: eficaz y segura en adultos sanos a 3-5 g/día.
 - Fuerza: cargas altas (orientativamente ~80% 1RM o más), 2-3 series por ejercicio, descansos 2-3 min. Ojo: es una referencia, no un umbral mágico; el rango útil es amplio y el esfuerzo pesa más que el porcentaje exacto.
-- Hipertrofia: acumular en torno a 10 o más series por grupo muscular a la semana; terminar las series cerca del fallo (1-3 repeticiones en reserva), NO al fallo absoluto. En el trabajo de FUERZA no hace falta acercarse tanto al fallo: puedes dejar más margen (RIR 3-4) sin perder resultado, y eso ahorra fatiga.
+- Hipertrofia: acumular en torno a 10 o más series por grupo muscular a la semana; terminar las series cerca del fallo (1-3 repeticiones en reserva), NO al fallo absoluto, con la única excepción de la serie a fallo técnico descrita abajo. En el trabajo de FUERZA no hace falta acercarse tanto al fallo: puedes dejar más margen (RIR 3-4) sin perder resultado, y eso ahorra fatiga.
 - El volumen semanal es la variable que más manda; la frecuencia importa sobre todo como forma de repartir ese volumen, no como objetivo en sí. Repartir cada grupo en 2 o más días suele facilitarlo, pero no lo trates como una regla rígida.
 - El peso corporal y las bandas son medios válidos y eficaces.
 - Indica el esfuerzo como RIR (repeticiones en reserva), no como RPE.
+- RANGOS DE REPETICIONES ANCHOS: en todo ejercicio con carga externa pauta rangos de 4-5 repeticiones de ancho (6-10, 8-12, 10-15), nunca de 2 ni un número fijo. El rango es lo que permite progresar en repeticiones antes de saltar de carga; con rangos estrechos cada escalón de mancuerna obliga a rozar el fallo. La app me avisa si llega un rango de menos de 4 (convención de práctica).
+- SERIE A FALLO TÉCNICO ("fallo_tecnico"): al parar siempre en el tope del rango no sé cuántas repeticiones me quedaban, y mi estimación del RIR es imprecisa (Halperin 2022) aunque se entrena practicando el fallo real (Wiedenmann 2026). Por eso la app me pide llevar la ÚLTIMA serie de algunos ejercicios hasta el fallo técnico —la última repetición con buena técnica— y anotar las que salgan. Marca "fallo_tecnico":true en 2-3 ejercicios por sesión como máximo, y solo donde fallar una repetición no comprometa nada: monoarticulares (curl, elevaciones laterales, extensiones de tríceps, gemelo) y peso corporal seguro (flexiones). Marca false en todo lo demás: básicos con mancuernas pesadas, unilaterales de pierna con carga, remos con la espalda sin apoyo, y cualquier ejercicio que cargue una zona con molestia. El resto de las series, a RIR 1-3: llegar al fallo no da más hipertrofia (Refalo 2023) y retrasa la recuperación 24-48 h (Morán-Navarro 2017). Si no marcas nada, la app decide con una lista conservadora.
+- DESCANSOS: accesorios y monoarticulares, 60-90 s; no pautes 2-3 min en ellos, es tiempo que no cabe en la sesión y no compra más hipertrofia (Singer 2024). Básicos pesados, 2-3 min: ahí el descanso protege la carga y la técnica.
+- POSICIÓN ALARGADA, como criterio de desempate: entre dos variantes equivalentes, prefiere la que carga el músculo estirado (curl en banco inclinado frente a curl concentrado, RDL frente a puente). La ventaja es pequeña e incierta (Wolf 2023): no reorganices la sesión por esto.
+- COLOCACIÓN DE LAS MANCUERNAS PESADAS: en press de hombros, press de pecho y similares, a partir de cargas que cueste llevar a la posición de salida, explica en "descripcion" cómo colocarlas sin tirar del hombro (apoyarlas en los muslos y subirlas con un impulso de rodilla, una cada vez; al terminar, bajarlas a los muslos, no dejarlas caer abiertas). El momento de mayor riesgo para el hombro suele ser la colocación, no las repeticiones (convención de práctica).
 - En "peso" especifica SIEMPRE la carga propuesta de forma inequívoca: para mancuernas aclara si es "X kg por mancuerna (una en cada mano)" o "una sola mancuerna de X kg" (p. ej. goblet); para barra "X kg en total incluida la barra"; si es sin carga, "solo peso corporal". Nunca dejes un número de kg sin aclarar a qué se refiere.
 - REPARTO MUSCULAR: el tren inferior (cuádriceps, isquios, glúteos) debe recibir AL MENOS un tercio de los ejercicios de la semana, y ≥2 ejercicios en cada sesión completa que incluya piernas (en cuerpo entero, siempre). Las piernas son los grupos más grandes y relevantes; no las relegues frente a empuje/tirón/core.
 - VARIEDAD DE MÉTODOS: además del esquema clásico de series×repeticiones, puedes proponer formatos como HIIT/intervalos, AMRAP, EMOM o circuito metabólico (útiles para acondicionamiento, pérdida de grasa y variedad; hechos en una habitación, con o sin material). Dos formas de expresarlos en el JSON:
@@ -3186,7 +3536,9 @@ PRINCIPIOS BASADOS EN EVIDENCIA (referencias comprobadas una a una contra su DOI
 - EQUILIBRIO DE PATRONES (además del reparto por grupos musculares): a lo largo de la semana cubre empuje horizontal, empuje vertical, tirón horizontal, tirón vertical, dominante de rodilla, dominante de cadera, core anti-extensión y core anti-rotación, y algún transporte cargado si hay material para ello. El volumen de TIRÓN debe ser al menos igual al de EMPUJE y nunca menor que la mitad: el desequilibrio hacia el empuje es la vía habitual a los problemas de hombro. Añade a cada ejercicio el campo "patron" con uno de estos valores exactos: empuje_horizontal, empuje_vertical, tiron_horizontal, tiron_vertical, rodilla, cadera, core_antiextension, core_antirrotacion, transporte, otro.
 - SERIES DE APROXIMACIÓN: en "calentamiento" incluye, además de la movilidad, las series de aproximación concretas del primer ejercicio pesado (p. ej. "2 series de aproximación: 50% × 8 y 75% × 4, sin llegar a fatigar"). No me hagas empezar en frío con la carga de trabajo.
 - MÍNIMO AERÓBICO DE SALUD: en "recomendacion_cardio" suma los minutos aeróbicos que salen de mis días libres y compáralos con el mínimo de salud (150-300 min semanales de intensidad moderada, o 75-150 de intensidad vigorosa). Si me quedo corto, dímelo de forma explícita y propón cómo llegar sin comprometer la fuerza, aunque yo no te lo haya pedido.
-${dietaTxt}- AJUSTE CALÓRICO CON MI PESO REAL (ciclo cerrado): usa la serie de PESO REGISTRADO si la hay. Ritmos de referencia: pérdida de grasa 0,25-0,5% del peso corporal por semana; ganancia de músculo 0,2-0,3% por semana; mantenimiento o recomposición, peso estable. Si mi ritmo real se aparta del objetivo durante 2-3 semanas seguidas, mueve el rango de calorías en torno a un 10% en la dirección que toque y dilo ("subo/bajo X kcal porque llevas Y semanas a Z kg por semana"). Si no hay pesos suficientes para juzgarlo, dilo en vez de tocar las calorías a ciegas.
+${dietaTxt}- AJUSTE CALÓRICO CON MI PESO REAL (ciclo cerrado): usa la serie de PESO REGISTRADO si la hay. Ritmos de referencia: pérdida de grasa 0,25-0,5% del peso corporal por semana; ganancia de músculo 0,25-0,5% por semana en principiantes e intermedios y más despacio en avanzados (Iraki 2019); mantenimiento o recomposición, peso estable y cintura a la baja. Usa el ritmo ya calculado en PESO Y CINTURA, no la diferencia entre dos pesajes sueltos. Si mi ritmo real se aparta del objetivo durante 2-3 semanas seguidas, mueve el rango de calorías en torno a un 10% en la dirección que toque y dilo ("subo/bajo X kcal porque llevas Y semanas a Z kg por semana"). Si no hay pesos suficientes para juzgarlo, dilo en vez de tocar las calorías a ciegas.
+- PROTEÍNA POR TOMA: reparte la proteína en 3-5 tomas de 0,40-0,55 g/kg cada una (Iraki 2019) y comprueba que el "menu_dia" que propones las cumple.
+- CREATINA (opcional, y la única excepción a «sin suplementos»): si mi objetivo incluye fuerza o músculo, puedes mencionar UNA vez la creatina monohidrato a 3-5 g/día como opción con buen respaldo (Kreider 2017), sin fase de carga y sin presentarla como necesaria. Añade que con enfermedad renal o medicación crónica se consulta antes con el médico. No recomiendes ningún otro suplemento.
 - PRECISIÓN DEL MENÚ: la app NO registra lo que como, así que el menú es una propuesta orientativa para dar ideas y llegar a la proteína, no un objetivo a cumplir al gramo. Preséntalo con esas palabras.`;
 
   return `Actúa como mi entrenador personal profesional y nutricionista, siguiendo evidencia científica actual. ${mode==='adapt'?'Genera la SIGUIENTE semana de entrenamiento adaptada a mi progreso real.':'Genera mi plan de entrenamiento semanal.'}
@@ -3198,11 +3550,11 @@ ${evidence}${adaptRules}
 Responde ÚNICAMENTE con un objeto JSON válido, sin texto antes ni después, sin backticks, con esta estructura exacta:
 {
   ${mode==='adapt'?'"analisis_progreso":"string 3-4 frases",':''}
-  "mesociclo":{"enfoque":"string: la fase que TÚ decides para este bloque según mi objetivo y progreso (p. ej. Acumulación de hipertrofia, Intensificación de fuerza, Recomposición, Descarga activa, Puesta a punto)","semanas_bloque":4,"justificacion":"string 1-2 frases de por qué esta fase ahora"},
+  "mesociclo":{"enfoque":"string: la fase que TÚ decides para este bloque según mi objetivo y progreso (p. ej. Acumulación de hipertrofia, Intensificación de fuerza, Recomposición, Descarga activa, Puesta a punto)","semanas_bloque":4,"semana_en_bloque":1,"justificacion":"string 1-2 frases de por qué esta fase ahora"},
   "sesiones_ia":[
     {"dia_codigo":"L","titulo":"string","meta":"string breve","calentamiento":"string","vuelta_calma":"string",
      "ejercicios":[
-       {"nombre":"string","series":3,"reps":"6-12","descanso_seg":90,"rir":"1-3","tempo":"2-1-2","peso":"p. ej. 16 kg por mancuerna | 12 kg en cada mano | solo peso corporal","descripcion":"string técnica 1 frase","musculos":"string","patron":"rodilla","errores":["error 1","error 2"]${mode==='adapt'?',"nota_progresion":"string"':''}}
+       {"nombre":"string","series":3,"reps":"8-12","descanso_seg":90,"rir":"1-3","fallo_tecnico":false,"tempo":"2-1-2","peso":"p. ej. 16 kg por mancuerna | 12 kg en cada mano | solo peso corporal","descripcion":"string técnica 1 frase","musculos":"string","patron":"rodilla","errores":["error 1","error 2"]${mode==='adapt'?',"nota_progresion":"string"':''}}
      ]}
   ],
   "recomendacion_cardio":"string para días libres",
@@ -3398,15 +3750,17 @@ function validatePlan(plan){
     else s.ejercicios.forEach((e,i)=>validateExercise(e,i,issues));
   });
   if(plan.nutricion&&(!plan.nutricion.calorias_diarias||!Array.isArray(plan.nutricion.menu_dia)))issues.warns.push('La "nutricion" no sigue el esquema completo (calorias_diarias, proteina_g, agua_litros, menu_dia); se aplicará lo que haya.');
-  coachingChecks(ses,issues); // v80
+  coachingChecks(ses,issues,plan); // v80 · v88: recibe el plan para saber si empieza bloque
   return issues;
 }
 /* v80 · comprobaciones de ENTRENADOR, no de sintaxis.
    La validación anterior miraba que el JSON tuviera los campos; no miraba nada de lo que el propio
    mensaje exige (tiempo, reparto de tren inferior, equilibrio empuje/tirón). Todo son AVISOS: el
    plan se puede aplicar igualmente y el usuario decide. */
-function coachingChecks(ses,issues){
+function coachingChecks(ses,issues,plan){
   let totalEj=0,infEj=0,emp=0,tir=0;
+  // v88 · rangos estrechos y rotación excesiva: las dos cosas que frenaron la progresión
+  const estrechos=[],nuevos=[];let nFallo=0;
   ses.forEach(s=>{
     const ejs=Array.isArray(s.ejercicios)?s.ejercicios:[];
     const breve=S.briefDays&&S.briefDays.indexOf(s.dia_codigo)>=0;
@@ -3414,15 +3768,28 @@ function coachingChecks(ses,issues){
     const est=estimateSessionMin(ejs);
     if(est>tope*1.1)
       issues.warns.push(`"${s.titulo||s.dia_codigo}": ~${est} min estimados frente a los ${tope} min que tienes. Pide menos ejercicios, menos series o descansos más cortos.`);
+    let falloSes=0;
     ejs.forEach(e=>{
       if(isBlock(e))return;
       totalEj++;
+      if(e&&e.nombre&&!nuevos.some(n=>mismoEjercicio(n,e.nombre)))nuevos.push(String(e.nombre));
+      const rr=repRange(e.reps);
+      if(rr&&!parseReps(e.reps)&&/kg/i.test(String(e.peso||''))&&parseKg(e.peso)!=null&&rr[1]-rr[0]<4)estrechos.push(`${e.nombre} (${e.reps})`);
+      if(e.fallo_tecnico===true||e.fallo_tecnico==='true'){falloSes++;
+        if(FALLO_NUNCA.test(_norm(e.nombre)))issues.warns.push(`"${cleanStr(e.nombre,60)}" viene marcado con última serie a fallo técnico. Es un ejercicio en el que fallar una repetición tiene riesgo: valora quitarle la marca.`);}
       if(_esInferior(e))infEj++;
       const pat=(e.patron||'').toLowerCase();
       if(PATRON_EMPUJE.indexOf(pat)>=0)emp++;
       if(PATRON_TIRON.indexOf(pat)>=0)tir++;
     });
+    if(falloSes>3)issues.warns.push(`"${s.titulo||s.dia_codigo}": ${falloSes} ejercicios con serie a fallo técnico. Más de 3 por sesión acumula fatiga sin aportar más información.`);
   });
+  if(estrechos.length)
+    issues.warns.push(`Rangos de repeticiones estrechos en ${estrechos.length} ejercicio(s) con carga: ${estrechos.slice(0,5).join(', ')}${estrechos.length>5?'…':''}. Con menos de 4 repeticiones de ancho un escalón de mancuerna no cabe en el rango; pide rangos como 6-10 u 8-12.`);
+  const rot=rotacionEntre(nuevos,nombresSemana(S.currentWeek-1));
+  const bloqueNuevo=plan&&plan.mesociclo&&parseInt(plan.mesociclo.semana_en_bloque)===1;
+  if(rot&&rot.total>=6&&rot.pct<50&&!bloqueNuevo)
+    issues.warns.push(`Solo ${rot.repetidos} de ${rot.total} ejercicios se repiten respecto a la semana anterior (${rot.pct}%) y no empieza un bloque nuevo. Sin repetir los ejercicios principales no se puede progresar ni medir: pide que los mantenga.`);
   if(totalEj>=6&&infEj/totalEj<0.28)
     issues.warns.push(`Tren inferior infrarrepresentado: ${infEj} de ${totalEj} ejercicios de la semana. El plan pide al menos un tercio.`);
   if(emp+tir>=5&&tir<emp/2)
@@ -3523,7 +3890,21 @@ function applyBridgePlan(plan){
   if(plan.nutricion)S.nutri=cleanNutri(plan.nutricion); // v72
   if(plan.mesociclo){
     if(plan.mesociclo.enfoque)S.mesoFocus=cleanStr(plan.mesociclo.enfoque,120);
-    if(plan.mesociclo.semanas_bloque)S.mesoLen=parseInt(plan.mesociclo.semanas_bloque)||S.mesoLen;
+    if(plan.mesociclo.semanas_bloque)S.mesoLen=Math.max(1,Math.min(12,parseInt(plan.mesociclo.semanas_bloque)||S.mesoLen));
+    // v88: el entrenador dice en qué semana del bloque cae la que planifica; la app se ajusta a él
+    const sb=parseInt(plan.mesociclo.semana_en_bloque);
+    if(!isNaN(sb)&&sb>=1&&sb<=12){
+      const k0=fmt(dates[0]);
+      const nb=parseInt(plan.mesociclo.bloque);
+      let num=(!isNaN(nb)&&nb>=1&&nb<=300)?nb:null;
+      if(num==null){
+        const prev=new Date(dates[0]);prev.setDate(prev.getDate()-7);
+        const miPrev=mesoInfo(programWeekFor(fmt(prev)),fmt(prev)),miAct=mesoInfo(programWeekFor(k0),k0);
+        num=sb===1?((miPrev?miPrev.block:0)+1):((miAct&&miAct.block)||1);
+      }
+      const ini=new Date(dates[0]);ini.setDate(ini.getDate()-(sb-1)*7);
+      S.blockStart=fmt(ini);S.blockNum=num;
+    }
   }
   // Análisis del entrenador: SIEMPRE refleja solo la adaptación actual (un único análisis vigente).
   // El historial de lo realizado se conserva aparte en S.history y se le envía a Claude en cada
@@ -3596,6 +3977,10 @@ function cleanEx(e){
   const o={...e};
   ['nombre','peso','musculos','patron','rir','rpe','tempo','tipo','formato','unidad','banda','yt','p'].forEach(k=>{if(o[k]!=null)o[k]=cleanStr(o[k],120);});
   if(o.reps!=null)o.reps=cleanStr(o.reps,40);
+  // v88: solo true/false explícitos; cualquier otra cosa se descarta y decide la lista de la app
+  if(o.fallo_tecnico===true||o.fallo_tecnico==='true')o.fallo_tecnico=true;
+  else if(o.fallo_tecnico===false||o.fallo_tecnico==='false')o.fallo_tecnico=false;
+  else delete o.fallo_tecnico;
   if(o.descripcion!=null)o.descripcion=cleanMulti(o.descripcion,1000); // v84
   if(o.nota_progresion!=null)o.nota_progresion=cleanMulti(o.nota_progresion,500); // v84: se guardaba sin sanear
   if(Array.isArray(o.errores))o.errores=o.errores.slice(0,6).map(x=>cleanStr(x,220)); // v84: no se saneaban
@@ -3759,7 +4144,7 @@ function modifyWithClaude(){
   const eqDetail=equipDetailFor(MOD.equipos);
   const mins=document.getElementById('mod-min').value;
   const objLabels=(S.profile.objetivos||['bienestar']).map(o=>GOAL_LABELS[o]||o).join(' + ');
-  const mi=mesoInfo(programWeekFor(MOD.key));
+  const mi=mesoInfo(programWeekFor(MOD.key),MOD.key);
   const mesoTxt=mi?`Fase del mesociclo: bloque ${mi.block}, semana ${mi.wInBlock} de ${mi.len}${mi.focus?' ('+mi.focus+')':''}.`:(S.mesoFocus?`Fase actual del programa: ${S.mesoFocus}.`:'');
   const hist=recentSummaryLines(MOD.key);
   // Sesión que ya estaba prevista para hoy: se la damos a Claude para que la ADAPTE, no la rehaga.
@@ -3895,7 +4280,7 @@ function generateWithClaude(){
   const eqLabels=equipLabels(GEN.equipos);
   const eqDetail=equipDetailFor(GEN.equipos);
   const compl=document.getElementById('gen-hist').checked;
-  const mi=mesoInfo(programWeekFor(GEN.key));
+  const mi=mesoInfo(programWeekFor(GEN.key),GEN.key);
   const mesoTxt=mi?`Fase del mesociclo: bloque ${mi.block}, semana ${mi.wInBlock} de ${mi.len}${mi.focus?' ('+mi.focus+')':''}.`:(S.mesoFocus?`Fase actual del programa: ${S.mesoFocus}.`:'');
   const hist=compl?recentSummaryLines(GEN.key):'';
   window._genPrompt=`Actúa como mi entrenador personal. Crea UNA sesión ADICIONAL para un día concreto que COMPLEMENTE mi entrenamiento reciente sin interferir en mi objetivo global.
@@ -4195,17 +4580,23 @@ function parseHealth(e){
   r.readAsText(file);
 }
 
-function logHealthSnapshot(h){
+function logHealthSnapshot(h,campos){
   if(!S.healthLog)S.healthLog=[];
   const today=h.date||todayKey();
   const snap={date:today,restingHR:h.restingHR,hrv:h.hrv,vo2max:h.vo2max,bodyFat:h.bodyFat,avgSteps:h.avgSteps,avgActiveKcal:h.avgActiveKcal,avgSleepH:h.avgSleepH};
+  /* v88: en la entrada manual solo cuenta lo que se ha tocado. El formulario se prellena con el
+     valor anterior y se guardaba entero: la HRV salió 44 en los 15 registros desde junio y el sueño
+     7 h en todos, y el entrenador llegó a citar «HRV estable» como prueba de que no había fatiga. */
+  if(campos)Object.keys(snap).forEach(k=>{if(k!=='date'&&campos.indexOf(k)<0)delete snap[k];});
   const i=S.healthLog.findIndex(s=>s.date===today);
-  if(i>=0)S.healthLog[i]=snap;else S.healthLog.push(snap);
+  // con campos (entrada manual) se FUSIONA con lo ya guardado ese día; una importación lo sustituye
+  if(i>=0)S.healthLog[i]=campos?Object.assign({},S.healthLog[i],snap):snap;else S.healthLog.push(snap);
   S.healthLog.sort((a,b)=>a.date.localeCompare(b.date));
   if(S.healthLog.length>24)S.healthLog=S.healthLog.slice(-24);
 }
 function saveManualHealth(){
-  const g=id=>{const v=toNum(document.getElementById(id).value);return isNaN(v)?null:v;};
+  // v88: un campo que no se ha tocado no es una medición nueva
+  const g=id=>{const el=document.getElementById(id);if(!el||el.dataset.tocado!=='1')return null;const v=toNum(el.value);return isNaN(v)?null:v;};
   const h=Object.assign({},S.health||{});
   const rhr=g('m-rhr'),hrv=g('m-hrv'),vo2=g('m-vo2'),bf=g('m-bf'),st=g('m-steps'),ak=g('m-akcal'),sl=g('m-sleep');
   if(rhr!=null)h.restingHR=Math.round(rhr);
@@ -4216,11 +4607,16 @@ function saveManualHealth(){
   if(ak!=null)h.avgActiveKcal=Math.round(ak);
   if(sl!=null)h.avgSleepH=+sl.toFixed(1);
   h.date=todayKey();h.manual=true;
-  if(Object.keys(h).length>1){S.health=h;S.lastHealthImport=h.date;logHealthSnapshot(h);save();renderHealth();updateImportInfo();
+  const campos=[['restingHR',rhr],['hrv',hrv],['vo2max',vo2],['bodyFat',bf],['avgSteps',st],['avgActiveKcal',ak],['avgSleepH',sl]].filter(x=>x[1]!=null).map(x=>x[0]);
+  if(!campos.length){const s0=document.getElementById('h-status');if(s0){s0.textContent='No has cambiado ningún valor: no se guarda nada (repetir el valor de otro mes falsearía la tendencia).';s0.style.color='var(--warn)';}return;}
+  h.upd=Object.assign({},h.upd||{});campos.forEach(c=>h.upd[c]=h.date);
+  if(Object.keys(h).length>1){S.health=h;S.lastHealthImport=h.date;logHealthSnapshot(h,campos);save();renderHealth();updateImportInfo();
     const st2=document.getElementById('h-status');st2.textContent='✓ Marcadores guardados. Recordatorio: actualízalos cada mes con la media mensual.';st2.style.color='var(--free)';}
 }
 function prefillManualHealth(){
-  const h=S.health||{};const set=(id,v)=>{const el=document.getElementById(id);if(el&&v!=null)el.value=v;};
+  const h=S.health||{};const set=(id,v)=>{const el=document.getElementById(id);if(!el)return;
+    el.dataset.tocado='';el.oninput=()=>{el.dataset.tocado='1';}; // v88
+    if(v!=null)el.value=v;};
   set('m-rhr',h.restingHR);set('m-hrv',h.hrv);set('m-vo2',h.vo2max);set('m-bf',h.bodyFat);set('m-steps',h.avgSteps);set('m-akcal',h.avgActiveKcal);set('m-sleep',h.avgSleepH);
 }
 function trendArrow(cur,prev,goodDown){
@@ -4395,6 +4791,35 @@ function fmtSets(series){
 // ¿El ejercicio se hace con banda elástica? (según EXDB y el material del usuario)
 // Normaliza texto para buscar menciones a banda (sin tildes, en minúsculas)
 function _norm(t){return String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
+/* v88 · ¿Es el mismo ejercicio aunque se llame distinto?
+   En 18 semanas hubo 110 nombres distintos. «Sentadilla búlgara» y «Sentadilla bulgara con
+   mancuernas» eran dos historiales separados, así que la revisión del día, el 1RM estimado y la
+   última marca perdían la referencia. Regla deliberadamente estricta: mismas palabras de movimiento
+   y, si ambos nombres dicen el material, el mismo material. Con material distinto NO se fusionan
+   (16 kg con kettlebell y 16 kg con mancuernas no son comparables). Variantes de agarre o de
+   apoyo («con agarre supino», «a una pierna») siguen siendo ejercicios distintos. */
+const _EX_STOP=new Set(['con','de','del','la','el','las','los','a','en','y','una','un','al','sobre','por']);
+function _exEquip(tokens){
+  if(tokens.some(t=>/^mancuerna/.test(t)))return 'mancuerna';
+  if(tokens.some(t=>/^kettlebell|^rusa$/.test(t)))return 'kettlebell';
+  if(tokens.some(t=>/^banda|^goma|^elastic/.test(t)))return 'banda';
+  if(tokens.some(t=>/^barra$/.test(t)))return 'barra';
+  return '';
+}
+function exKey(nombre){
+  const toks=_norm(nombre).replace(/[^a-z0-9ñ ]+/g,' ').split(/\s+/).filter(Boolean)
+    .filter(t=>!_EX_STOP.has(t)).map(t=>t.length>4&&/s$/.test(t)?t.slice(0,-1):t);
+  const eq=_exEquip(toks);
+  const base=toks.filter(t=>!/^mancuerna|^kettlebell|^pesa$|^rusa$|^banda|^goma|^elastic|^barra$/.test(t)).sort().join(' ');
+  return {base,eq};
+}
+function mismoEjercicio(a,b){
+  if(!a||!b)return false;
+  if(_norm(a).trim()===_norm(b).trim())return true;
+  const ka=exKey(a),kb=exKey(b);
+  if(!ka.base||ka.base!==kb.base)return false;
+  return !(ka.eq&&kb.eq&&ka.eq!==kb.eq);
+}
 function _mencionaBanda(t){return /\b(banda|bandas|goma|gomas|elastic)/.test(_norm(t));}
 /* ¿Este ejercicio se hace con banda elástica? (v65)
    Prioriza lo que dice LA SESIÓN (carga propuesta y nombre) sobre lo deducido de la base de
@@ -4432,23 +4857,27 @@ function suggestedBand(ex){
 }
 // Último rendimiento registrado (serie a serie) para un ejercicio, buscando en el historial.
 function lastPerformance(nombre){
-  const nm=(nombre||'').toLowerCase().trim();if(!nm)return null;
+  if(!nombre||!String(nombre).trim())return null;
   for(const h of (S.history||[])){
     if(!h.sets)continue;
-    const found=h.sets.find(e=>e.nombre&&e.nombre.toLowerCase().trim()===nm);
+    const found=h.sets.find(e=>e.nombre&&mismoEjercicio(e.nombre,nombre)); // v88
     if(found&&found.series&&found.series.length)return {date:h.key,series:found.series};
   }
   return null;
 }
 /* --- Progresión de carga por ejercicio (v56): reutiliza S.history[].sets, que ya guarda
    kg×reps serie a serie desde el reproductor. No añade ninguna tabla ni registro nuevo. --- */
-function exercisesWithLoggedSets(){
-  const names=new Map(); // nombre → nº de sesiones con carga numérica registrada
+function exercisesWithLoggedSets(desde){
+  /* v88: agrupado por identidad de ejercicio (mismoEjercicio), mostrando el nombre más reciente.
+     El historial va del más reciente al más antiguo, así que el primer nombre visto es el actual. */
+  const names=new Map(); // nombre visible → nº de sesiones con carga numérica registrada
   (S.history||[]).forEach(h=>{
-    if(!h.sets)return;
+    if(!h.sets||(desde&&h.key<desde))return;
     h.sets.forEach(e=>{
       if(!e.nombre||!e.series||!e.series.some(s=>s.kg!=null&&s.kg!=='' &&!isNaN(toNum(s.kg))))return;
-      names.set(e.nombre,(names.get(e.nombre)||0)+1);
+      let clave=null;
+      for(const k of names.keys()){if(mismoEjercicio(k,e.nombre)){clave=k;break;}}
+      if(clave)names.set(clave,names.get(clave)+1);else names.set(e.nombre,1);
     });
   });
   // v61: se listan TODOS los ejercicios con al menos una sesión con carga registrada (antes n>=2,
@@ -4460,21 +4889,21 @@ function exercisesWithLoggedSets(){
 }
 // Nº de sesiones con carga registrada por ejercicio (para etiquetar el selector de progresión).
 function loggedSessionCount(nombre){
-  const nm=(nombre||'').toLowerCase().trim();let c=0;
+  let c=0;if(!nombre)return 0;
   (S.history||[]).forEach(h=>{
     if(!h.sets)return;
-    const found=h.sets.find(e=>e.nombre&&e.nombre.toLowerCase().trim()===nm);
+    const found=h.sets.find(e=>e.nombre&&mismoEjercicio(e.nombre,nombre)); // v88
     if(found&&found.series&&found.series.some(s=>s.kg!=null&&s.kg!==''&&!isNaN(toNum(s.kg))))c++;
   });
   return c;
 }
 // serie temporal (más antiguo→más reciente) de la carga máxima registrada por sesión para ese ejercicio
 function loadProgressionFor(nombre){
-  const nm=(nombre||'').toLowerCase().trim();if(!nm)return {dates:[],values:[]};
+  if(!nombre||!String(nombre).trim())return {dates:[],values:[]};
   const points=[];
   (S.history||[]).forEach(h=>{
     if(!h.sets)return;
-    const found=h.sets.find(e=>e.nombre&&e.nombre.toLowerCase().trim()===nm);
+    const found=h.sets.find(e=>e.nombre&&mismoEjercicio(e.nombre,nombre)); // v88
     if(!found||!found.series||!found.series.length)return;
     const kgs=found.series.map(s=>toNum(s.kg)).filter(v=>!isNaN(v));
     if(!kgs.length)return;
@@ -4615,10 +5044,10 @@ function _conKg(ex){
 }
 /* Último registro del MISMO ejercicio anterior a hoy, con su referencia de unidades */
 function ultimoRegistro(nombre,antesDe){
-  const nm=_norm(nombre).trim();if(!nm)return null;
+  if(!nombre||!_norm(nombre).trim())return null;
   for(const h of (S.history||[])){
     if(!h.sets||!h.key||(antesDe&&h.key>=antesDe))continue;
-    const e=h.sets.find(x=>x&&_norm(x.nombre).trim()===nm);
+    const e=h.sets.find(x=>x&&mismoEjercicio(x.nombre,nombre)); // v88
     if(e&&e.series&&e.series.length)return {fecha:h.key,e};
   }
   return null;
@@ -4654,32 +5083,49 @@ function ajustesDelDia(key,estado){
       const kgL=kgs.length?Math.max(...kgs):null;
       const rango=repRange(ex.reps);
       const reps=ser.map(x=>toNum(String(x.reps))).filter(v=>!isNaN(v));
-      const nLim=nAlLimite(ser),conEsf=ser.filter(x=>x&&x.esf).length;
       const f=_fechaCorta(ur.fecha);
       if(kgL!=null&&rango&&reps.length){
-        const todoTope=reps.every(r=>r>=rango[1]);
-        const muyCorto=reps.some(r=>r<rango[0]-1);
-        const pasada=conEsf>0&&nLim*2>=conEsf;
-        if(todoTope&&conEsf>0&&!pasada&&kgP<=kgL&&estado.estado==='cansado'){
+        /* v88: misma regla que el mensaje semanal. La carga solo sube si el salto cabe en el rango;
+           si no cabe, se mantiene y se amplía el rango. Y un salto ya pautado que no cabe se avisa. */
+        const d=decisionProgresion(ex,ser,kgP>kgL?kgP:null)||{};
+        const muyCorto=d.accion==='bajar';
+        const rangoTxt=String(ex.reps||'');
+        if(d.accion==='subir'&&kgP<=kgL&&estado.estado==='cansado'){
           // no se sube carga el día que se llega cansado, aunque los datos den margen
           pr.avisos.push(`El ${f} tenías margen para subir, pero llegas cansado: hoy mantenemos ${kgP} kg y subimos otro día.`);
-        }else if(todoTope&&conEsf>0&&!pasada&&kgP<=kgL){
-          const up=_stepKg(kgL,+1,ex.peso);
-          if(up!=null){pr.cambios.peso={antes:ex.peso,despues:_pesoCon(ex.peso,up)};
-            pr.motivos.push(`El ${f} cerraste todas las series en el tope del rango con ${kgL} kg y solo ${nLim} de ${conEsf} al límite: hay margen, hoy ${up} kg.`);}
-        }else if((pasada||muyCorto)&&kgP>kgL){
+        }else if(d.accion==='subir'&&kgP<=kgL){
+          pr.cambios.peso={antes:ex.peso,despues:_pesoCon(ex.peso,d.up)};
+          pr.motivos.push(`El ${f} cerraste todas las series en el tope con ${kgL} kg y con margen (${d.fuente}). El salto a ${d.up} kg (+${d.pct}%) cabe en el rango: hoy ${d.up} kg buscando ${d.obj} repeticiones, no el tope.`);
+        }else if(d.accion==='subir'&&kgP>kgL){
+          pr.avisos.push(`Hoy subes de ${kgL} a ${kgP} kg (+${d.pct}%): el primer día busca ${d.obj} repeticiones, no el tope del rango.`);
+        }else if(d.accion==='ampliar'){
+          if(kgP>kgL)pr.cambios.peso={antes:ex.peso,despues:_pesoCon(ex.peso,kgL)};
+          // el día que se llega cansado no se amplía el objetivo de repeticiones
+          if(repRange(rangoTxt)&&repRange(rangoTxt)[1]<d.tope&&estado.estado!=='cansado')pr.cambios.reps={antes:rangoTxt,despues:_repsCon(rangoTxt,d.lo,d.tope)};
+          if(Object.keys(pr.cambios).length)
+            pr.motivos.push(`El ${f} cerraste el rango con ${kgL} kg (${d.fuente}), pero el salto a ${d.up} kg es de un +${d.pct}% y te dejaría en unas ${Math.max(0,d.alc)} repeticiones, por debajo del rango. Mejor ${kgL} kg y subir repeticiones hasta ${d.tope}; al cerrarlas, el salto ya cabe.`);
+        }else if(d.accion==='sin_escalon'){
+          if(repRange(rangoTxt)&&repRange(rangoTxt)[1]<d.tope&&estado.estado!=='cansado'){pr.cambios.reps={antes:rangoTxt,despues:_repsCon(rangoTxt,d.lo,d.tope)};
+            pr.motivos.push(`El ${f} cerraste el rango con ${kgL} kg y no hay una carga más pesada: hoy progresa en repeticiones, hasta ${d.tope}.`);}
+        }else if((d.accion==='consolidar'||muyCorto)&&kgP>kgL){
           pr.cambios.peso={antes:ex.peso,despues:_pesoCon(ex.peso,kgL)};
-          pr.motivos.push(`El ${f} con ${kgL} kg: ${pasada?nLim+' de '+conEsf+' series al límite':'repeticiones por debajo del rango'}. Subir hoy a ${kgP} kg es prematuro: consolida ${kgL} kg.`);
+          pr.motivos.push(`El ${f} con ${kgL} kg: ${d.accion==='consolidar'?d.nLim+' de '+d.conEsf+' series sin margen (RIR 0)':'repeticiones por debajo del rango'}. Subir hoy a ${kgP} kg es prematuro: consolida ${kgL} kg.`);
         }else if(muyCorto&&kgP===kgL){
           const dn=_stepKg(kgL,-1,ex.peso);
           if(dn!=null){pr.cambios.peso={antes:ex.peso,despues:_pesoCon(ex.peso,dn)};
             pr.motivos.push(`El ${f} te quedaste lejos del rango con ${kgL} kg: baja un escalón a ${dn} kg y recupera las repeticiones.`);}
+        }else if(d.accion==='reps'&&kgP>kgL&&d.cabe===false){
+          pr.cambios.peso={antes:ex.peso,despues:_pesoCon(ex.peso,kgL)};
+          pr.motivos.push(`El ${f} con ${kgL} kg todavía no cerraste el rango. Subir hoy a ${kgP} kg (+${d.pct}%) te dejaría en unas ${Math.max(0,d.alc)} repeticiones, por debajo de las ${d.lo} del rango: es prematuro. Hoy ${kgL} kg y a sumar repeticiones.`);
+        }else if(d.accion==='reps'&&kgP>kgL){
+          pr.avisos.push(`Hoy subes de ${kgL} a ${kgP} kg (+${Math.round((kgP-kgL)/kgL*100)}%) sin haber cerrado todavía el rango con ${kgL} kg. Si la primera serie no llega a ${d.lo} repeticiones con buena técnica, vuelve a ${kgL} kg.`);
         }
       }
     }
     // --- molestia articular en una zona que este ejercicio carga
     const zs=_zonasQueCarga(ex,zonas);
     if(zs.length){
+      delete pr.cambios.reps; // v88: con molestia en la zona no se amplía el objetivo de repeticiones
       if(series>2)pr.cambios.series={antes:series,despues:series-1};
       if(kgP!=null&&!pr.cambios.peso){const dn=_stepKg(kgP,-1,ex.peso);
         if(dn!=null)pr.cambios.peso={antes:ex.peso,despues:_pesoCon(ex.peso,dn)};}
@@ -4701,6 +5147,12 @@ function ajustesDelDia(key,estado){
   });
   return props;
 }
+// «8-10 por pierna» → «8-13 por pierna»: cambia solo los números
+function _repsCon(txt,lo,tope){
+  const t=String(txt||'');const nuevo=lo+'-'+tope;
+  if(/\d+\s*[-–a]\s*\d+/.test(t))return t.replace(/\d+\s*[-–a]\s*\d+/,nuevo);
+  return /\d+/.test(t)?t.replace(/\d+/,nuevo):nuevo;
+}
 function _descCambios(c){
   const out=[];
   if(c.nombre)out.push(`cambiar a ${c.nombre.despues}`);
@@ -4710,9 +5162,12 @@ function _descCambios(c){
     const a=parseKg(A),b=parseKg(B),rx=/\d+(?:[.,]\d+)?/;
     if(a!=null&&b!=null&&A.replace(rx,'#')===B.replace(rx,'#')){
       const resto=A.replace(rx,'').replace(/^\s*kg\s*/i,'').trim();
-      out.push(`carga ${a} → ${b} kg${resto?' ('+resto.replace(/^\(|\)$/g,'')+')':''}`);
+      // v88: «por mancuerna (una en cada mano)» perdía su paréntesis de cierre
+      const r2=/^\(.*\)$/.test(resto)?resto.slice(1,-1):resto;
+      out.push(`carga ${a} → ${b} kg${r2?' · '+r2:''}`);
     }else out.push(`carga: ${A} → ${B}`);
   }
+  if(c.reps)out.push(`repeticiones ${c.reps.antes} → ${c.reps.despues}`); // v88
   if(c.series)out.push(`series ${c.series.antes} → ${c.series.despues}`);
   if(c.rir)out.push(`RIR ${c.rir.antes} → ${c.rir.despues}`);
   return out.join(' · ');
@@ -4800,7 +5255,7 @@ function preEmpezar(aplicar){
     const reg={nombre:p.nombre,desc:_descCambios(p.cambios),motivo:p.motivos.join(' ')};
     if(!ok){rechazados.push(reg);return;}
     const ex=sess.exercises[p.i];if(!ex)return;
-    if(!ex._preAjuste)ex._preAjuste={nombre:ex.nombre,peso:ex.peso,series:ex.series,rir:ex.rir};
+    if(!ex._preAjuste)ex._preAjuste={nombre:ex.nombre,peso:ex.peso,series:ex.series,rir:ex.rir,reps:ex.reps};
     const c=p.cambios;
     if(c.nombre){
       const db=EXDB.find(e=>_norm(e.n)===_norm(c.nombre.despues));
@@ -4809,6 +5264,7 @@ function preEmpezar(aplicar){
       else{ex.p=patFromName(ex.nombre)||ex.p;}
     }
     if(c.peso)ex.peso=c.peso.despues;
+    if(c.reps)ex.reps=c.reps.despues; // v88
     if(c.series)ex.series=c.series.despues;
     if(c.rir)ex.rir=c.rir.despues;
     cambios.push(reg);
@@ -4845,7 +5301,7 @@ PERFIL: ${p.edad||'?'} años, ${p.peso||'?'} kg, nivel ${p.nivel||'?'}. Mancuern
 SESIÓN PREVISTA PARA HOY:
 ${prev}
 
-LO ÚLTIMO REGISTRADO DE CADA EJERCICIO (el esfuerzo va serie a serie: fácil = me sobraban 3+ repeticiones, justo = 1-2, al límite = ninguna; los kilos y repeticiones se interpretan con el "pautado"):
+LO ÚLTIMO REGISTRADO DE CADA EJERCICIO (el esfuerzo va serie a serie: «RIR n» = repeticiones que creo que me quedaban; «a fallo técnico» = serie llevada hasta la última repetición con buena técnica, y por tanto un dato, no una estimación; en registros antiguos, fácil ≈ RIR 3+, justo ≈ 1-2, al límite ≈ 0. Los kilos y repeticiones se interpretan con el "pautado"):
 ${ult}
 
 ÚLTIMOS 7 DÍAS:
@@ -4854,10 +5310,11 @@ ${hist||'- sin registros'}
 PROPUESTA DE LA APP (reglas automáticas; valóralas con criterio: confírmalas, corrígelas o descártalas):
 ${pr}
 
-LÍMITES DEL AJUSTE: como máximo un escalón de carga arriba o abajo y una serie más o menos por ejercicio. Usa solo pesos de la lista disponible. Puedes proponer sustituir un ejercicio si hay molestia, con el material disponible. Si no hay nada que ajustar, dilo.
+CRITERIO DE CARGA: se progresa primero en repeticiones; la carga solo sube si el salto cabe en el rango (con la carga nueva debo poder volver a la parte baja del rango con ~1 repetición de margen). Si el salto es demasiado grande para el rango, mejor la misma carga y un rango más ancho.
+LÍMITES DEL AJUSTE: como máximo un escalón de carga arriba o abajo y una serie más o menos por ejercicio; puedes ampliar el rango de repeticiones. Usa solo pesos de la lista disponible. Puedes proponer sustituir un ejercicio si hay molestia, con el material disponible. Si no hay nada que ajustar, dilo.
 
 Responde ÚNICAMENTE con un objeto JSON válido, sin texto antes ni después, sin backticks:
-{"analisis":"2-3 frases con tu valoración de hoy","ajustes":[{"ejercicio":"nombre EXACTO de la sesión prevista","peso":"carga inequívoca, p. ej. 18 kg por mancuerna (una en cada mano), o null si no cambia","series":3,"rir":"2-3","sustituir_por":null,"motivo":"1 frase"}]}
+{"analisis":"2-3 frases con tu valoración de hoy","ajustes":[{"ejercicio":"nombre EXACTO de la sesión prevista","peso":"carga inequívoca, p. ej. 18 kg por mancuerna (una en cada mano), o null si no cambia","reps":"8-12 o null","series":3,"rir":"2-3","sustituir_por":null,"motivo":"1 frase"}]}
 En cada ajuste pon null en lo que no cambie. Si no hay nada que ajustar, "ajustes":[].`;
 }
 function preCopiar(){
@@ -4895,6 +5352,7 @@ function propsDesdeClaude(json,key){
       if(Math.abs(ns-s0)>1)errores.push(`${ex.nombre}: pasa de ${s0} a ${ns} series, más de lo que permite un ajuste del día. Se limita a ${ns>s0?s0+1:s0-1}.`);
       pr.cambios.series={antes:s0,despues:Math.max(1,Math.min(s0+1,Math.max(s0-1,ns)))};}
     if(a.rir){const r=cleanStr(a.rir,12);if(r&&r!==String(ex.rir||''))pr.cambios.rir={antes:ex.rir||'—',despues:r};}
+    if(a.reps){const r=cleanStr(a.reps,12);if(r&&repRange(r)&&r!==String(ex.reps||''))pr.cambios.reps={antes:ex.reps||'—',despues:r};} // v88
     if(Object.keys(pr.cambios).length||pr.motivos.length)props.push(pr);
   });
   return {props,errores,analisis:cleanMulti(json.analisis||'',600)};
@@ -5057,6 +5515,7 @@ function renderPlayer(){
     mid=`<div class="pl-phase c-free">DESCANSO</div>
       <div class="pl-timer" id="pl-timer">${fmtSec(P.sec)}</div>
       <div class="pl-next">${proxBloque?'Prepárate para el bloque':nuevoEj?'Prepárate para el siguiente ejercicio':'Siguiente: serie '+P.set+' de '+ex.series}</div>
+      ${calibMsg()}
       ${preview}
       <button class="btn btn-block" style="margin-top:14px;background:rgba(255,255,255,.15);border-color:transparent;color:#fff" onclick="skipRest()">Saltar descanso →</button>
       ${navEjercicios()}`;
@@ -5071,13 +5530,21 @@ function renderPlayer(){
     const last=canRec?lastPerformance(ex.nombre):null;
     const esBanda=isBandExercise(ex); // v62: con banda se registra la resistencia, no kg
     const prefKg=(P.rec&&P.rec.exi===P.exi&&P.rec.kg!=null)?P.rec.kg:(parseKg(ex.peso)!=null?parseKg(ex.peso):'');
-    const prefReps=(P.rec&&P.rec.exi===P.exi&&P.rec.reps!=null)?P.rec.reps:targetReps(ex.reps);
+    /* v88: la última serie de los ejercicios seguros va a FALLO TÉCNICO. Las repeticiones NO se
+       prellenan: el 93% de las series de sep-oct acababan exactamente en el tope pautado, porque el
+       campo ya lo traía escrito y se paraba ahí. En esta serie el número tiene que ser el real. */
+    const aFallo=canRec&&esFalloTecnico(ex)&&P.set>=(+ex.series||1);
+    const prefReps=aFallo?'':((P.rec&&P.rec.exi===P.exi&&P.rec.reps!=null)?P.rec.reps:targetReps(ex.reps));
     const prefBanda=(P.rec&&P.rec.exi===P.exi&&P.rec.banda)?P.rec.banda:suggestedBand(ex);
     /* v80: el esfuerzo real de cada serie. Sin él, "llegó al tope del rango" era ambiguo: 12
        repeticiones a RIR 3 y 12 repeticiones arrastrándose al fallo pedían decisiones opuestas y
        el entrenador no podía distinguirlas. */
-    const prefEsf=(P.rec&&P.rec.exi===P.exi&&P.rec.esf)?P.rec.esf:null;
-    P.esf=prefEsf;
+    /* v88: el esfuerzo YA NO se hereda de la serie anterior. Con el prellenado, una vez marcado
+       «al límite» las series siguientes lo arrastraban: en sep-oct, de 40 «al límite» solo 2 fueron
+       seguidos de otra cosa. Se conserva solo si se repinta la MISMA serie. */
+    const mismaSerie=P.rirSet&&P.rirSet.exi===P.exi&&P.rirSet.set===P.set;
+    P.rir=mismaSerie?P.rirSet.v:null;
+    P.esf=P.rir==null?null:rirAEsf(P.rir);
     const inpSt='text-align:center;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:10px;color:#fff;padding:8px 6px;font-size:16px';
     const bandOpts=availableBands();
     const cargaInput=esBanda
@@ -5109,10 +5576,14 @@ function renderPlayer(){
           <span class="pl-cue">reps</span>
           <button type="button" class="pl-step" onclick="stepField('pl-reps',1,0,false)">+</button>
         </div>
-        <div class="pl-rec-row" style="margin-top:10px;gap:6px">
-          ${ESF_OPTS.map(([k,lab])=>`<button type="button" id="esf-${k}" class="esf-b${prefEsf===k?' esf-on':''}" onclick="setEsf('${k}')">${lab}</button>`).join('')}
+        ${aFallo?`
+        <div class="pl-fallo">🎯 <b>Última serie a fallo técnico.</b> Haz todas las repeticiones que puedas con la técnica pautada y para en la primera que salga peor. Anota las que hagas aunque pasen del rango: este número es el que de verdad dice si toca subir.</div>`:`
+        <div class="pl-cue" style="font-size:calc(11px*var(--fs));margin-top:10px">¿Cuántas repeticiones más podrías haber hecho <b>con buena técnica</b>?</div>
+        <div class="pl-rec-row" style="margin-top:6px;gap:6px">
+          ${RIR_OPTS.map(([v,lab])=>`<button type="button" id="rir-${v}" class="esf-b${P.rir===v?' esf-on':''}" onclick="setRir(${v})">${lab}</button>`).join('')}
         </div>
-        <div class="pl-cue" style="font-size:calc(10px*var(--fs));margin-top:5px">¿Cómo fue esta serie? De esto depende que tu entrenador suba la carga o la consolide.</div>
+        <div class="pl-cue" style="font-size:calc(10px*var(--fs));margin-top:5px">Sin marcar no pasa nada; marcado, tu entrenador sabe si la carga está bien puesta.</div>`}
+        <div id="pl-msg" class="pl-cue" style="color:var(--warn);margin-top:6px"></div>
         ${last?`<div class="pl-cue" style="margin-top:6px;color:var(--ring-stand)">Última vez (${last.date}): ${esc(fmtSetsDetalladas(last))}</div>`:''}
       </div>`:'';
     /* v82: con la fuente ampliada, la figura empujaba el botón principal fuera de pantalla
@@ -5122,7 +5593,8 @@ function renderPlayer(){
     mid=`<div style="width:${figW}px;height:${figH}px;margin:0 auto 14px">${exSVG(ex.nombre,ex.p)}</div>
       <div class="pl-reps">${ex.series>1?`Serie ${P.set} de ${esc(ex.series)}`:'1 serie'} · ${esc(ex.reps)}${/^\d+$/.test(String(ex.reps))?' reps':''}</div>
       ${ex.peso?`<div class="pl-cue" style="margin-top:4px;color:var(--ring-ex);font-weight:600">🏋 ${esc(ex.peso)}</div>`:''}
-      ${(ex.rir||ex.rpe)?`<div class="pl-cue">Deja ${esc(ex.rir||ex.rpe)} reps en reserva (RIR)${ex.tempo?' · tempo '+esc(ex.tempo):''}</div>`:''}
+      ${aFallo?`<div class="pl-cue">Esta serie, hasta el fallo técnico${ex.tempo?' · tempo '+esc(ex.tempo):''}</div>`
+        :(ex.rir||ex.rpe)?`<div class="pl-cue">Deja ${esc(ex.rir||ex.rpe)} reps en reserva (RIR)${ex.tempo?' · tempo '+esc(ex.tempo):''}</div>`:''}
       ${recHTML}
       <button class="btn btn-primary btn-block mt-12" onclick="finishSet()">${repSecs?'Iniciar ('+repSecs+'s)':'✓ Serie completada'}</button>
       ${P.sess.userNote?`<div class="pl-cue mt-12" style="color:var(--accent)">💬 ${esc(P.sess.userNote)}</div>`:''}
@@ -5137,14 +5609,78 @@ function renderPlayer(){
 }
 /* v80 · esfuerzo percibido de la serie, en el idioma del que entrena (no en RIR, que hay que
    traducir mentalmente a mitad de serie). Se guarda con cada serie y viaja al prompt. */
-const ESF_OPTS=[['facil','😌 Fácil'],['justo','💪 Justo'],['limite','🔥 Al límite']];
+const ESF_OPTS=[['facil','😌 Fácil'],['justo','💪 Justo'],['limite','🔥 Al límite']]; // registros anteriores a la v88
 const ESF_LABEL={facil:'fácil (le sobraban 3+ repeticiones)',justo:'justo (1-2 repeticiones de margen)',limite:'al límite (sin margen)'};
-function setEsf(v){
-  P.esf=(P.esf===v)?null:v; // volver a pulsar lo deselecciona
-  ESF_OPTS.forEach(([k])=>{
-    const b=document.getElementById('esf-'+k);
-    if(b)b.className='esf-b'+(k===P.esf?' esf-on':'');
+/* v88 · repeticiones en reserva como NÚMERO. «Al límite» se leía como «me costó»: en sep-oct, 19 de
+   23 ejercicios marcados al límite repetían las mismas repeticiones en todas las series, cosa poco
+   compatible con no tener ninguna de margen. Preguntar «¿cuántas más?» ancla la respuesta. La gente
+   tiende además a quedarse corta en ~1 repetición al estimarlo (Halperin 2022), y lo que corrige esa
+   estimación es comparar de vez en cuando con el fallo real: de ahí la serie a fallo técnico. */
+const RIR_OPTS=[[0,'0'],[1,'1'],[2,'2'],[3,'3 o más']];
+function calibMsg(){
+  const c=P.ultimaCalib;if(!c)return '';
+  const est=c.estimadas>=3?'3 o más':c.estimadas;
+  const txt=c.sesgo>0
+    ? `En la serie anterior dijiste que te quedaban ${est}, y a fallo técnico has hecho ${c.hechasDeMas} más: te quedaban <b>al menos ${c.sesgo} más</b> de las que creías. Tenlo en cuenta al marcar.`
+    : `Buena estimación: dijiste que te quedaban ${est} y a fallo técnico has hecho ${c.hechasDeMas} más.`;
+  return `<div class="pl-fallo" style="margin-top:8px">🎯 ${txt}</div>`;
+}
+function rirAEsf(v){return v==null?null:(v<=0?'limite':(v>=3?'facil':'justo'));}
+function setRir(v){
+  P.rir=(P.rir===v)?null:v; // volver a pulsar lo deselecciona
+  P.esf=rirAEsf(P.rir);
+  P.rirSet={exi:P.exi,set:P.set,v:P.rir};
+  RIR_OPTS.forEach(([k])=>{
+    const b=document.getElementById('rir-'+k);
+    if(b)b.className='esf-b'+(k===P.rir?' esf-on':'');
   });
+}
+// compatibilidad: la escala antigua se traduce a la nueva
+function setEsf(v){setRir({facil:3,justo:1,limite:0}[v]);}
+/* v88 · ¿esta serie puede ir a fallo técnico sin riesgo? Lo decide primero el entrenador
+   (campo "fallo_tecnico" del plan). Si no lo dice, solo ejercicios de un solo segmento o con el
+   peso corporal, en los que fallar una repetición no compromete la espalda ni el equilibrio. Nunca
+   en básicos con mancuernas pesadas, unilaterales de pierna ni remos con la espalda libre, y nunca
+   si el ejercicio carga una zona con molestia articular reciente. */
+const FALLO_SEGURO=/curl|elevaci[oó]n(es)? (lateral|frontal)|elevaciones laterales|lateral(es)? a una mano|talones|gemelo|flexi[oó]n|flexiones|extensi[oó]n de tr[ií]ceps|patada de tr[ií]ceps|p[aá]jaro|face pull|pull-?apart|encogimiento/;
+const FALLO_NUNCA=/sentadilla|peso muerto|zancada|b[uú]lgara|renegado|rumano|buenos d[ií]as|hip thrust|dominada|press de banca|remo|swing|cargada|arranque|salto|burpee/;
+function esFalloTecnico(ex){
+  if(!ex||isBlock(ex)||parseReps(ex.reps))return false;
+  if(ex.fallo_tecnico===true)return true;
+  if(ex.fallo_tecnico===false)return false;
+  const n=_norm(ex.nombre);
+  if(FALLO_NUNCA.test(n)||!FALLO_SEGURO.test(n))return false;
+  return !_zonasQueCarga(ex,activeRiskAreas()).length;
+}
+/* v88 · calibración: en la serie a fallo técnico se ve cuántas quedaban de verdad. Si en la serie
+   anterior (misma carga) dijiste que te quedaba 1 y luego, ya más cansado, hiciste 4 más, te
+   quedaban AL MENOS 3 más de las que creías. Es un mínimo: la fatiga de la serie intermedia juega
+   a favor de la estimación, no en contra. */
+function calibracionDe(series){
+  const ser=series||[];
+  const fi=ser.findIndex(x=>x&&x.fallo);
+  if(fi<1)return null;
+  const f=ser[fi];
+  for(let i=fi-1;i>=0;i--){
+    const p=ser[i];
+    if(!p||p.rir==null||p.fallo)continue;
+    if(String(p.kg||'')!==String(f.kg||'')||String(p.banda||'')!==String(f.banda||''))continue;
+    const rf=toNum(String(f.reps)),rp=toNum(String(p.reps));
+    if(isNaN(rf)||isNaN(rp))return null;
+    return {estimadas:p.rir,hechasDeMas:rf-rp,sesgo:(rf-rp)-p.rir};
+  }
+  return null;
+}
+function calibracionReciente(dias){
+  const desdeD=new Date(todayKey()+'T00:00:00');desdeD.setDate(desdeD.getDate()-(dias||28));
+  const desde=fmt(desdeD);const out=[];
+  (S.history||[]).forEach(h=>{
+    if(!h.sets||!h.key||h.key<desde)return;
+    h.sets.forEach(e=>{const c=calibracionDe(e.series);if(c)out.push(Object.assign({nombre:e.nombre,fecha:h.key},c));});
+  });
+  if(!out.length)return null;
+  const s=out.map(x=>x.sesgo).sort((a,b)=>a-b);
+  return {n:out.length,mediana:s[Math.floor(s.length/2)],casos:out};
 }
 /* Resumen del esfuerzo de un conjunto de series, para el mensaje a Claude */
 /* Etiqueta única, para la interfaz (una línea por ejercicio). Es deliberadamente conservadora:
@@ -5161,14 +5697,21 @@ function esfResumen(series){
    y "al límite × 4" se leían igual, y son situaciones opuestas: la primera es una progresión sana,
    la segunda dice que la carga está pasada. Esto devuelve el detalle. */
 const ESF_CORTO={facil:'fácil',justo:'justo',limite:'al límite'};
-function esfSerie(s){return (s&&s.esf&&ESF_CORTO[s.esf])||'';}
+function esfSerie(s){
+  if(!s)return '';
+  if(s.fallo)return 'a fallo técnico';               // v88
+  if(s.rir!=null)return 'RIR '+(s.rir>=3?'3+':s.rir); // v88
+  return (s.esf&&ESF_CORTO[s.esf])||'';
+}
 function esfDetalle(series){
   const v=(series||[]);
-  if(!v.some(x=>x&&x.esf))return '';
+  if(!v.some(x=>x&&(x.esf||x.rir!=null||x.fallo)))return '';
   return ' · esfuerzo por serie: '+v.map((x,i)=>`s${i+1} ${esfSerie(x)||'sin marcar'}`).join(', ');
 }
 /* Cuántas series se cerraron sin margen. Es lo que decide si se puede subir carga. */
-function nAlLimite(series){return (series||[]).filter(x=>x&&x.esf==='limite').length;}
+function nAlLimite(series){return (series||[]).filter(x=>x&&!x.fallo&&(x.rir===0||(x.rir==null&&x.esf==='limite'))).length;}
+// v88: series con esfuerzo declarado, sin contar la de fallo técnico (que es 0 por definición)
+function nConEsfuerzo(series){return (series||[]).filter(x=>x&&!x.fallo&&(x.rir!=null||x.esf)).length;}
 /* v86 · una serie con su carga, sus repeticiones y su esfuerzo, para MOSTRARLO.
    La v85 arregló lo que viaja al entrenador pero dejó la interfaz igual: el resumen al cerrar la
    sesión seguía enseñando una sola etiqueta de esfuerzo para todo el ejercicio y ninguna referencia
@@ -5229,7 +5772,7 @@ function finishSet(){
     startWorkCountdown(ex,repSecs);
     return;
   }
-  recordSet(ex);
+  if(recordSet(ex)===false)return; // v88: la serie a fallo técnico necesita las repeticiones reales
   beginRest();
 }
 /* Guarda la serie recién hecha (kg×reps, o banda×reps, de los campos del reproductor) en P.setLog */
@@ -5240,6 +5783,13 @@ function recordSet(ex){
   const banda=bEl?bEl.value:null; // v62: ejercicios de banda registran la resistencia, no kg
   const kg=kgRaw!==''?toNum(kgRaw):null;
   const reps=rpRaw!==''?rpRaw:null;
+  const aFallo=esFalloTecnico(ex)&&P.set>=(+ex.series||1); // v88
+  if(aFallo&&(reps==null||isNaN(toNum(reps)))){
+    const m=document.getElementById('pl-msg');
+    if(m)m.textContent='Anota cuántas repeticiones has hecho en esta serie: es la que mide tu margen real.';
+    if(rEl)rEl.focus();
+    return false;
+  }
   if((kg==null||isNaN(kg))&&reps==null&&!banda)return;
   let e=(P.setLog=P.setLog||[]).find(x=>x.nombre===ex.nombre);
   if(!e){e={nombre:ex.nombre,series:[]};P.setLog.push(e);}
@@ -5251,9 +5801,13 @@ function recordSet(ex){
   if(ex.reps&&!e.repsRef)e.repsRef=String(ex.reps);
   const serie={kg:(kg!=null&&!isNaN(kg))?kg:null,reps};
   if(banda)serie.banda=banda;
-  if(P.esf)serie.esf=P.esf; // v80
+  if(aFallo){serie.fallo=true;}                       // v88: el esfuerzo es 0 por definición
+  else if(P.rir!=null){serie.rir=P.rir;serie.esf=rirAEsf(P.rir);} // v88 (esf se mantiene por compatibilidad)
+  else if(P.esf)serie.esf=P.esf;
   e.series.push(serie);
-  P.rec={exi:P.exi,kg:kgRaw,reps:rpRaw,banda,esf:P.esf}; // prellenar la siguiente serie del MISMO ejercicio
+  P.rec={exi:P.exi,kg:kgRaw,reps:rpRaw,banda}; // v88: se prellenan carga y reps, NO el esfuerzo
+  P.rirSet=null;
+  P.ultimaCalib=aFallo?calibracionDe(e.series):null; // v88: se enseña durante el descanso
   persistSetLog(); // v71
 }
 /* Ejercicios por tiempo: se registran solos ("40s" por serie) */
@@ -5808,7 +6362,7 @@ function updateObjNote(){
   const tk=primaryGoal(objs);
   const schemeLbl={fuerza:'fuerza (cargas altas, pocas reps)',musculo:'hipertrofia (reps moderadas cerca del fallo)',tonificar:'tonificación',resistencia:'resistencia muscular',grasa:'circuito metabólico',bienestar:'salud general'}[tk];
   const fat=objs.includes('grasa'),mus=objs.includes('musculo')||objs.includes('fuerza');
-  let nutr= fat&&mus?'recomposición (déficit ligero, proteína alta)':fat?'déficit calórico':mus?'superávit ligero':'mantenimiento';
+  let nutr=estrategiaCalorica(objs).mode; // v88
   note.textContent=`Entrenamiento orientado a ${schemeLbl}; nutrición en ${nutr}.`;
 }
 function renderEquipChips(){
@@ -5908,8 +6462,8 @@ function renderMeso(){
   if(fv)fv.innerHTML=S.mesoFocus?`Enfoque propuesto por tu entrenador: <b style="color:var(--text)">${esc(S.mesoFocus)}</b>`:'Aún sin propuesta: pulsa "Adaptar con Claude" y tu entrenador fijará la fase del bloque.';
   if(!info)return;
   const cur=programWeekFor(fmt(new Date()));
-  const mi=mesoInfo(cur);
-  info.textContent=mi?`Semana ${mi.weekNum} del programa · bloque ${mi.block} (semana ${mi.wInBlock} de ${mi.len})`:'Aún sin registros: la cuenta empezará con tu primer plan o sesión.';
+  const mi=mesoInfo(cur,todayKey());
+  info.textContent=mi?`Semana ${mi.weekNum} del programa · bloque ${mi.block} (semana ${mi.wInBlock} de ${mi.len})${mi.ancla?' · contado desde el '+_fechaCorta(weekKeyOf(S.blockStart))+', según tu entrenador':''}`:'Aún sin registros: la cuenta empezará con tu primer plan o sesión.';
 }
 function saveMeso(){
   const l=document.getElementById('meso-len');
@@ -5946,16 +6500,75 @@ function logWeightSnapshot(pesoStr){
   if(S.weightLog.length>120)S.weightLog=S.weightLog.slice(-120); // ~4 meses a diario, límite razonable
 }
 // tendencia: compara la media de los últimos 7 registros con la media de los 7 anteriores
+/* v88: la tendencia comparaba los últimos 7 REGISTROS con los 7 anteriores y lo llamaba «esta
+   semana». Con un pesaje por semana eso eran 7 semanas contra otras 7. Y el umbral de «estable»
+   (0,2 kg) era mayor que el ritmo de ganancia buscado a 64 kg (0,13-0,19 kg/semana): nunca podía
+   salir otra cosa que «estable». Ahora es una recta de regresión sobre las últimas 5 semanas por
+   FECHA, en kg y en % del peso por semana. */
 function weightTrend(){
-  const log=(S.weightLog||[]).slice().sort((a,b)=>a.date<b.date?-1:1);
-  if(log.length<4)return null;
-  const last7=log.slice(-7),prev7=log.slice(-14,-7);
-  if(!prev7.length)return null;
-  const avg=arr=>arr.reduce((s,x)=>s+x.kg,0)/arr.length;
-  const a=avg(last7),b=avg(prev7);
-  const diff=+(a-b).toFixed(1);
-  if(Math.abs(diff)<0.2)return{dir:'estable',diff};
-  return{dir:diff>0?'subiendo':'bajando',diff};
+  const hoy=todayKey();
+  const log=(S.weightLog||[]).filter(w=>w&&w.date&&!isNaN(+w.kg)&&daysBetween(w.date,hoy)!=null&&daysBetween(w.date,hoy)<=35)
+    .slice().sort((a,b)=>a.date<b.date?-1:1);
+  if(log.length<3)return null;
+  const x0=log[0].date;
+  const xs=log.map(w=>daysBetween(x0,w.date)),ys=log.map(w=>+w.kg);
+  const span=xs[xs.length-1];
+  if(span<14)return null;
+  const mx=xs.reduce((a,b)=>a+b,0)/xs.length,my=ys.reduce((a,b)=>a+b,0)/ys.length;
+  let num=0,den=0;xs.forEach((x,i)=>{num+=(x-mx)*(ys[i]-my);den+=(x-mx)*(x-mx);});
+  const kgDia=den?num/den:0;
+  const kgSem=+(kgDia*7).toFixed(2);
+  const pctSem=my?+(kgDia*7/my*100).toFixed(2):0;
+  const enteros=log.every(w=>Number.isInteger(+w.kg));
+  const dir=Math.abs(pctSem)<0.1?'estable':(kgSem>0?'subiendo':'bajando');
+  return {dir,diff:kgSem,kgSem,pctSem,n:log.length,dias:span,enteros};
+}
+/* Ritmo objetivo según los objetivos, en % del peso por semana (los mismos que el mensaje semanal) */
+function ritmoObjetivoPeso(){
+  const o=S.profile.objetivos||[];
+  const fat=o.includes('grasa'),mus=o.includes('musculo')||o.includes('fuerza');
+  if(fat&&!mus)return {min:-0.5,max:-0.25,txt:'perder grasa: entre −0,25% y −0,5% por semana'};
+  const av=S.profile.nivel==='avanzado';
+  if(mus&&!fat)return av?{min:0.1,max:0.25,txt:'ganar músculo (avanzado): hasta +0,25% por semana'}:{min:0.25,max:0.5,txt:'ganar músculo: entre +0,25% y +0,5% por semana'};
+  if(fat&&mus)return {min:-0.15,max:0.15,txt:'recomposición: peso estable (±0,15% por semana)'};
+  return null;
+}
+/* v88 · registro rápido de peso y cintura desde Nutrición. Antes el peso solo se guardaba al tocar
+   «Guardar» en Datos personales, y la cintura no existía. */
+function guardarPesoRapido(){
+  const kg=toNum((document.getElementById('nq-peso')||{}).value||'');
+  const cm=toNum((document.getElementById('nq-cintura')||{}).value||'');
+  const msg=document.getElementById('nq-msg');
+  if((isNaN(kg)||kg<=0)&&(isNaN(cm)||cm<=0)){if(msg)msg.textContent='Escribe al menos el peso o la cintura.';return;}
+  if(!isNaN(kg)&&kg>0){
+    S.profile.peso=String(kg);
+    logWeightSnapshot(String(kg));
+    const pe=document.getElementById('peso');if(pe)pe.value=String(kg);
+  }
+  if(!isNaN(cm)&&cm>0){
+    if(!S.waistLog)S.waistLog=[];
+    const hoy=todayKey();const i=S.waistLog.findIndex(w=>w.date===hoy);
+    if(i>=0)S.waistLog[i].cm=cm;else S.waistLog.push({date:hoy,cm});
+    S.waistLog.sort((a,b)=>a.date<b.date?-1:1);
+    if(S.waistLog.length>60)S.waistLog=S.waistLog.slice(-60);
+  }
+  save();renderNutri();
+}
+function pesoRapidoHTML(){
+  const ult=(S.weightLog||[]).slice().sort((a,b)=>a.date<b.date?-1:1).slice(-1)[0];
+  const cin=(S.waistLog||[]).slice(-1)[0];
+  const cin0=(S.waistLog||[])[0];
+  return `<div class="card mt-12">
+    <div class="card-t">⚖️ Peso y cintura</div>
+    <p class="note mb-9">En ayunas, tras ir al baño, 2-3 veces por semana y <b>con decimales</b>. La cintura, una vez al mes, a la altura del ombligo y sin meter tripa: con el peso estable es lo único que dice si la recomposición funciona.</p>
+    <div class="flexrow gap8">
+      <div class="field flex1"><label>Peso (kg)</label><input type="text" id="nq-peso" inputmode="decimal" placeholder="${ult?esc(_nSer(ult.kg)):'64,5'}"></div>
+      <div class="field flex1"><label>Cintura (cm)</label><input type="text" id="nq-cintura" inputmode="decimal" placeholder="${cin?esc(_nSer(cin.cm)):'opcional'}"></div>
+    </div>
+    <button class="btn btn-block" onclick="guardarPesoRapido()">Guardar medición</button>
+    <div id="nq-msg" class="note mt-6"></div>
+    ${(ult||cin)?`<div class="note mt-6">${ult?`Último peso: <b>${esc(_nSer(ult.kg))} kg</b> (${esc(_fechaCorta(ult.date))})`:''}${ult&&cin?' · ':''}${cin?`${ult?'cintura':'Cintura'}: <b>${esc(_nSer(cin.cm))} cm</b> (${esc(_fechaCorta(cin.date))})${cin0&&cin0!==cin?`, ${(cin.cm-cin0.cm)>0?'+':''}${_nSer(Math.round((cin.cm-cin0.cm)*10)/10)} cm desde el ${esc(_fechaCorta(cin0.date))}`:''}`:''}</div>`:''}
+  </div>`;
 }
 function loadProfile(){
   const ct=document.getElementById('cloud-token');
@@ -6035,8 +6648,15 @@ function marcarCopia(){S.lastBackup=todayKey();save();renderDataStatus();}
 /* v73: en iOS, descargar un .json desde una app instalada en la pantalla de inicio es confuso
    (acaba en Descargas de Safari, fuera de la vista). Con la hoja de compartir el usuario elige
    "Guardar en Archivos" → iCloud Drive, que es lo único que sobrevive a formatear el móvil. */
+/* v88: la copia exportada incluía el token de GitHub de la copia en la nube. Un archivo que se
+   guarda en iCloud, se adjunta o se comparte no debe llevar credenciales. */
+function copiaSinSecretos(){
+  const c=JSON.parse(JSON.stringify(S));
+  if(c.cloud)c.cloud.token='';
+  return c;
+}
 async function exportData(){
-  const json=JSON.stringify(S,null,2);
+  const json=JSON.stringify(copiaSinSecretos(),null,2);
   const nombre=`fitcoach-backup-${todayKey()}.json`;
   try{
     if(typeof File!=='undefined'&&navigator.canShare){
@@ -6113,7 +6733,7 @@ function ghHeaders(){
 async function cloudPush(silencioso){
   const c=S.cloud||{};
   if(!c.token){if(!silencioso)cloudStatus('Falta el token de GitHub.','var(--danger)');return false;}
-  const cuerpo={files:{'fitcoach-backup.json':{content:JSON.stringify(S,null,2)}}};
+  const cuerpo={files:{'fitcoach-backup.json':{content:JSON.stringify(copiaSinSecretos(),null,2)}}}; // v88
   try{
     let r;
     if(c.gistId){
@@ -6195,7 +6815,10 @@ function restoreData(e){
       e.target.value='';return;
     }
     if(!confirm('Esto SUSTITUIRÁ todos los datos actuales de la app (perfil, historial, agenda, salud...) por los de esta copia. No se puede deshacer. ¿Continuar?')){e.target.value='';return;}
-    S=data;initState();save();
+    const _nube=S.cloud; // v88: la copia ya no trae el token; se conserva el de este dispositivo
+    S=data;initState();
+    if(_nube&&_nube.token&&!(S.cloud&&S.cloud.token))S.cloud=Object.assign({},S.cloud||{},{token:_nube.token,gistId:(S.cloud&&S.cloud.gistId)||_nube.gistId});
+    save();
     loadProfile();renderDayChips();renderCal();renderProg();renderNutri();renderHealth();updateImportInfo();renderFsChips();renderMeso();setWeekHeader();
     if(st){st.style.color='var(--free)';st.textContent='✓ Copia restaurada.';}
     e.target.value='';
