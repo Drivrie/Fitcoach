@@ -2481,3 +2481,74 @@ lo usaba.
 ### Pendiente en el iPhone
 - La tarjeta de Progreso es larga (semana, siete días, nota y botones). Comprobar que el teclado no
   tapa la nota y que los botones del final se alcanzan bien.
+
+---
+
+## v91: textos enteros, figuras fieles, semana del bloque en Perfil y desayuno sin explicaciones
+
+### 1. «No se ve todo el texto»: se cortaba AL GUARDAR, no en pantalla
+Auditoría con Playwright de todas las pestañas, cada día del calendario, la pantalla de 8 sesiones
+con todas las fichas abiertas, el reproductor (cada ejercicio en preparación, trabajo y descanso), la
+revisión previa y las hojas: **ningún texto recortado por la maquetación**. Todo lo que termina en «…»
+venía cortado de origen por los límites de guardado. Medido sobre la copia real:
+
+| Dónde | Límite anterior | Casos en la copia | Límite v91 |
+|---|---|---|---|
+| Análisis del entrenador: bloque de cardio | 1.200 | se cortó | 3.000 |
+| Análisis del entrenador: análisis / justificación | 2.000 / 1.200 | — | 6.000 / 3.000 |
+| Recomendación de cardio en los días libres | 500 | 1 | 3.000 |
+| Carga del ejercicio («peso») | 120 | 15 | 300 |
+| Explicación del día («meta») | 500 | 8 | 2.000 |
+| Descripción / nota de progresión / errores | 1.000 / 500 / 220 | — | 2.000 / 1.500 / 400 |
+| Plato del menú | 200 | 1 | 600 |
+| Registro de decisiones del entrenador | 700 / 900 | 12 | 1.500 / 2.500 |
+
+Lo ya cortado no se puede recuperar: la app ahora lo dice («el final se perdió al guardarse en una
+versión anterior»), en el análisis, en la nota de nutrición y en el calendario. Llega entero con el
+próximo plan.
+
+### 2. Figuras de los ejercicios
+Revisados los 110 nombres de ejercicio del historial real contra su figura:
+- **El press de pecho (el ejercicio más repetido, 16 veces) se dibujaba como un press por encima de
+  la cabeza de pie.** Ahora es tumbado, de brazos flexionados a extendidos.
+- Mal asignados y corregidos: fondos en silla y puente de isquios (salían como sentadilla isométrica
+  por la palabra «silla»), zancada en posición goblet (salía como goblet), press de pecho con banda
+  (salía como press militar), curl femoral (salía como peso muerto rumano), paseo lateral con banda
+  (salía como elevación lateral), elevación de piernas colgado (salía tumbado).
+- Sin figura propia y ahora con ella: press de hombros sentado, press de pecho con banda, fondos,
+  tríceps tumbado, patada de tríceps, remo invertido, remo renegado, pájaros, pull-apart, face pull,
+  paseo del granjero/maleta, bicho muerto / posición hueca, curl femoral, abducción de cadera,
+  patada de glúteo, paseo lateral, leñador, elevación de piernas colgado (18 figuras nuevas o
+  rehechas). Solo quedan sin figura propia los circuitos, que usan la genérica.
+- Son siluetas de dos posiciones: orientan el gesto, no sustituyen al vídeo ni a la descripción.
+
+### 3. Semana del bloque en Perfil
+La tarjeta Mesociclo enseña ahora las dos cuentas y por qué difieren:
+- **Calendario automático**: semanas fijas desde el primer registro.
+- **Según tu entrenador**: la que fijó en su último plan (`semana_en_bloque`, desde la v88). En planes
+  anteriores, que solo lo decían en el texto («es la semana 3 del bloque»), se lee del texto y se
+  compara con lo que contaba el calendario **para esa misma semana**.
+- Si no coinciden: «No coinciden, y manda la de tu entrenador», con la explicación y su justificación.
+- **Fallo de numeración corregido**: la semana del programa se contaba de 7 en 7 días desde el primer
+  registro. Como el primer registro fue en domingo, cada domingo «pasaba» a la semana siguiente: la
+  cabecera (que mira el lunes) decía «semana 18» y Perfil (que mira hoy) «semana 19» el mismo día. Ahora
+  se cuenta por semanas de calendario, como el resto de la app. Con tus datos la semana del 5/10 pasa
+  a ser la 19 y, sin ancla del entrenador, la semana 3 del bloque: la misma que decía tu entrenador
+  («la app marca la 2»).
+
+### 4. Desayuno
+El mensaje pedía presentar el menú como «propuesta orientativa» y el entrenador lo escribió dentro
+del plato del desayuno, con su razonamiento calórico, y se cortó a 200 caracteres. Ahora:
+- El esquema tiene `nutricion.nota` y el mensaje dice que la explicación va ahí y que cada plato
+  lleva solo el plato.
+- Al aplicar un plan, si un plato es en realidad una explicación, se mueve a la nota.
+- En los datos ya guardados se corrige al pintar, sin tocarlos: la explicación aparece en «Nota de tu
+  entrenador» y el desayuno dice que ese plan no concretó plato.
+
+### Validación
+- **622 comprobaciones en verde, 0 fallos**, en cinco zonas horarias (`test-v91.js`): 69 nuevas
+  (598 sin la copia real).
+- Contra la v90: falla la versión y la existencia de la función nueva; la sección nueva se salta.
+- Persistencia: veterano y copia real intactos. No hay campos nuevos en `initState`; `mesoNota` se
+  crea al aplicar un plan.
+- Galería de figuras revisada visualmente; capturas de Nutrición y Mesociclo con la copia real.

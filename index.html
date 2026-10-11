@@ -482,6 +482,7 @@ body{font-size:calc(15px*var(--fs))}
       <p class="note mb-9">Tu entrenador (Claude) decide la fase del bloque según tu objetivo global y tu progreso, y la propone en cada adaptación semanal. La semana del programa se cuenta desde tu primer registro. Nunca hay semanas de descanso: si tus datos lo piden, lo que baja es el volumen (mismos días, un 40-50% menos de series), y tu entrenador te explica por qué.</p>
       <div id="meso-info" style="font-size:calc(13px*var(--fs));font-weight:600;margin-bottom:6px"></div>
       <div id="meso-focus-view" style="font-size:calc(13px*var(--fs));color:var(--text2);margin-bottom:10px"></div>
+      <div id="meso-coach"></div>
       <details>
         <summary style="cursor:pointer;font-size:calc(12px*var(--fs));color:var(--accent)">Ajuste avanzado (opcional)</summary>
         <div class="field mt-8"><label>Semanas por bloque (orientativo; Claude puede ajustarlo)</label><select id="meso-len" onchange="saveMeso()">
@@ -638,7 +639,7 @@ body{font-size:calc(15px*var(--fs))}
         <div id="cloud-status" style="margin-top:7px;font-size:calc(12px*var(--fs))"></div>
       </details>
     </div>
-    <div style="text-align:center;font-size:calc(11px*var(--fs));color:var(--text3);margin-top:16px">FitCoach IA · versión 90</div>
+    <div style="text-align:center;font-size:calc(11px*var(--fs));color:var(--text3);margin-top:16px">FitCoach IA · versión 91</div>
     <div id="sw-status" style="text-align:center;font-size:calc(11px*var(--fs));color:var(--warn);margin-top:4px;display:none"></div>
     <div style="text-align:center;margin-top:8px">
       <button class="btn btn-xs" onclick="checkForUpdate()">🔄 Buscar actualización</button>
@@ -1103,7 +1104,12 @@ function daysSince(dateStr){return daysBetween(dateStr,todayKey());}
 // nº de semana del programa para una fecha dada (1 = primera semana con registros)
 function programWeekFor(dateStr){
   if(!S.programStart)return null;
-  const d=daysBetween(S.programStart,dateStr);
+  /* v91: se cuenta por semanas de calendario (lunes a domingo), como el resto de la app. Antes se
+     contaba de 7 en 7 días desde el primer registro: si ese día no era lunes, el domingo ya «era»
+     la semana siguiente y la cabecera (que mira el lunes) y Perfil (que mira hoy) daban números
+     distintos el mismo día. */
+  const a=weekKeyOf(S.programStart),b=weekKeyOf(dateStr);
+  const d=(a&&b)?daysBetween(a,b):null;
   if(d==null)return null;
   return Math.floor(d/7)+1;
 }
@@ -1813,7 +1819,7 @@ function selDay(key,idx,keep){
       const badge=s.skipped?'<span class="badge b-rest">⃠ No realizado</span>':`<span class="badge ${s.done?'b-done':s.type==='ai'?'b-ai':'b-free'}">${s.done?'✓ Hecho':s.type==='ai'?'IA':'Libre'}</span>`;
       h+=`<div class="sess ${s.type}${s.done?' done':''}${s.skipped?' skipped':''}">
         <div class="sess-h" onclick="tapSess('${key}',${si})"><span class="sess-tt">${esc(s.title)}</span>${badge}</div>
-        <div class="sess-m" onclick="tapSess('${key}',${si})">${esc(s.meta||'')}${s.done&&s.log?' · '+esc(s.log.feeling)+' '+esc(s.log.duration)+'min':''}</div>
+        <div class="sess-m" onclick="tapSess('${key}',${si})">${esc(s.meta||'')}${/…\s*$/.test(s.meta||'')?'<span style="color:var(--text3)"> (el final se perdió al guardarse en una versión anterior)</span>':''}${s.done&&s.log?' · '+esc(s.log.feeling)+' '+esc(s.log.duration)+'min':''}</div>
         <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">`;
       if(!s.done&&!s.skipped){
         if(s.type==='ai')h+=`<button class="btn btn-xs" onclick="openModify('${key}')">⚙ Modificar</button>`;
@@ -1934,18 +1940,12 @@ const FIGS={
   flexion:{c:'#34d399',
     A:{hd:[92,52],sh:[80,56],hip:[48,60],knL:[24,66],ftL:[18,68],elL:[80,68],haL:[80,72],elR:[80,68],haR:[80,72]},
     B:{hd:[92,46],sh:[80,50],hip:[48,56],knL:[24,62],ftL:[18,64],elL:[80,60],haL:[80,72],elR:[80,60],haR:[80,72]}},
-  pressdb:{c:'#34d399',extra:p=>_db(p.haL,'#7c6cf5')+_db(p.haR,'#7c6cf5'),
-    A:{hd:[60,16],sh:[60,30],hip:[60,58],elL:[48,34],haL:[46,30],elR:[72,34],haR:[74,30],knL:[56,76],ftL:[55,92],knR:[64,76],ftR:[65,92]},
-    B:{hd:[60,18],sh:[60,32],hip:[60,58],elL:[52,20],haL:[52,12],elR:[68,20],haR:[68,12],knL:[56,76],ftL:[55,92],knR:[64,76],ftR:[65,92]}},
   pressbanca:{c:'#34d399',extra:p=>_bar([p.haL[0],p.haL[1]],[p.haR[0],p.haR[1]],'#fbbf24'),
     A:{hd:[30,46],sh:[42,50],hip:[72,54],knL:[86,48],ftL:[94,44],knR:[86,58],ftR:[94,62],elL:[48,40],haL:[48,34],elR:[48,40],haR:[48,34]},
     B:{hd:[30,46],sh:[42,50],hip:[72,54],knL:[86,48],ftL:[94,44],knR:[86,58],ftR:[94,62],elL:[48,46],haL:[48,52],elR:[48,46],haR:[48,52]}},
   militar:{c:'#34d399',extra:p=>_bar([p.haL[0],p.haL[1]],[p.haR[0],p.haR[1]],'#fbbf24'),
     A:{hd:[60,18],sh:[60,32],hip:[60,58],elL:[50,34],haL:[48,30],elR:[70,34],haR:[72,30],knL:[56,76],ftL:[55,92],knR:[64,76],ftR:[65,92]},
     B:{hd:[60,18],sh:[60,32],hip:[60,58],elL:[54,22],haL:[52,12],elR:[66,22],haR:[68,12],knL:[56,76],ftL:[55,92],knR:[64,76],ftR:[65,92]}},
-  fondos:{c:'#34d399',
-    A:{hd:[60,28],sh:[60,40],hip:[60,64],elL:[50,48],haL:[48,54],elR:[70,48],haR:[72,54],knL:[58,80],ftL:[56,90],knR:[62,80],ftR:[64,90]},
-    B:{hd:[60,20],sh:[60,32],hip:[60,58],elL:[50,40],haL:[48,52],elR:[70,40],haR:[72,52],knL:[58,74],ftL:[56,86],knR:[62,74],ftR:[64,86]}},
   lateral:{c:'#34d399',extra:p=>_db(p.haL,'#7c6cf5')+_db(p.haR,'#7c6cf5'),
     A:{hd:[60,16],sh:[60,30],hip:[60,58],elL:[52,42],haL:[51,55],elR:[68,42],haR:[69,55],knL:[56,76],ftL:[55,92],knR:[64,76],ftR:[65,92]},
     B:{hd:[60,16],sh:[60,30],hip:[60,58],elL:[46,30],haL:[36,30],elR:[74,30],haR:[84,30],knL:[56,76],ftL:[55,92],knR:[64,76],ftR:[65,92]}},
@@ -2021,6 +2021,85 @@ const FIGS={
   comba:{c:'#60a5fa',extra:(p,f)=>`<path d="M${p.haL[0]} ${p.haL[1]} Q 60 ${f==='A'?100:6} ${p.haR[0]} ${p.haR[1]}" stroke="#fbbf24" fill="none" stroke-width="2"/>`,
     A:{hd:[60,18],sh:[60,32],hip:[60,58],elL:[52,42],haL:[50,50],elR:[68,42],haR:[70,50],knL:[57,76],ftL:[56,90],knR:[63,76],ftR:[64,90]},
     B:{hd:[60,14],sh:[60,28],hip:[60,54],elL:[52,40],haL:[50,46],elR:[68,40],haR:[70,46],knL:[57,72],ftL:[56,84],knR:[63,72],ftR:[64,84]}},
+  /* ---- v91: figuras nuevas o rehechas para que el dibujo sea el ejercicio pautado ---- */
+  // press de pecho con mancuernas (suelo o banco): tumbado, brazos de flexionados a extendidos.
+  // Antes «pressdb» era un press por encima de la cabeza de pie: el ejercicio más repetido del
+  // historial (press de pecho en suelo, 16 veces) se dibujaba como un press de hombros.
+  pressdb:{c:'#34d399',extra:p=>_db(p.haL,'#7c6cf5'),
+    A:{hd:[24,58],sh:[36,62],hip:[66,64],knL:[82,50],ftL:[96,64],knR:[84,52],ftR:[98,64],elL:[46,64],haL:[46,50],elR:[46,64],haR:[46,50]},
+    B:{hd:[24,58],sh:[36,62],hip:[66,64],knL:[82,50],ftL:[96,64],knR:[84,52],ftR:[98,64],elL:[37,48],haL:[38,34],elR:[37,48],haR:[38,34]}},
+  // press de hombros sentado: de frente, sentado en un banco
+  militarsent:{c:'#34d399',extra:p=>_db(p.haL,'#fbbf24')+_db(p.haR,'#fbbf24')+`<rect x="40" y="66" width="40" height="4" rx="2" fill="#9ca3af"/>`,
+    A:{hd:[60,24],sh:[60,37],hip:[60,64],elL:[45,46],haL:[45,33],elR:[75,46],haR:[75,33],knL:[48,70],ftL:[48,90],knR:[72,70],ftR:[72,90]},
+    B:{hd:[60,24],sh:[60,37],hip:[60,64],elL:[51,25],haL:[53,12],elR:[69,25],haR:[67,12],knL:[48,70],ftL:[48,90],knR:[72,70],ftR:[72,90]}},
+  // press de pecho de pie con banda por la espalda
+  pressbanda:{c:'#34d399',extra:p=>_band(p.haR,[50,34],'#fbbf24'),
+    A:{hd:[56,16],sh:[56,30],hip:[56,58],elL:[48,42],haL:[64,38],elR:[48,42],haR:[64,38],knL:[52,76],ftL:[50,92],knR:[62,76],ftR:[66,92]},
+    B:{hd:[56,16],sh:[56,30],hip:[56,58],elL:[72,32],haL:[88,32],elR:[72,32],haR:[88,32],knL:[52,76],ftL:[50,92],knR:[62,76],ftR:[66,92]}},
+  // fondos en silla: manos en el borde, piernas delante; baja doblando codos
+  fondos:{c:'#34d399',extra:()=>`<rect x="18" y="52" width="26" height="4" rx="2" fill="#9ca3af"/><line x1="20" y1="56" x2="20" y2="92" stroke="#9ca3af" stroke-width="3"/><line x1="42" y1="56" x2="42" y2="92" stroke="#9ca3af" stroke-width="3"/>`,
+    A:{hd:[48,24],sh:[46,37],hip:[50,62],elL:[42,44],haL:[38,52],elR:[42,44],haR:[38,52],knL:[74,64],ftL:[96,88],knR:[74,66],ftR:[96,90]},
+    B:{hd:[50,38],sh:[48,50],hip:[52,74],elL:[32,46],haL:[38,52],elR:[32,46],haR:[38,52],knL:[76,74],ftL:[96,88],knR:[76,76],ftR:[96,90]}},
+  // extensión de tríceps tumbado (rompecráneos en el suelo)
+  tricepstumb:{c:'#34d399',extra:p=>_db(p.haL,'#7c6cf5'),
+    A:{hd:[24,58],sh:[36,62],hip:[66,64],knL:[82,50],ftL:[96,64],knR:[84,52],ftR:[98,64],elL:[38,46],haL:[39,32],elR:[38,46],haR:[39,32]},
+    B:{hd:[24,58],sh:[36,62],hip:[66,64],knL:[82,50],ftL:[96,64],knR:[84,52],ftR:[98,64],elL:[38,46],haL:[25,44],elR:[38,46],haR:[25,44]}},
+  // patada de tríceps: inclinado, el codo fijo y el antebrazo se extiende hacia atrás
+  patadatri:{c:'#34d399',extra:p=>_db(p.haR,'#7c6cf5'),
+    A:{hd:[30,36],sh:[40,42],hip:[66,52],elL:[40,56],haL:[42,66],elR:[54,46],haR:[52,58],knL:[64,72],ftL:[62,90],knR:[72,72],ftR:[74,90]},
+    B:{hd:[30,36],sh:[40,42],hip:[66,52],elL:[40,56],haL:[42,66],elR:[54,46],haR:[68,44],knL:[64,72],ftL:[62,90],knR:[72,72],ftR:[74,90]}},
+  // remo invertido bajo una mesa: cuerpo recto, se tira del pecho hacia el borde
+  remoinv:{c:'#fbbf24',extra:()=>`<line x1="54" y1="38" x2="114" y2="38" stroke="#9ca3af" stroke-width="3"/><line x1="108" y1="38" x2="108" y2="92" stroke="#9ca3af" stroke-width="3"/>`,
+    A:{hd:[76,58],sh:[66,60],hip:[44,72],knL:[30,80],ftL:[16,88],knR:[30,80],ftR:[16,88],elL:[68,50],haL:[70,40],elR:[68,50],haR:[70,40]},
+    B:{hd:[76,46],sh:[66,48],hip:[42,66],knL:[28,77],ftL:[16,88],knR:[28,77],ftR:[16,88],elL:[56,44],haL:[68,40],elR:[56,44],haR:[68,40]}},
+  // remo renegado: plancha alta con una mancuerna que sube a la cadera
+  renegado:{c:'#fbbf24',extra:p=>_db(p.haL,'#7c6cf5')+_db(p.haR,'#7c6cf5'),
+    A:{hd:[94,50],sh:[82,54],hip:[50,60],knL:[30,66],ftL:[16,70],knR:[30,66],ftR:[16,70],elL:[82,64],haL:[82,72],elR:[82,64],haR:[82,72]},
+    B:{hd:[94,50],sh:[82,54],hip:[50,60],knL:[30,66],ftL:[16,70],knR:[30,66],ftR:[16,70],elL:[82,64],haL:[82,72],elR:[70,48],haR:[72,58]}},
+  // pájaros: inclinado, brazos de colgando a abiertos
+  pajaro:{c:'#fbbf24',extra:p=>_db(p.haL,'#7c6cf5'),
+    A:{hd:[30,38],sh:[40,44],hip:[66,52],elL:[40,58],haL:[41,68],elR:[40,58],haR:[41,68],knL:[64,72],ftL:[62,90],knR:[72,72],ftR:[74,90]},
+    B:{hd:[30,38],sh:[40,44],hip:[66,52],elL:[46,34],haL:[52,26],elR:[46,34],haR:[52,26],knL:[64,72],ftL:[62,90],knR:[72,72],ftR:[74,90]}},
+  // pull-apart: de frente, la banda se abre de delante del pecho hasta los lados
+  pullapart:{c:'#fbbf24',extra:p=>_band(p.haL,p.haR,'#34d399'),
+    A:{hd:[60,16],sh:[60,30],hip:[60,56],elL:[52,36],haL:[55,36],elR:[68,36],haR:[65,36],knL:[56,74],ftL:[55,92],knR:[64,74],ftR:[65,92]},
+    B:{hd:[60,16],sh:[60,30],hip:[60,56],elL:[44,31],haL:[28,31],elR:[76,31],haR:[92,31],knL:[56,74],ftL:[55,92],knR:[64,74],ftR:[65,92]}},
+  // face pull: de lado, la banda anclada delante a la altura de la cara, tira hacia la frente
+  facepull:{c:'#fbbf24',extra:p=>_band(p.haR,[108,22],'#34d399'),
+    A:{hd:[52,16],sh:[52,30],hip:[52,58],elL:[70,26],haL:[86,24],elR:[70,26],haR:[86,24],knL:[48,76],ftL:[46,92],knR:[58,76],ftR:[62,92]},
+    B:{hd:[52,16],sh:[52,30],hip:[52,58],elL:[46,20],haL:[60,16],elR:[46,20],haR:[60,16],knL:[48,76],ftL:[46,92],knR:[58,76],ftR:[62,92]}},
+  // paseo del granjero / de maleta: caminando con peso a los lados
+  granjero:{c:'#fbbf24',extra:p=>_db(p.haL,'#7c6cf5'),
+    A:{hd:[60,16],sh:[60,30],hip:[60,56],elL:[63,44],haL:[64,58],elR:[63,44],haR:[64,58],knL:[54,74],ftL:[46,92],knR:[66,74],ftR:[72,92]},
+    B:{hd:[62,16],sh:[62,30],hip:[62,56],elL:[65,44],haL:[66,58],elR:[65,44],haR:[66,58],knL:[68,74],ftL:[74,92],knR:[56,74],ftR:[50,92]}},
+  // bicho muerto: boca arriba, brazos al techo y piernas en mesa; se extienden brazo y pierna contrarios
+  bichomuerto:{c:'#f87171',
+    A:{hd:[24,60],sh:[36,62],hip:[64,64],elL:[37,50],haL:[38,38],elR:[37,50],haR:[38,38],knL:[64,46],ftL:[82,46],knR:[66,46],ftR:[84,46]},
+    B:{hd:[24,60],sh:[36,62],hip:[64,64],elL:[26,58],haL:[14,56],elR:[37,50],haR:[38,38],knL:[64,46],ftL:[82,46],knR:[82,62],ftR:[100,62]}},
+  // elevación de piernas colgado: de la barra, sube las piernas
+  legraisehang:{c:'#f87171',extra:()=>`<line x1="34" y1="8" x2="86" y2="8" stroke="#9ca3af" stroke-width="3"/>`,
+    A:{hd:[60,22],sh:[60,31],hip:[60,56],elL:[52,18],haL:[50,8],elR:[68,18],haR:[70,8],knL:[58,72],ftL:[58,88],knR:[62,72],ftR:[62,88]},
+    B:{hd:[60,22],sh:[60,31],hip:[60,56],elL:[52,18],haL:[50,8],elR:[68,18],haR:[70,8],knL:[74,50],ftL:[76,66],knR:[76,52],ftR:[78,68]}},
+  // curl femoral deslizante / con banda: boca arriba, caderas arriba, los talones se acercan
+  curlfem:{c:'#7c6cf5',
+    A:{hd:[20,62],sh:[32,64],hip:[56,58],elL:[40,68],haL:[48,68],elR:[40,68],haR:[48,68],knL:[78,62],ftL:[100,66],knR:[78,62],ftR:[100,66]},
+    B:{hd:[20,62],sh:[32,64],hip:[56,48],elL:[40,68],haL:[48,68],elR:[40,68],haR:[48,68],knL:[72,40],ftL:[80,66],knR:[72,40],ftR:[80,66]}},
+  // abducción de cadera tumbado de lado
+  abduccion:{c:'#7c6cf5',extra:p=>_db([p.knR[0]-6,p.knR[1]-4],'#fbbf24'),
+    A:{hd:[18,58],sh:[30,62],hip:[62,64],elL:[26,72],haL:[18,66],elR:[40,58],haR:[52,62],knL:[80,66],ftL:[100,68],knR:[80,62],ftR:[100,62]},
+    B:{hd:[18,58],sh:[30,62],hip:[62,64],elL:[26,72],haL:[18,66],elR:[40,58],haR:[52,62],knL:[80,66],ftL:[100,68],knR:[78,52],ftR:[96,40]}},
+  // patada de glúteo en cuadrupedia, con banda
+  patadaglut:{c:'#7c6cf5',extra:p=>_band(p.ftR,p.haL,'#34d399'),
+    A:{hd:[24,48],sh:[34,54],hip:[66,56],elL:[34,68],haL:[34,80],elR:[34,68],haR:[34,80],knL:[66,80],ftL:[86,80],knR:[64,78],ftR:[84,78]},
+    B:{hd:[24,48],sh:[34,54],hip:[66,56],elL:[34,68],haL:[34,80],elR:[34,68],haR:[34,80],knL:[66,80],ftL:[86,80],knR:[86,50],ftR:[104,40]}},
+  // paseo lateral con banda: de frente, semisentadilla y paso al lado
+  paseolat:{c:'#7c6cf5',extra:p=>_band(p.knL,p.knR,'#34d399'),
+    A:{hd:[60,22],sh:[60,35],hip:[60,60],elL:[50,46],haL:[54,58],elR:[70,46],haR:[66,58],knL:[54,74],ftL:[52,92],knR:[66,74],ftR:[68,92]},
+    B:{hd:[60,22],sh:[60,35],hip:[60,60],elL:[50,46],haL:[54,58],elR:[70,46],haR:[66,58],knL:[48,74],ftL:[40,92],knR:[74,74],ftR:[84,92]}},
+  // leñador con banda: diagonal de arriba a abajo cruzando el cuerpo
+  lenador:{c:'#f87171',extra:p=>_band(p.haR,[108,8],'#34d399'),
+    A:{hd:[60,18],sh:[60,32],hip:[60,58],elL:[72,24],haL:[82,14],elR:[74,26],haR:[84,16],knL:[54,74],ftL:[48,92],knR:[66,74],ftR:[72,92]},
+    B:{hd:[58,22],sh:[58,36],hip:[60,60],elL:[46,50],haL:[38,62],elR:[48,52],haR:[40,64],knL:[52,76],ftL:[48,92],knR:[68,76],ftR:[72,92]}},
   shrug:{c:'#fbbf24',extra:p=>_db(p.haL,'#7c6cf5')+_db(p.haR,'#7c6cf5'),
     A:{hd:[60,16],sh:[60,34],hip:[60,58],elL:[50,46],haL:[48,58],elR:[70,46],haR:[72,58],knL:[56,76],ftL:[55,92],knR:[64,76],ftR:[65,92]},
     B:{hd:[60,16],sh:[60,28],hip:[60,58],elL:[50,40],haL:[48,52],elR:[70,40],haR:[72,52],knL:[56,76],ftL:[55,92],knR:[64,76],ftR:[65,92]}},
@@ -2029,6 +2108,32 @@ const FIGS={
 /* mapeo nombre de ejercicio → archetipo de figura */
 function figKey(name){
   const n=(name||'').toLowerCase();
+  /* v91: casos que antes caían en una figura equivocada o en ninguna. Van primero porque las
+     reglas de abajo los capturaban mal: «fondos en silla» y «puente… en una silla» salían como
+     sentadilla isométrica (por «silla»), «zancada… en posición goblet» como goblet, «press de pecho
+     con banda» como press por encima de la cabeza y «curl femoral» como peso muerto rumano. */
+  if(/fondo/.test(n))return 'fondos';
+  if(/puente/.test(n))return /isquio/.test(n)?'curlfem':'hipthrust';
+  if(/empuje de cadera|hip thrust/.test(n))return 'hipthrust';
+  if(/zancada/.test(n))return 'zancada';
+  if(/curl femoral|curl de pierna|leg ?curl|curl n[oó]rdico|femoral/.test(n))return 'curlfem';
+  if(/paseo lateral|monster walk|caminata lateral/.test(n))return 'paseolat';
+  if(/paseo (del )?granjero|paseo de maleta|farmer|maleta|transporte/.test(n))return 'granjero';
+  if(/remo invertido|remo australiano|invertido/.test(n))return 'remoinv';
+  if(/renegad/.test(n))return 'renegado';
+  if(/pull-?apart/.test(n))return 'pullapart';
+  if(/face ?pull/.test(n))return 'facepull';
+  if(/p[aá]jaro|reverse fly|apertura inversa|aperturas inversas/.test(n))return 'pajaro';
+  if(/bicho muerto|dead ?bug|hollow|posici[oó]n hueca/.test(n))return 'bichomuerto';
+  if(/abducci[oó]n/.test(n))return 'abduccion';
+  if(/patada de gl[uú]teo|patada gl[uú]teo|kickback de gl/.test(n))return 'patadaglut';
+  if(/le[nñ]ador|woodchop/.test(n))return 'lenador';
+  if(/elevaci[oó]n de piernas? colgad|colgado/.test(n))return 'legraisehang';
+  if(/patada de tr[ií]ceps|kickback/.test(n))return 'patadatri';
+  if(/tr[ií]ceps.*(tumbad|suelo|banco)|press franc[eé]s|rompecr[aá]neos/.test(n))return 'tricepstumb';
+  if(/press.*(pecho|banca).*banda|banda.*(pecho|banca)|press de pecho con banda/.test(n))return 'pressbanda';
+  if(/press de pecho|press en suelo|press cerrado|floor press/.test(n))return 'pressdb';
+  if(/press de hombros sentado|press.*sentado|sentado.*press/.test(n))return 'militarsent';
   if(/goblet/.test(n))return 'goblet';
   if(/sumo/.test(n))return 'sumo';
   if(/sentadilla con salto|squat ?jump|sentadilla saltando|salto de sentadilla|sentadilla pl[ií]om|pliom[eé]trica/.test(n))return 'squatjump';
@@ -2587,6 +2692,7 @@ function renderProg(){
     <div class="stat"><div class="stat-v">${done}</div><div class="stat-l">Esta semana</div></div>
     <div class="stat"><div class="stat-v">${pct}%</div><div class="stat-l">Adherencia</div></div>`;
   document.getElementById('insight').textContent=S.insight||'Registra sesiones para recibir análisis adaptativo.';
+  avisoCortado('insight',S.insight); // v91
   const bi=document.getElementById('baseline-in');if(bi&&document.activeElement!==bi)bi.value=S.baseline||'';
   const hl=document.getElementById('history');
   /* v73: se pintaban TODAS las sesiones en cada renderProg(), y renderProg se llama al registrar,
@@ -2758,8 +2864,14 @@ function renderNutri(){
       <div class="stat"><div class="stat-v">${esc(n.proteina_g)}g</div><div class="stat-l">proteína</div></div>
       <div class="stat"><div class="stat-v">${esc(n.agua_litros)}L</div><div class="stat-l">agua</div></div>
     </div></div>
-    ${(n.menu_dia||[]).map(m=>`<div class="meal"><div class="meal-t">${esc(m.momento)} · ${esc(m.hora)}</div>
-      <div class="meal-n">${esc(m.plato)}</div><div class="meal-m">${esc(m.kcal)} kcal · ${esc(m.proteina_g)}g proteína</div></div>`).join('')}
+    ${(()=>{ // v91: la explicación del entrenador va en su sitio, no en el desayuno
+      const extra=[];const menu=(n.menu_dia||[]).map(m=>{const r=separarExplicacion(m.plato);if(r.explicacion)extra.push(r.explicacion);return Object.assign({},m,{plato:r.plato});});
+      const nota=[n.nota].concat(extra).filter(Boolean).join('\n\n');
+      const cortada=/…$/.test(nota);
+      return (nota?`<div class="card"><div class="card-t">🧑‍⚕️ Nota de tu entrenador</div><div class="note" style="white-space:pre-wrap">${esc(nota)}</div>${cortada?'<div class="note mt-6" style="color:var(--text3)">Este texto se guardó cortado en una versión anterior de la app; desde la v91 llega entero con el próximo plan.</div>':''}</div>`:'')
+        +menu.map(m=>`<div class="meal"><div class="meal-t">${esc(m.momento)} · ${esc(m.hora)}</div>
+      <div class="meal-n">${m.plato?esc(m.plato):'<span style="color:var(--text3);font-weight:400">Tu entrenador no concretó el plato de este momento en este plan. Mantén la proteína y las kcal indicadas.</span>'}</div><div class="meal-m">${esc(m.kcal)} kcal · ${esc(m.proteina_g)}g proteína</div></div>`).join('');
+    })()}
     <p class="note">Valores orientativos calculados desde tu gasto energético${hasRange?' (el rango es a propósito: no lo tomes como un objetivo exacto a cumplir)':''}. Ajusta según tu evolución y consulta a un profesional para necesidades específicas.</p>
     <div class="card mt-12">
       <div class="card-t">📝 Revisión semanal</div>
@@ -3203,8 +3315,8 @@ function logCoachDecision(plan,weekKeyStr){
     fecha:todayKey(),
     semana:weekKeyStr||weekKeyOf(todayKey()),
     enfoque:cleanStr(meso.enfoque,120),
-    justificacion:cleanMulti(meso.justificacion,700),   // v84
-    analisis:cleanMulti(plan.analisis_progreso,900),    // v84
+    justificacion:cleanMulti(meso.justificacion,1500),  // v84 · v91: 700 cortaba
+    analisis:cleanMulti(plan.analisis_progreso,2500),   // v84 · v91: 900 cortaba
     sesiones:(plan.sesiones_ia||[]).length
   };
   if(!entrada.enfoque&&!entrada.analisis)return;
@@ -3635,7 +3747,7 @@ PRINCIPIOS BASADOS EN EVIDENCIA (referencias comprobadas una a una; si citas evi
 ${dietaTxt}- AJUSTE CALÓRICO CON MI PESO REAL (ciclo cerrado): usa la serie de PESO REGISTRADO si la hay. Ritmos de referencia: pérdida de grasa 0,25-0,5% del peso corporal por semana; ganancia de músculo 0,25-0,5% por semana en principiantes e intermedios y más despacio en avanzados (Iraki 2019); mantenimiento o recomposición, peso estable y cintura a la baja. Usa el ritmo ya calculado en PESO Y CINTURA, no la diferencia entre dos pesajes sueltos. Si mi ritmo real se aparta del objetivo durante 2-3 semanas seguidas, mueve el rango de calorías en torno a un 10% en la dirección que toque y dilo ("subo/bajo X kcal porque llevas Y semanas a Z kg por semana"). Si no hay pesos suficientes para juzgarlo, dilo en vez de tocar las calorías a ciegas.
 - PROTEÍNA POR TOMA: reparte la proteína en 3-5 tomas de 0,40-0,55 g/kg cada una (Iraki 2019) y comprueba que el "menu_dia" que propones las cumple.
 - CREATINA (opcional, y la única excepción a «sin suplementos»): si mi objetivo incluye fuerza o músculo, puedes mencionar UNA vez la creatina monohidrato a 3-5 g/día como opción con buen respaldo (Kreider 2017), sin fase de carga y sin presentarla como necesaria. Añade que con enfermedad renal o medicación crónica se consulta antes con el médico. No recomiendes ningún otro suplemento.
-- PRECISIÓN DEL MENÚ: la app NO registra lo que como, así que el menú es una propuesta orientativa para dar ideas y llegar a la proteína, no un objetivo a cumplir al gramo. Preséntalo con esas palabras.`;
+- PRECISIÓN DEL MENÚ: la app NO registra lo que como, así que el menú es una propuesta orientativa para dar ideas y llegar a la proteína, no un objetivo a cumplir al gramo. Dilo con esas palabras en "nutricion.nota", junto con tu razonamiento calórico; en cada "plato" escribe SOLO el plato (ingredientes y cantidades), nunca explicaciones: la app muestra cada plato bajo su momento del día.`;
 
   return `Actúa como mi entrenador personal profesional y nutricionista, siguiendo evidencia científica actual. ${mode==='adapt'?'Genera la SIGUIENTE semana de entrenamiento adaptada a mi progreso real.':'Genera mi plan de entrenamiento semanal.'}
 
@@ -3654,7 +3766,7 @@ Responde ÚNICAMENTE con un objeto JSON válido, sin texto antes ni después, si
      ]}
   ],
   "recomendacion_cardio":"string para días libres",
-  "nutricion":{"calorias_diarias":2000,"calorias_min":1900,"calorias_max":2100,"proteina_g":130,"agua_litros":2.5,
+  "nutricion":{"calorias_diarias":2000,"calorias_min":1900,"calorias_max":2100,"proteina_g":130,"agua_litros":2.5,"modo":"string corta: mantenimiento | superávit ligero | déficit ligero…","nota":"string: por qué esas calorías y cómo usar el menú; aquí, NO dentro de un plato",
     "menu_dia":[
       {"momento":"Desayuno","hora":"08:00","plato":"string","kcal":400,"proteina_g":25},
       {"momento":"Media mañana","hora":"11:00","plato":"string","kcal":180,"proteina_g":10},
@@ -4040,10 +4152,10 @@ function applyBridgePlan(plan){
     if(!S.schedule[key])S.schedule[key]=[];
     // v84: desde la v80 la recomendación de cardio lleva zonas, pulsaciones y el contraste con el
     // mínimo aeróbico semanal. En 140 caracteres no cabía ni la primera frase.
-    if(!S.schedule[key].some(s=>s.type==='free'))S.schedule[key].push({type:'free',title:'Entrenamiento libre',meta:cleanMulti(plan.recomendacion_cardio,500)||'Actividad libre',done:false});});
+    if(!S.schedule[key].some(s=>s.type==='free'))S.schedule[key].push({type:'free',title:'Entrenamiento libre',meta:cleanMulti(plan.recomendacion_cardio,3000)||'Actividad libre',done:false});}); // v91: 500 cortaba
   if(plan.nutricion)S.nutri=cleanNutri(plan.nutricion); // v72
   if(plan.mesociclo){
-    if(plan.mesociclo.enfoque)S.mesoFocus=cleanStr(plan.mesociclo.enfoque,120);
+    if(plan.mesociclo.enfoque)S.mesoFocus=cleanStr(plan.mesociclo.enfoque,200);
     if(plan.mesociclo.semanas_bloque)S.mesoLen=Math.max(1,Math.min(12,parseInt(plan.mesociclo.semanas_bloque)||S.mesoLen));
     // v88: el entrenador dice en qué semana del bloque cae la que planifica; la app se ajusta a él
     const sb=parseInt(plan.mesociclo.semana_en_bloque);
@@ -4059,22 +4171,27 @@ function applyBridgePlan(plan){
       const ini=new Date(dates[0]);ini.setDate(ini.getDate()-(sb-1)*7);
       S.blockStart=fmt(ini);S.blockNum=num;
     }
+    // v91: lo que dijo el entrenador, para enseñarlo en Perfil frente al calendario automático
+    S.mesoNota={fecha:todayKey(),semanaPlan:fmt(dates[0]),
+      semana_en_bloque:(!isNaN(sb)&&sb>=1&&sb<=12)?sb:null,
+      bloque:parseInt(plan.mesociclo.bloque)||null,semanas_bloque:parseInt(plan.mesociclo.semanas_bloque)||null,
+      enfoque:cleanStr(plan.mesociclo.enfoque,200),justificacion:cleanMulti(plan.mesociclo.justificacion||'',3000)};
   }
   // Análisis del entrenador: SIEMPRE refleja solo la adaptación actual (un único análisis vigente).
   // El historial de lo realizado se conserva aparte en S.history y se le envía a Claude en cada
   // adaptación, así que su análisis ya tiene en cuenta la progresión previa sin necesidad de
   // acumular textos de semanas anteriores aquí (que confundían sobre cuál es el vigente).
   const insightParts=[];
-  if(plan.analisis_progreso)insightParts.push(cleanMulti(plan.analisis_progreso,2000));
+  if(plan.analisis_progreso)insightParts.push(cleanMulti(plan.analisis_progreso,6000)); // v91
   if(plan.mesociclo&&(plan.mesociclo.enfoque||plan.mesociclo.justificacion)){
     // v84: aquí es donde el entrenador explica por qué contradice una preferencia mía y por qué
     // toca bajar volumen. Cortarlo deja el argumento a medias, que es justo lo que no se debe cortar.
-    const j=plan.mesociclo.justificacion?' — '+cleanMulti(plan.mesociclo.justificacion,1200):'';
-    insightParts.push('🗓️ Fase del mesociclo: '+(cleanStr(plan.mesociclo.enfoque,120)||S.mesoFocus)+j);
+    const j=plan.mesociclo.justificacion?' — '+cleanMulti(plan.mesociclo.justificacion,3000):''; // v91
+    insightParts.push('🗓️ Fase del mesociclo: '+(cleanStr(plan.mesociclo.enfoque,200)||S.mesoFocus)+j);
   }
   // v84: 300 caracteres no daban para zonas + rangos de pulsaciones + minutos semanales + cómo
   // llegar al mínimo de salud, que es lo que se le pide desde la v80
-  if(plan.recomendacion_cardio)insightParts.push('🏃 Cardio recomendado: '+cleanMulti(plan.recomendacion_cardio,1200));
+  if(plan.recomendacion_cardio)insightParts.push('🏃 Cardio recomendado: '+cleanMulti(plan.recomendacion_cardio,3000)); // v91: 1200 cortaba
   if(insightParts.length)S.insight=insightParts.join('\n\n');
   logCoachDecision(plan,weekKeyOf(fmt(dates[0]))); // v75: continuidad de criterio entre semanas
   save();closeSheet('bridge-bg');renderCal();renderNutri();renderProg();tab('cal');
@@ -4129,15 +4246,16 @@ function cleanInt(v,min,max,def){
 function cleanEx(e){
   if(!e||typeof e!=='object')return {nombre:'Ejercicio',series:3,reps:'10',descanso_seg:60};
   const o={...e};
-  ['nombre','peso','musculos','patron','rir','rpe','tempo','tipo','formato','unidad','banda','yt','p'].forEach(k=>{if(o[k]!=null)o[k]=cleanStr(o[k],120);});
+  ['nombre','musculos','patron','rir','rpe','tempo','tipo','formato','unidad','banda','yt','p'].forEach(k=>{if(o[k]!=null)o[k]=cleanStr(o[k],120);});
+  if(o.peso!=null)o.peso=cleanStr(o.peso,300); // v91: 120 cortaba 15 cargas («… sentado con la espalda apoyada»)
   if(o.reps!=null)o.reps=cleanStr(o.reps,40);
   // v88: solo true/false explícitos; cualquier otra cosa se descarta y decide la lista de la app
   if(o.fallo_tecnico===true||o.fallo_tecnico==='true')o.fallo_tecnico=true;
   else if(o.fallo_tecnico===false||o.fallo_tecnico==='false')o.fallo_tecnico=false;
   else delete o.fallo_tecnico;
-  if(o.descripcion!=null)o.descripcion=cleanMulti(o.descripcion,1000); // v84
-  if(o.nota_progresion!=null)o.nota_progresion=cleanMulti(o.nota_progresion,500); // v84: se guardaba sin sanear
-  if(Array.isArray(o.errores))o.errores=o.errores.slice(0,6).map(x=>cleanStr(x,220)); // v84: no se saneaban
+  if(o.descripcion!=null)o.descripcion=cleanMulti(o.descripcion,2000); // v84 · v91
+  if(o.nota_progresion!=null)o.nota_progresion=cleanMulti(o.nota_progresion,1500); // v84 · v91
+  if(Array.isArray(o.errores))o.errores=o.errores.slice(0,6).map(x=>cleanStr(x,400)); // v84 · v91
   if(!o.nombre)o.nombre='Ejercicio';
   if(Array.isArray(o.movimientos))o.movimientos=o.movimientos.slice(0,20).map(m=>({
     ...(m&&typeof m==='object'?m:{}),
@@ -4156,18 +4274,36 @@ function cleanEx(e){
   }
   return o;
 }
+// ¿El texto de un plato es una explicación del menú? Devuelve {plato, explicacion}
+const _RX_EXPLICA=/propuesta orientativa|no (es )?un objetivo a cumplir|al gramo|no toco las calor|llevas \d|pesadas?|kcal\/d[ií]a|(sub|baj)o (las )?calor/i;
+function separarExplicacion(t){
+  const s=String(t||'').trim();
+  if(!s||!_RX_EXPLICA.test(s))return {plato:s,explicacion:''};
+  // «(explicación) plato»: si hay un paréntesis inicial cerrado, el plato es lo que sigue
+  const m=s.match(/^\(([^)]*)\)\s*(.*)$/s);
+  if(m&&m[2]&&!_RX_EXPLICA.test(m[2]))return {plato:m[2].trim(),explicacion:m[1].trim()};
+  return {plato:'',explicacion:s.replace(/^\(/,'').replace(/\)$/,'').trim()};
+}
 function cleanNutri(n){
   if(!n||typeof n!=='object')return n;
   const o={...n};
   ['calorias_diarias','calorias_min','calorias_max','proteina_g'].forEach(k=>{if(o[k]!=null)o[k]=cleanInt(o[k],0,20000,null);});
   if(o.agua_litros!=null)o.agua_litros=cleanStr(o.agua_litros,10);
-  if(o.modo!=null)o.modo=cleanStr(o.modo,80);
-  if(o.nota!=null)o.nota=cleanMulti(o.nota,900); // v84
+  if(o.modo!=null)o.modo=cleanStr(o.modo,200);
+  if(o.nota!=null)o.nota=cleanMulti(o.nota,3000); // v84 · v91
   if(Array.isArray(o.menu_dia))o.menu_dia=o.menu_dia.slice(0,12).map(m=>({
     ...(m&&typeof m==='object'?m:{}),
-    momento:cleanStr(m&&m.momento,40),hora:cleanStr(m&&m.hora,10),plato:cleanStr(m&&m.plato,200),
+    momento:cleanStr(m&&m.momento,40),hora:cleanStr(m&&m.hora,10),plato:cleanMulti(m&&m.plato,600),
     kcal:cleanInt(m&&m.kcal,0,5000,null),proteina_g:cleanInt(m&&m.proteina_g,0,500,null)
   }));
+  /* v91: el mensaje pedía presentar el menú como «propuesta orientativa» y el entrenador lo escribió
+     DENTRO del plato del desayuno, junto con su razonamiento calórico: el desayuno decía la
+     explicación en vez del desayuno, y además cortado a 200 caracteres. Si un plato es en realidad
+     una explicación, se mueve a la nota. */
+  (o.menu_dia||[]).forEach(m=>{
+    const r=separarExplicacion(m.plato);
+    if(r.explicacion){o.nota=[o.nota,r.explicacion].filter(Boolean).join('\n\n');m.plato=r.plato;}
+  });
   return o;
 }
 // sanea una sesión del JSON y devuelve sus campos ya listos para guardar
@@ -4177,9 +4313,9 @@ function cleanSession(s){
   /* v84: `meta` es la explicación del día que se lee en el calendario. Estaba cortada a 140
      caracteres AL GUARDAR, así que llegaba con «…» y el resto se perdía para siempre: no era un
      problema de que no cupiera en pantalla, es que el texto ya no existía. */
-  s.meta=cleanMulti(s.meta,500);
-  if(s.calentamiento!=null)s.calentamiento=cleanMulti(s.calentamiento,900); // v84: incluye aproximaciones
-  if(s.vuelta_calma!=null)s.vuelta_calma=cleanMulti(s.vuelta_calma,700);
+  s.meta=cleanMulti(s.meta,2000);            // v91: 500 cortaba 8 explicaciones del día
+  if(s.calentamiento!=null)s.calentamiento=cleanMulti(s.calentamiento,2000); // v84: incluye aproximaciones
+  if(s.vuelta_calma!=null)s.vuelta_calma=cleanMulti(s.vuelta_calma,1500);
   s.ejercicios=(Array.isArray(s.ejercicios)?s.ejercicios:[]).slice(0,25).map(cleanEx).map(matchYT);
   return s;
 }
@@ -5426,7 +5562,7 @@ function preEmpezar(aplicar){
   });
   if(PRE.props!=null){
     sess.ajusteDia={fecha:todayKey(),estado:PRE.estado,dolor:PRE.dolor.slice(),tipoDolor:PRE.tipoDolor,
-      fuente:PRE.fuente,analisis:cleanMulti(PRE.analisis||'',600),cambios,rechazados};
+      fuente:PRE.fuente,analisis:cleanMulti(PRE.analisis||'',1500),cambios,rechazados};
     save();
   }
   const k=PRE.key;
@@ -5495,7 +5631,7 @@ function propsDesdeClaude(json,key){
     const i=sess.exercises.findIndex(x=>!isBlock(x)&&_norm(x.nombre).trim()===_norm(a.ejercicio).trim());
     if(i<0){errores.push(`"${cleanStr(a.ejercicio,60)}" no está en la sesión de hoy: ignorado.`);return;}
     const ex=sess.exercises[i];
-    const pr={i,nombre:ex.nombre,cambios:{},motivos:a.motivo?[cleanMulti(a.motivo,400)]:[],avisos:[]};
+    const pr={i,nombre:ex.nombre,cambios:{},motivos:a.motivo?[cleanMulti(a.motivo,800)]:[],avisos:[]};
     if(a.sustituir_por){const nn=cleanStr(a.sustituir_por,80);if(nn&&_norm(nn)!==_norm(ex.nombre))pr.cambios.nombre={antes:ex.nombre,despues:nn};}
     if(a.peso){const pz=cleanStr(a.peso,120);
       if(pz&&pz!==ex.peso){
@@ -5510,7 +5646,7 @@ function propsDesdeClaude(json,key){
     if(a.reps){const r=cleanStr(a.reps,12);if(r&&repRange(r)&&r!==String(ex.reps||''))pr.cambios.reps={antes:ex.reps||'—',despues:r};} // v88
     if(Object.keys(pr.cambios).length||pr.motivos.length)props.push(pr);
   });
-  return {props,errores,analisis:cleanMulti(json.analisis||'',600)};
+  return {props,errores,analisis:cleanMulti(json.analisis||'',1500)};
 }
 function preLeerClaude(){
   const t=(document.getElementById('pre-resp')||{}).value||'';
@@ -6680,7 +6816,52 @@ function renderMeso(){
   if(!info)return;
   const cur=programWeekFor(fmt(new Date()));
   const mi=mesoInfo(cur,todayKey());
+  renderMesoCoach(cur); // v91
   info.textContent=mi?`Semana ${mi.weekNum} del programa · bloque ${mi.block} (semana ${mi.wInBlock} de ${mi.len})${mi.ancla?' · contado desde el '+_fechaCorta(weekKeyOf(S.blockStart))+', según tu entrenador':''}`:'Aún sin registros: la cuenta empezará con tu primer plan o sesión.';
+}
+/* v91 · Semana del bloque: la del calendario frente a la que dice el entrenador.
+   El calendario cuenta semanas fijas desde el primer registro; el entrenador decide según lo que
+   has hecho (una semana de volumen reducido, un bloque alargado o recortado). Si no coinciden, se
+   enseñan las dos y por qué, y manda la del entrenador. */
+/* v91: hasta la v90 algunos textos del entrenador se recortaban al guardarse y terminan en «…». Lo
+   perdido no se puede recuperar; se dice, para que no parezca un fallo de pantalla. */
+function avisoCortado(id,txt){
+  const el=document.getElementById(id);if(!el)return;
+  const prev=document.getElementById(id+'-cortado');if(prev)prev.remove();
+  if(!/…\s*$/.test(String(txt||'')))return;
+  el.insertAdjacentHTML('afterend',`<div id="${id}-cortado" class="note mt-6" style="color:var(--text3)">El final de este texto se perdió al guardarse en una versión anterior de la app (cortaba a una longitud fija). Desde la v91 llega entero con el próximo plan.</div>`);
+}
+function _semanaEnTexto(t){const m=String(t||'').match(/semana\s+(\d{1,2})\s+(?:de\s+\d+\s+)?del\s+bloque/i);const n=m?+m[1]:null;return n&&n>=1&&n<=12?n:null;}
+function renderMesoCoach(cur){
+  const el=document.getElementById('meso-coach');if(!el)return;
+  if(!cur||cur<1){el.innerHTML='';return;}
+  const len=S.mesoLen||4;
+  const teo={block:Math.floor((cur-1)/len)+1,w:((cur-1)%len)+1};
+  const mn=S.mesoNota||null;
+  const real=S.blockStart?mesoInfo(cur,todayKey()):null;
+  const log=(S.coachLog||[]).slice(-1)[0];
+  const just=(mn&&mn.justificacion)||(log&&log.justificacion)||'';
+  let h=`<div class="note mb-9"><div>🔢 <b>Calendario automático:</b> bloque ${teo.block}, semana ${teo.w} de ${len} (semana ${cur} desde tu primer registro).</div>`;
+  if(real&&real.ancla){
+    const igual=real.block===teo.block&&real.wInBlock===teo.w;
+    h+=`<div class="mt-6">🧑‍🏫 <b>Según tu entrenador:</b> bloque ${real.block}, semana ${real.wInBlock} de ${real.len}${mn&&mn.fecha?` (lo fijó en el plan del ${_fechaCorta(mn.fecha)})`:''}.</div>`;
+    h+=igual?`<div class="mt-6">Coinciden.</div>`
+      :`<div class="mt-6" style="color:var(--warn)"><b>No coinciden, y manda la de tu entrenador.</b> El calendario cuenta semanas fijas desde tu primer registro; tu entrenador cuenta el bloque según lo que has hecho de verdad (una semana de volumen reducido, un bloque que alarga o recorta).</div>`;
+  }else if(_semanaEnTexto(just)&&log&&log.semana){
+    // Planes anteriores a la v88: el entrenador lo decía solo en su texto («es la semana 3 del bloque»).
+    // Se compara con lo que contaba el calendario PARA ESA MISMA SEMANA, no para hoy.
+    const sw=_semanaEnTexto(just);const pw=programWeekFor(log.semana);
+    const tw=pw?((pw-1)%len)+1:null;
+    h+=`<div class="mt-6">🧑‍🏫 <b>Según tu entrenador</b> (lo dice en su texto del plan para la semana del ${_fechaCorta(log.semana)}): semana ${sw} del bloque.${tw?` Para esa misma semana el calendario contaba la ${tw}.`:''}</div>`;
+    if(tw&&tw!==sw)h+=`<div class="mt-6" style="color:var(--warn)"><b>No coinciden, y manda la de tu entrenador.</b> El calendario cuenta semanas fijas desde tu primer registro; tu entrenador cuenta el bloque según lo que has hecho de verdad. En los planes nuevos lo indica en un campo propio y la app ajusta su cuenta sola; este es anterior a ese campo.</div>`;
+  }else if(mn){
+    h+=`<div class="mt-6">🧑‍🏫 Tu entrenador no indicó en su último plan qué semana del bloque era, así que la app sigue el calendario. Desde la v88 se lo pide en cada plan («semana_en_bloque»).</div>`;
+  }else{
+    h+=`<div class="mt-6">🧑‍🏫 Aún no hay un plan de la v91 o posterior con la semana del bloque: cuando apliques el próximo, aquí verás la de tu entrenador y, si no coincide, por qué.</div>`;
+  }
+  if(just)h+=`<div class="mt-6" style="white-space:pre-wrap"><b>Por qué, según tu entrenador:</b> ${esc(just)}</div>`;
+  h+='</div>';
+  el.innerHTML=h;
 }
 function saveMeso(){
   const l=document.getElementById('meso-len');
