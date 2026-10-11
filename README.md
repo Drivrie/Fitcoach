@@ -2437,3 +2437,47 @@ lo usaba.
 - La tarjeta con el editor abierto es larga (unos 10 chips de tiempo y 7 de material): comprobar que
   se maneja bien con el pulgar.
 - La nota de cada día es un campo de texto dentro de la tarjeta: comprobar que el teclado no la tapa.
+
+---
+
+## v90: una sola puerta para planificar la semana, en Progreso
+
+### Qué había
+- **Tres botones de Claude** (Progreso, Perfil y el atajo del resumen del Calendario) que llamaban a
+  la misma función y generaban exactamente el mismo mensaje. No había diferencia funcional; la única
+  diferencia era de contexto: en Perfil el botón estaba debajo de lo que alimenta el plan, en
+  Progreso se pulsaba sin ver nada de eso.
+- **El botón sin conexión solo estaba en Perfil** y generaba sobre la semana que hubiera a la vista,
+  aunque fuera la que ya estaba en curso, sin avisar. El de Claude sí ofrecía pasar a la semana
+  próxima.
+
+### Qué cambia
+- **Perfil = lo estable**: semana tipo, minutos, material, objetivos, limitaciones, alimentación y
+  mesociclo. Los botones de generar se sustituyen por un enlace «Ir a planificar la semana →».
+- **Progreso → tarjeta «🗓️ Planificar la semana»**, con el ritual del domingo en orden:
+  1. ¿Qué semana planificas? (próxima por defecto; se puede elegir la semana en curso).
+  2. Cambios en días concretos (la tarjeta de la v89, que sale de Perfil).
+  3. Instrucciones para tu entrenador (la nota libre, que sale de Perfil).
+  4. Generar: **con Claude** (recomendado) o **sin conexión**. Los dos planifican la semana elegida
+     en el paso 1.
+- Sin conexión sobre la semana en curso **pide confirmación** («las sesiones pendientes se
+  sustituyen; lo ya registrado se conserva»), como ya hacía el de Claude.
+- **El atajo del Calendario** («✨ Planificar semana próxima») ya no abre el mensaje directo: lleva a
+  la tarjeta, para que se revisen los cambios de la semana antes de generar.
+- Textos que mandaban a «Adaptar con Claude» o a «Generar semana en Perfil» actualizados.
+- La nota se guarda también al pulsar generar, por si el teclado de iOS no llegó a soltar el evento.
+
+### Lo que NO cambia
+- Ningún dato guardado ni ningún identificador de campo (`week-note`, `exc-body`…): solo cambian de
+  pantalla. El mensaje a Claude es idéntico al de la v89.
+
+### Validación
+- **553 comprobaciones en verde, 0 fallos**, en cinco zonas horarias (`test-v90.js`): 25 nuevas
+  (529 sin la copia real).
+- Contra la v89: falla la versión y la existencia de la función nueva; la sección nueva se salta.
+- Playwright con la copia real a 375×812 y 390×844, letra al 100%, 130% y 145%: sin errores ni
+  desbordes en las seis pestañas, y «Generar con Claude» abre el puente en la semana próxima.
+
+### Pendiente en el iPhone
+- La tarjeta de Progreso es larga (semana, siete días, nota y botones). Comprobar que el teclado no
+  tapa la nota y que los botones del final se alcanzan bien.

@@ -340,9 +340,24 @@ body{font-size:calc(15px*var(--fs))}
     <div class="card">
       <div class="card-t">📈 Esta semana</div>
       <div id="wk-prog"></div>
-      <div class="divider"></div>
-      <button class="btn btn-primary btn-block" onclick="openWeekBridge()">✨ Generar la semana próxima con Claude</button>
-      <p class="note mt-9">Envía a tu entrenador todo lo que la app sabe de ti: sesiones realizadas, lo pautado frente a lo que hiciste de verdad, cargas serie a serie, volumen por grupo muscular, fuerza estimada, cardio y marcadores de Salud. Es el mismo botón que hay en Perfil. Gratis con tu plan Pro, copiando y pegando.</p>
+    </div>
+    <div class="card" id="plan-card">
+      <div class="card-t">🗓️ Planificar la semana</div>
+      <p class="note mb-9">El ritual del domingo, en orden: elige la semana, marca lo que esa semana sea distinto de tu semana tipo, añade instrucciones si hace falta y genera el plan.</p>
+      <div class="fw6 mb-6" style="font-size:calc(13px*var(--fs))">1 · ¿Qué semana planificas?</div>
+      <div id="exc-weeks" class="mb-9"></div>
+      <div class="fw6 mb-6" style="font-size:calc(13px*var(--fs))" id="exc-card">2 · Cambios en días concretos</div>
+      <p class="note mb-9">Si un día tendrás menos tiempo, otro material o no podrás entrenar, cámbialo aquí. Solo afecta a esa fecha; tu semana tipo se define en Perfil.</p>
+      <div id="exc-body"></div>
+      <div class="fw6 mb-6 mt-12" style="font-size:calc(13px*var(--fs))">3 · Instrucciones para tu entrenador (opcional)</div>
+      <p class="note mb-9">Lo que no encaje en lo anterior, con tus palabras. Ej: "esta semana evita saltos", "quiero centrarme en espalda", "añade un día de carrera suave".</p>
+      <textarea id="week-note" placeholder="Escribe aquí lo que quieras pedirle a tu entrenador para esta semana…" style="min-height:70px"></textarea>
+      <div id="week-note-hint" class="note mt-6"></div>
+      <div class="fw6 mb-6 mt-12" style="font-size:calc(13px*var(--fs))">4 · Generar el plan</div>
+      <div id="plan-aviso"></div>
+      <button class="btn btn-primary btn-block" onclick="planificarConClaude()">✨ Generar con Claude (recomendado)</button>
+      <button class="btn btn-block mt-8" onclick="planificarOffline()">⚡ Generar sin conexión</button>
+      <p class="note mt-9"><b>Con Claude</b> tu entrenador recibe todo lo que la app sabe de ti: lo pautado frente a lo hecho, cargas serie a serie, volumen, fuerza estimada, cardio, marcadores, los cambios de cada día y tus instrucciones. Gratis con tu plan, copiando y pegando. <b>Sin conexión</b> es el recambio: respeta los días, el tiempo y el material de cada día, pero no lee tus instrucciones ni interpreta tu estado.</p>
     </div>
     <div class="card">
       <div class="card-t">🧠 Análisis del entrenador</div>
@@ -422,12 +437,6 @@ body{font-size:calc(15px*var(--fs))}
       <label style="font-size:calc(11px*var(--fs));font-weight:600;color:#5ee0b0;text-transform:uppercase;letter-spacing:.5px">Días de entrenamiento libre</label>
       <div id="free-days" style="margin-top:6px"></div>
     </div>
-    <div class="card" id="exc-card">
-      <div class="card-t">📌 Cambios en días concretos</div>
-      <p class="note mb-9">Lo de arriba es tu semana tipo. Si sabes que un día concreto tendrás menos tiempo, otro material o no podrás entrenar, cámbialo aquí: solo afecta a esa fecha, no a las semanas siguientes.</p>
-      <div id="exc-weeks" class="mb-9"></div>
-      <div id="exc-body"></div>
-    </div>
     <div class="card">
       <div class="card-t">Objetivo (puedes elegir varios)</div>
       <div id="obj-chips" style="margin-bottom:4px"></div>
@@ -464,14 +473,10 @@ body{font-size:calc(15px*var(--fs))}
       </div>
     </div>
     <div class="card">
-      <div class="card-t">💬 Instrucciones adicionales (opcional)</div>
-      <p class="note mb-9">Cualquier cosa que no encaje en los ajustes de arriba, dicha con tus palabras. Ej: "el jueves solo tengo 25 minutos", "añade un día de carrera suave", "esta semana evita saltos", "quiero centrarme en espalda".</p>
-      <textarea id="week-note" placeholder="Escribe aquí lo que quieras pedirle a tu entrenador para esta semana…" style="min-height:70px"></textarea>
-      <div id="week-note-hint" class="note mt-6"></div>
+      <div class="card-t">🗓️ Planificar la semana</div>
+      <p class="note mb-9">Lo de esta pantalla es tu <b>semana tipo</b> y no cambia de una semana a otra. Lo que es de una semana concreta —un día con menos tiempo u otro material, instrucciones para tu entrenador— y la generación del plan están en <b>Progreso</b>, junto a tus resultados.</p>
+      <button class="btn btn-block" onclick="irAPlanificar()">Ir a planificar la semana →</button>
     </div>
-    <button class="btn btn-primary btn-block" onclick="buildWeekOffline()">⚡ Generar semana (offline)</button>
-    <button class="btn btn-primary btn-block mt-8" onclick="openWeekBridge()">✨ Generar la semana próxima con Claude</button>
-    <p class="note mt-8">El botón de Claude es el mismo que encontrarás en Progreso y es el recomendado: tiene en cuenta tu historial, tus cargas reales y tus marcadores de Salud. El generador sin conexión de arriba es el recambio para cuando no puedas usar Claude: reparte ejercicios y progresa las cargas con lo que tengas registrado, pero no lee tus instrucciones ni interpreta tu estado.</p>
     <div class="card">
       <div class="card-t">🗓️ Mesociclo</div>
       <p class="note mb-9">Tu entrenador (Claude) decide la fase del bloque según tu objetivo global y tu progreso, y la propone en cada adaptación semanal. La semana del programa se cuenta desde tu primer registro. Nunca hay semanas de descanso: si tus datos lo piden, lo que baja es el volumen (mismos días, un 40-50% menos de series), y tu entrenador te explica por qué.</p>
@@ -633,7 +638,7 @@ body{font-size:calc(15px*var(--fs))}
         <div id="cloud-status" style="margin-top:7px;font-size:calc(12px*var(--fs))"></div>
       </details>
     </div>
-    <div style="text-align:center;font-size:calc(11px*var(--fs));color:var(--text3);margin-top:16px">FitCoach IA · versión 89</div>
+    <div style="text-align:center;font-size:calc(11px*var(--fs));color:var(--text3);margin-top:16px">FitCoach IA · versión 90</div>
     <div id="sw-status" style="text-align:center;font-size:calc(11px*var(--fs));color:var(--warn);margin-top:4px;display:none"></div>
     <div style="text-align:center;margin-top:8px">
       <button class="btn btn-xs" onclick="checkForUpdate()">🔄 Buscar actualización</button>
@@ -1636,7 +1641,7 @@ function buildWeekOffline(){
   });
   S.nutri=buildNutriOffline();
   const mi=mesoInfo(programWeekFor(fmt(dates[0])),fmt(dates[0]));
-  if(mi)S.insight=`Semana ${mi.weekNum} del programa · bloque ${mi.block}, semana ${mi.wInBlock} de ${mi.len}${mi.focus?' ('+mi.focus+')':''}. Progresión continua, sin descarga programada. Pulsa "Adaptar con Claude" para que tu entrenador fije la fase del bloque.`;
+  if(mi)S.insight=`Semana ${mi.weekNum} del programa · bloque ${mi.block}, semana ${mi.wInBlock} de ${mi.len}${mi.focus?' ('+mi.focus+')':''}. Progresión continua, sin descarga programada. Pulsa "Generar con Claude" en Progreso → Planificar la semana para que tu entrenador fije la fase del bloque.`;
   save();renderCal();renderNutri();renderProg();
   tab('cal');
 }
@@ -1750,14 +1755,14 @@ function sundayRitualHtml(dates,todayKey){
   const steps=[];
   if(pendientes)steps.push(`Registra o marca como no realizado lo pendiente (${pendientes} día${pendientes>1?'s':''})`);
   if(markersDue)steps.push('Toca actualizar tus medias mensuales en Perfil (ya ha pasado un mes)');
-  if(!nextPlanned)steps.push('Avanza con › a la semana próxima y pulsa "Adaptar con Claude"');
+  if(!nextPlanned)steps.push('Planifica la semana próxima en Progreso → Planificar la semana');
   if(!steps.length)return '';
   return `<div style="background:linear-gradient(135deg,rgba(10,132,255,.14),rgba(50,215,75,.10));border:1px solid var(--border);border-radius:16px;padding:13px 14px;margin-bottom:13px">
     <div style="font-size:calc(11px*var(--fs));font-weight:700;color:var(--ai);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px">📋 Domingo · cierra la semana</div>
     <ol style="margin:0;padding-left:18px;font-size:calc(13px*var(--fs));color:var(--text2);line-height:1.7">
       ${steps.map(s=>`<li>${s}</li>`).join('')}
     </ol>
-    ${!nextPlanned?`<button class="btn btn-primary" style="margin-top:10px;border-radius:999px;padding:8px 14px" onclick="openWeekBridge()">✨ Generar semana próxima</button>`:''}
+    ${!nextPlanned?`<button class="btn btn-primary" style="margin-top:10px;border-radius:999px;padding:8px 14px" onclick="irAPlanificar(1)">✨ Planificar semana próxima</button>`:''}
   </div>`;
 }
 
@@ -1793,14 +1798,14 @@ function selDay(key,idx,keep){
   const code=DAYS[idx];const sess=S.schedule[key]||[];
   let h=`<div style="font-size:calc(15px*var(--fs));font-weight:600;margin-bottom:9px">${DAY_NAMES[idx]} · ${fLabel(dates[idx])}</div>`;
   const _exc=excDia(key); // v89
-  if(_exc)h+=`<div class="note mb-9" style="border-left:3px solid var(--warn)">📌 <b>Este día:</b> ${esc(excTxt(_exc))}. <span style="color:var(--text3)">Se cambia en Perfil → Cambios en días concretos.</span></div>`;
+  if(_exc)h+=`<div class="note mb-9" style="border-left:3px solid var(--warn)">📌 <b>Este día:</b> ${esc(excTxt(_exc))}. <span style="color:var(--text3)">Se cambia en Progreso → Planificar la semana.</span></div>`;
   if(sess.length===0){
     // v67: se usa la previsión de ESTA semana. En semanas pasadas sin previsión guardada no se
     // proyecta la distribución actual del perfil (falsearía lo que estaba planificado entonces).
     const wPlan=planForWeek(S.currentWeek);
     if(!wPlan)h+=`<div class="sess rest"><div class="sess-h"><span class="sess-tt">Sin registro</span><span class="badge b-rest">—</span></div><div class="sess-m">No hay nada registrado este día. Esta semana es anterior a tu planificación actual, así que no se muestra una previsión: lo que ves refleja solo lo que quedó guardado.</div></div>`;
     else if(wPlan.ai.includes(code)&&sinSesionDia(key))h+=`<div class="sess rest"><div class="sess-h"><span class="sess-tt">Sin sesión esta semana</span><span class="badge b-rest">📌</span></div><div class="sess-m">Lo marcaste como cambio de este día. Tu semana tipo no cambia.</div></div>`;
-    else if(wPlan.ai.includes(code))h+=`<div class="sess ai"><div class="sess-h"><span class="sess-tt">Sesión IA planificada</span><span class="badge b-ai">IA</span></div><div class="sess-m">Pulsa "Generar semana" en Perfil</div></div>`;
+    else if(wPlan.ai.includes(code))h+=`<div class="sess ai"><div class="sess-h"><span class="sess-tt">Sesión IA planificada</span><span class="badge b-ai">IA</span></div><div class="sess-m">Planifícala en Progreso → Planificar la semana</div></div>`;
     else if(wPlan.free.includes(code))h+=`<div class="sess free"><div class="sess-h"><span class="sess-tt">Entrenamiento libre</span><span class="badge b-free">Libre</span></div><div class="sess-m">Registra lo que hagas hoy</div></div>`;
     else h+=`<div class="sess rest"><div class="sess-h"><span class="sess-tt">Día de descanso</span><span class="badge b-rest">Rest</span></div><div class="sess-m">No hay nada previsto. Recuperación activa: camina o estira suave. Si entrenaste igualmente, pulsa "Registrar" o "Añadir" para anotarlo.</div></div>`;
   } else {
@@ -2571,6 +2576,7 @@ function openAdd(){
 // v74: se conserva el nombre porque lo usan Progreso y Nutrición, pero delega en weekStats()
 function weekAdherencePct(){return weekStats();}
 function renderProg(){
+  renderExc(); // v90: la planificación de la semana vive en Progreso
   const dates=weekDates(S.currentWeek);
   const {planned,done,pct}=weekAdherencePct();
   document.getElementById('wk-prog').innerHTML=`
@@ -3736,7 +3742,50 @@ function openBridge(mode){
   if(window._bridgeRaw){const bi=document.getElementById('bridge-in');if(bi)bi.value=window._bridgeRaw;}
   openSheet('bridge-bg');
 }
-function goNextWeekInBridge(){S.currentWeek++;save();renderCal();openBridge(S.bridgeMode||'adapt');}
+/* v90 · Una sola puerta para planificar la semana, en Progreso.
+   Hasta la v89 había tres botones de Claude (Progreso, Perfil y el resumen del Calendario) que
+   llamaban a la misma función, y el de «sin conexión» solo estaba en Perfil y generaba sobre la
+   semana que hubiera a la vista, aunque fuera la que ya estaba en curso, sin avisar. Ahora la
+   semana se elige explícitamente arriba de la tarjeta y los dos botones planifican ESA semana. */
+function _semanaPlan(){if(EXC.off==null)EXC.off=S.currentWeek>0?S.currentWeek:1;return EXC.off;}
+function avisoSemanaPlan(){
+  const el=document.getElementById('plan-aviso');if(!el)return;
+  const off=_semanaPlan();
+  el.innerHTML=off===0
+    ?`<div class="note mb-9" style="border-left:3px solid var(--warn)">Vas a planificar la semana <b>en curso</b> (${_rangoSemana(0)}). Las sesiones que ya hayas registrado se conservan, pero las pendientes se sustituyen.</div>`
+    :`<div class="note mb-9">Se planificará la semana del <b>${_rangoSemana(off)}</b>.</div>`;
+}
+function _irASemanaPlan(){
+  // la nota se guarda al escribir; aquí se asegura por si el teclado de iOS no llegó a soltar el evento
+  const wn=document.getElementById('week-note');
+  if(wn)S.weekNote=String(wn.value||'').trim().slice(0,typeof NOTE_MAX!=='undefined'?NOTE_MAX:2000);
+  const off=_semanaPlan();
+  if(S.currentWeek!==off){S.currentWeek=off;renderCal();}
+  save();
+}
+function planificarConClaude(){
+  saveProfile();
+  if(!S.profile.peso||!S.profile.altura||!S.profile.edad){alert('Completa tus datos en Perfil primero (peso, altura y edad).');return;}
+  _irASemanaPlan();
+  const hayDatos=(S.history&&S.history.length)||(S.baseline&&S.baseline.trim());
+  openBridge(hayDatos?'adapt':'new');
+}
+function planificarOffline(){
+  const off=_semanaPlan();
+  if(off===0&&!confirm('Vas a generar la semana EN CURSO. Las sesiones pendientes se sustituyen; lo ya registrado se conserva. ¿Continuar?'))return;
+  _irASemanaPlan();
+  buildWeekOffline();
+}
+// El atajo del Calendario y el enlace de Perfil llevan a la tarjeta en vez de abrir el mensaje directo:
+// así se revisan los cambios de esa semana antes de generar.
+function irAPlanificar(off){
+  if(off!=null)EXC.off=off;else if(EXC.off==null||EXC.off<S.currentWeek)EXC.off=S.currentWeek>0?S.currentWeek:1;
+  tab('prog');renderExc();
+  const c=document.getElementById('plan-card');
+  if(c&&c.scrollIntoView)setTimeout(()=>{try{c.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){c.scrollIntoView();}},60);
+}
+function goNextWeekInBridge(){S.currentWeek++;EXC.off=S.currentWeek;save(); // v90: la tarjeta sigue a la semana elegida
+  renderCal();openBridge(S.bridgeMode||'adapt');}
 function sharePrompt(){
   const txt=window._prompt||'';
   if(navigator.share){
@@ -6423,6 +6472,7 @@ function renderExc(){
   const wk=document.getElementById('exc-weeks'),b=document.getElementById('exc-body');if(!wk||!b)return;
   if(EXC.off==null)EXC.off=S.currentWeek>0?S.currentWeek:1;
   wk.innerHTML=_excOffs().map(o=>`<span class="chip${o===EXC.off?' sel':''}" onclick="excSemana(${o})">${o===0?'Esta semana':o===1?'Próxima':'Semana mostrada'} · ${_rangoSemana(o)}</span>`).join('');
+  avisoSemanaPlan(); // v90
   const plan=planForWeek(EXC.off)||{ai:S.aiDays,brief:S.briefDays,free:S.freeDays};
   const fechas=weekDates(EXC.off);
   const gen=S.profile.equipos||['ninguno'];
@@ -6626,7 +6676,7 @@ function renderMeso(){
   const fv=document.getElementById('meso-focus-view');
   const l=document.getElementById('meso-len');
   if(l&&S.mesoLen)l.value=String(S.mesoLen);
-  if(fv)fv.innerHTML=S.mesoFocus?`Enfoque propuesto por tu entrenador: <b style="color:var(--text)">${esc(S.mesoFocus)}</b>`:'Aún sin propuesta: pulsa "Adaptar con Claude" y tu entrenador fijará la fase del bloque.';
+  if(fv)fv.innerHTML=S.mesoFocus?`Enfoque propuesto por tu entrenador: <b style="color:var(--text)">${esc(S.mesoFocus)}</b>`:'Aún sin propuesta: genera la semana con Claude (Progreso → Planificar la semana) y tu entrenador fijará la fase del bloque.';
   if(!info)return;
   const cur=programWeekFor(fmt(new Date()));
   const mi=mesoInfo(cur,todayKey());
