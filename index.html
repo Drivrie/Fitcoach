@@ -422,6 +422,12 @@ body{font-size:calc(15px*var(--fs))}
       <label style="font-size:calc(11px*var(--fs));font-weight:600;color:#5ee0b0;text-transform:uppercase;letter-spacing:.5px">Días de entrenamiento libre</label>
       <div id="free-days" style="margin-top:6px"></div>
     </div>
+    <div class="card" id="exc-card">
+      <div class="card-t">📌 Cambios en días concretos</div>
+      <p class="note mb-9">Lo de arriba es tu semana tipo. Si sabes que un día concreto tendrás menos tiempo, otro material o no podrás entrenar, cámbialo aquí: solo afecta a esa fecha, no a las semanas siguientes.</p>
+      <div id="exc-weeks" class="mb-9"></div>
+      <div id="exc-body"></div>
+    </div>
     <div class="card">
       <div class="card-t">Objetivo (puedes elegir varios)</div>
       <div id="obj-chips" style="margin-bottom:4px"></div>
@@ -627,7 +633,7 @@ body{font-size:calc(15px*var(--fs))}
         <div id="cloud-status" style="margin-top:7px;font-size:calc(12px*var(--fs))"></div>
       </details>
     </div>
-    <div style="text-align:center;font-size:calc(11px*var(--fs));color:var(--text3);margin-top:16px">FitCoach IA · versión 88</div>
+    <div style="text-align:center;font-size:calc(11px*var(--fs));color:var(--text3);margin-top:16px">FitCoach IA · versión 89</div>
     <div id="sw-status" style="text-align:center;font-size:calc(11px*var(--fs));color:var(--warn);margin-top:4px;display:none"></div>
     <div style="text-align:center;margin-top:8px">
       <button class="btn btn-xs" onclick="checkForUpdate()">🔄 Buscar actualización</button>
@@ -1045,6 +1051,9 @@ function initState(){
   // v88: cintura (cm), el único indicador de composición que se puede medir en casa sin báscula
   // de bioimpedancia. Sin él, una recomposición con el peso estable no se puede evaluar.
   if(!S.waistLog)S.waistLog=[];
+  // v89: cambios en días concretos (tiempo, material, sin sesión) por FECHA: {'2026-10-14':{min:30}}.
+  // Van por fecha y no por día de la semana para que no se cuelen en las semanas siguientes.
+  if(!S.dayOverrides||typeof S.dayOverrides!=='object'||Array.isArray(S.dayOverrides))S.dayOverrides={};
   // v88: inicio y número del bloque que DECIDE EL ENTRENADOR. Antes el bloque se contaba por
   // calendario fijo desde el primer registro, y el entrenador tenía que corregir a la app
   // («aunque la app marque semana 1, este bloque empezó el 21/9»). Vacío = cálculo antiguo.
@@ -1445,6 +1454,27 @@ function recentExerciseNames(beforeKey,days){
   return names;
 }
 
+/* v89 · El generador sin conexión no respetaba los minutos: con 18 min pedidos salían ~55 min
+   estimados con el mismo cálculo que usa el validador. Se recorta en este orden hasta caber (con un
+   10% de margen, el mismo que tolera el validador): descanso de los accesorios a 60 s, series de los
+   accesorios hasta 2, descanso de los básicos a 90 s, series de los básicos hasta 3, quitar
+   accesorios desde el final, quitar ejercicios desde el final (mínimo 2) y, por último, series hasta 2. */
+function ajustarATiempo(ejs,minutos){
+  const tope=(+minutos||45)*1.1;
+  const cabe=()=>estimateSessionMin(ejs)<=tope;
+  if(cabe())return ejs;
+  const acc=()=>ejs.filter(e=>!isBlock(e)&&!(EXDB.find(x=>x.n===e.nombre)||{}).comp);
+  const bas=()=>ejs.filter(e=>!isBlock(e)&&(EXDB.find(x=>x.n===e.nombre)||{}).comp);
+  acc().forEach(e=>{if(!cabe()&&+e.descanso_seg>60)e.descanso_seg=60;});
+  for(let i=ejs.length-1;i>=0&&!cabe();i--){const e=ejs[i];if(acc().indexOf(e)>=0)while(!cabe()&&+e.series>2)e.series--;}
+  bas().forEach(e=>{if(!cabe()&&+e.descanso_seg>90)e.descanso_seg=90;});
+  for(let i=ejs.length-1;i>=0&&!cabe();i--){const e=ejs[i];if(bas().indexOf(e)>=0)while(!cabe()&&+e.series>3)e.series--;}
+  // se quitan antes los accesorios que los básicos, empezando por el final
+  for(let i=ejs.length-1;i>=0&&!cabe()&&ejs.length>2;i--){if(acc().indexOf(ejs[i])>=0)ejs.splice(i,1);}
+  while(!cabe()&&ejs.length>2)ejs.pop();
+  for(let i=ejs.length-1;i>=0&&!cabe();i--){const e=ejs[i];while(!cabe()&&+e.series>2)e.series--;}
+  return ejs;
+}
 function buildSessionOffline(equip,objetivo,nivel,minutos,dayCode,seed,isDeload,opts){
   const g=GOALS[objetivo];
   const mult=LEVEL_MULT[nivel];
@@ -1477,14 +1507,15 @@ function buildSessionOffline(equip,objetivo,nivel,minutos,dayCode,seed,isDeload,
       errores: ERRORS[figKey(ex.n)]||[],
     };
   });
+  ajustarATiempo(ejercicios,minutos); // v89: antes la sesión offline no cabía en el tiempo pedido
   const tipoLabel={'pierna':'tren inferior','empuje':'empuje','tiron':'tirón','core':'core','cardio':'metabólico'};
-  const focus=[...new Set(exs.map(e=>tipoLabel[e.p]))].slice(0,2).join(' + ');
+  const focus=[...new Set(ejercicios.map(e=>tipoLabel[e.p]))].slice(0,2).join(' + ');
   const objLbl=GOAL_LABELS[objetivo]||objetivo;
   const riskNote=activeRiskAreas().size?` · adaptada evitando ejercicios de riesgo para: ${[...activeRiskAreas()].map(areaLabel).join(', ')}`:'';
   return {
     dia_codigo:dayCode,
     titulo:isDeload?'Sesión de descarga':(`Full body · ${focus}`),
-    meta:`${exs.length} ejercicios · ${minutos}min · RIR ${g.rir} · orientada a ${objLbl}; básicos primero y accesorios después${fatLvl===2?' · fatiga alta (14 días): 1 serie menos y más margen al fallo':fatLvl===1?' · fatiga moderada: se mantiene el volumen, sin apretar':(rampa?' · última semana del bloque: 1 serie más':'')}${riskNote}`,
+    meta:`${ejercicios.length} ejercicios · ${minutos}min · RIR ${g.rir} · orientada a ${objLbl}; básicos primero y accesorios después${fatLvl===2?' · fatiga alta (14 días): 1 serie menos y más margen al fallo':fatLvl===1?' · fatiga moderada: se mantiene el volumen, sin apretar':(rampa?' · última semana del bloque: 1 serie más':'')}${riskNote}`,
     calentamiento:'5-8 min: movilidad de tobillo, cadera y hombro + 1 serie ligera del primer ejercicio (al 50%) para engrasar el gesto.',
     vuelta_calma:'5 min: estira los grupos trabajados (30s por grupo) y termina con 1 min de respiración nasal lenta para bajar pulsaciones.',
     ejercicios
@@ -1570,9 +1601,12 @@ function buildWeekOffline(){
   S.aiDays.forEach((code,i)=>{
     const idx=DAYS.indexOf(code);if(idx<0)return;
     const key=fmt(dates[idx]);
+    const _o=excDia(key); // v89
+    if(_o&&_o.sinSesion)return;
     if(!S.schedule[key])S.schedule[key]=[];
     const isBrief=S.briefDays.includes(code);
-    const mins=isBrief?18:p.minutos;
+    const mins=(_o&&_o.min)||(isBrief?18:p.minutos);
+    const eqDia=(_o&&_o.equipos)?new Set(_o.equipos):eq;
     /* v75: en los días de fuerza BREVE el prompt lleva versiones pidiendo a Claude que priorice
        tren superior o core porque ese día también hay carrera. El motor offline hacía justo lo
        contrario: su orden de patrones empieza por "pierna" en todas las sesiones. Ahora los días
@@ -1581,11 +1615,12 @@ function buildWeekOffline(){
     const opts=isBrief
       ? {avoid,lead:'empuje',exclude:EXDB.filter(e=>e.p==='pierna'&&e.comp).map(e=>e.n)}
       : {avoid};
-    const sess=buildSessionOffline(eq,objetivo,p.nivel,mins,code,(S.currentWeek+1)*7+i,isDeload,opts);
+    const sess=buildSessionOffline(eqDia,objetivo,p.nivel,mins,code,(S.currentWeek+1)*7+i,isDeload,opts);
     sess.ejercicios.forEach(e=>avoid.add(e.nombre));
     if(isBrief)sess.titulo='Fuerza breve · complemento de carrera';
     const ex=S.schedule[key].findIndex(x=>x.type==='ai');
     const entry={type:'ai',title:sess.titulo,meta:sess.meta,warmup:sess.calentamiento,cooldown:sess.vuelta_calma,exercises:sess.ejercicios,done:false,brief:isBrief};
+    if(_o)entry.cond=_o;
     conservarRegistro(key,entry); // v74
     if(weekNote)entry.userNote=weekNote; // v64: nota del usuario, visible al entrenar
     if(ex>=0)S.schedule[key][ex]=entry;else S.schedule[key].push(entry);
@@ -1593,6 +1628,7 @@ function buildWeekOffline(){
   S.freeDays.forEach(code=>{
     const idx=DAYS.indexOf(code);if(idx<0)return;
     const key=fmt(dates[idx]);
+    if(sinSesionDia(key))return; // v89
     if(!S.schedule[key])S.schedule[key]=[];
     if(!S.schedule[key].some(s=>s.type==='free')){
       S.schedule[key].push({type:'free',title:'Entrenamiento libre',meta:GOALS[objetivo].cardio,done:false});
@@ -1756,11 +1792,14 @@ function selDay(key,idx,keep){
   const dates=weekDates(S.currentWeek);
   const code=DAYS[idx];const sess=S.schedule[key]||[];
   let h=`<div style="font-size:calc(15px*var(--fs));font-weight:600;margin-bottom:9px">${DAY_NAMES[idx]} · ${fLabel(dates[idx])}</div>`;
+  const _exc=excDia(key); // v89
+  if(_exc)h+=`<div class="note mb-9" style="border-left:3px solid var(--warn)">📌 <b>Este día:</b> ${esc(excTxt(_exc))}. <span style="color:var(--text3)">Se cambia en Perfil → Cambios en días concretos.</span></div>`;
   if(sess.length===0){
     // v67: se usa la previsión de ESTA semana. En semanas pasadas sin previsión guardada no se
     // proyecta la distribución actual del perfil (falsearía lo que estaba planificado entonces).
     const wPlan=planForWeek(S.currentWeek);
     if(!wPlan)h+=`<div class="sess rest"><div class="sess-h"><span class="sess-tt">Sin registro</span><span class="badge b-rest">—</span></div><div class="sess-m">No hay nada registrado este día. Esta semana es anterior a tu planificación actual, así que no se muestra una previsión: lo que ves refleja solo lo que quedó guardado.</div></div>`;
+    else if(wPlan.ai.includes(code)&&sinSesionDia(key))h+=`<div class="sess rest"><div class="sess-h"><span class="sess-tt">Sin sesión esta semana</span><span class="badge b-rest">📌</span></div><div class="sess-m">Lo marcaste como cambio de este día. Tu semana tipo no cambia.</div></div>`;
     else if(wPlan.ai.includes(code))h+=`<div class="sess ai"><div class="sess-h"><span class="sess-tt">Sesión IA planificada</span><span class="badge b-ai">IA</span></div><div class="sess-m">Pulsa "Generar semana" en Perfil</div></div>`;
     else if(wPlan.free.includes(code))h+=`<div class="sess free"><div class="sess-h"><span class="sess-tt">Entrenamiento libre</span><span class="badge b-free">Libre</span></div><div class="sess-m">Registra lo que hagas hoy</div></div>`;
     else h+=`<div class="sess rest"><div class="sess-h"><span class="sess-tt">Día de descanso</span><span class="badge b-rest">Rest</span></div><div class="sess-m">No hay nada previsto. Recuperación activa: camina o estira suave. Si entrenaste igualmente, pulsa "Registrar" o "Añadir" para anotarlo.</div></div>`;
@@ -3049,7 +3088,7 @@ function complianceFor(key){
     }
     filas.push({nombre:ex.nombre,plan,real:real+esfDetalle(ser),estado});
   });
-  return filas.length?{key,titulo:sess.title,filas}:null;
+  return filas.length?{key,titulo:sess.title+(sess.cond?` [día con cambios: ${excTxt(sess.cond)}]`:''),filas}:null;
 }
 function complianceList(dias){
   const lim=dias||21;
@@ -3274,6 +3313,46 @@ function cargasHist(x,cmpKeys){
   const extra=x.sets.filter(e=>enPlan.indexOf(_norm(e.nombre))<0);
   return ' Series: detalladas arriba, en CUMPLIMIENTO REAL.'+(extra.length?' Además, fuera de lo pautado: '+extra.map(fmtE).join('; ')+'.':'');
 }
+/* v89 · Cambios en días concretos de una semana.
+   Hasta la v88 el tiempo y el material eran los mismos para todos los días de la semana. Si un
+   miércoles solo había 30 minutos o un viernes no había mancuernas, había que escribirlo en la nota
+   libre y confiar en que el entrenador lo leyera; la app no lo comprobaba ni lo usaba el generador
+   sin conexión. Ahora cada fecha puede tener sus minutos, su material, una nota corta o quedar sin
+   sesión, y eso llega al mensaje semanal, al validador, al generador sin conexión y al calendario. */
+const EXC_MIN=[15,20,25,30,40,45,60,75,90];
+function excDia(key){
+  const o=(S.dayOverrides||{})[key];if(!o||typeof o!=='object')return null;
+  const r={};
+  if(o.sinSesion)r.sinSesion=true;
+  const m=parseInt(o.min);if(!isNaN(m)&&m>=10&&m<=180)r.min=m;
+  if(Array.isArray(o.equipos)&&o.equipos.length)r.equipos=o.equipos.filter(e=>EQUIP_LIST.some(x=>x[0]===e));
+  if(r.equipos&&!r.equipos.length)delete r.equipos;
+  if(o.nota&&String(o.nota).trim())r.nota=String(o.nota).trim().slice(0,120);
+  return Object.keys(r).length?r:null;
+}
+function excTxt(o){
+  if(!o)return '';
+  if(o.sinSesion)return 'sin sesión'+(o.nota?' · «'+o.nota+'»':'');
+  const t=[];
+  if(o.min)t.push(o.min+' min');
+  if(o.equipos)t.push((o.equipos.length===1&&o.equipos[0]==='ninguno')?'solo peso corporal':'solo '+equipLabels(o.equipos));
+  if(o.nota)t.push('«'+o.nota+'»');
+  return t.join(' · ');
+}
+function keyDeCodigo(code,off){const i=DAYS.indexOf(code);if(i<0)return null;return fmt(weekDates(off==null?S.currentWeek:off)[i]);}
+function minutosDia(key,code){
+  const o=excDia(key);if(o&&o.min)return o.min;
+  return (S.briefDays||[]).includes(code)?20:(parseInt(S.profile.minutos)||45);
+}
+function equiposDia(key){const o=excDia(key);return (o&&o.equipos)||S.profile.equipos||['ninguno'];}
+function sinSesionDia(key){const o=excDia(key);return !!(o&&o.sinSesion);}
+/* Material de los días con cambios que no está en el material general: se describe con sus pesos */
+function detalleMaterialExtra(lista){
+  const gen=S.profile.equipos||[];
+  const extra=[...new Set(lista)].filter(e=>e!=='ninguno'&&gen.indexOf(e)<0);
+  if(!extra.length)return '';
+  return equipDetailFor(extra).split('\n').filter(l=>/disponibles|anclaje|anclar/i.test(l)).join('\n');
+}
 function coachExtrasFor(equipos,beforeKey){
   let t=`\n- ACTÚA COMO ENTRENADOR PROFESIONAL: en "descripcion" de cada ejercicio explica en 1-2 frases la técnica clave Y por qué está en esta sesión (qué aporta al objetivo). En "meta" resume en una frase el propósito de la sesión.`;
   if((equipos||[]).includes('bandas')){
@@ -3307,7 +3386,9 @@ function buildPrompt(mode){
      tres días seguidos. Ahora va la fecha de cada uno para que pueda espaciar los estímulos. */
   const _wdArr=weekDates(S.currentWeek);
   const conFecha=arr=>arr.map(c=>{const i=DAYS.indexOf(c);
-    return i>=0?`${c} (${DAY_NAMES[i]} ${_wdArr[i].getDate()}/${_wdArr[i].getMonth()+1})`:c;}).join(', ');
+    const ex=i>=0?excDia(fmt(_wdArr[i])):null; // v89
+    return i>=0?`${c} (${DAY_NAMES[i]} ${_wdArr[i].getDate()}/${_wdArr[i].getMonth()+1}${ex?'; ESTE DÍA: '+excTxt(ex):''})`:c;}).join(', ');
+  const _sinSes=c=>{const i=DAYS.indexOf(c);return i>=0&&sinSesionDia(fmt(_wdArr[i]));};
   /* v80: edad y sexo se enviaban en el perfil y ninguna regla los usaba (la edad solo alimentaba
      la FCmáx). Aquí se convierten en criterio de programación. */
   let espTxt='';
@@ -3318,13 +3399,22 @@ function buildPrompt(mode){
   if(String(p.sexo||'').toLowerCase().indexOf('mujer')===0){
     espTxt+=`\n- SEXO: soy mujer. NO programes por fases del ciclo menstrual: la evidencia disponible es demasiado débil e inconsistente para prescribir por fase. Lo razonable es autorregular por síntomas, igual que con cualquier otra señal de fatiga que yo registre. Los criterios de carga, volumen y proximidad al fallo son los mismos que para un hombre; no rebajes la exigencia por el sexo.`;
   }
-  const fullDays=ordDays(S.aiDays.filter(d=>!S.briefDays.includes(d)));
-  const briefDays=ordDays(S.aiDays.filter(d=>S.briefDays.includes(d)));
-  const freeOrd=ordDays(S.freeDays);
+  // v89: un día marcado «sin sesión» para esa semana sale de la planificación
+  const fullDays=ordDays(S.aiDays.filter(d=>!S.briefDays.includes(d)&&!_sinSes(d)));
+  const briefDays=ordDays(S.aiDays.filter(d=>S.briefDays.includes(d)&&!_sinSes(d)));
+  const freeOrd=ordDays(S.freeDays.filter(d=>!_sinSes(d)));
+  const quitados=ordDays(S.aiDays.concat(S.freeDays).filter(_sinSes));
+  const excLista=DAYS.map((c,i)=>({c,i,o:excDia(fmt(_wdArr[i]))})).filter(x=>x.o&&!x.o.sinSesion&&(S.aiDays.includes(x.c)||S.freeDays.includes(x.c)));
+  let excBloque='';
+  if(excLista.length||quitados.length){
+    const extra=detalleMaterialExtra([].concat(...excLista.map(x=>x.o.equipos||[])));
+    excBloque=`\n- CAMBIOS EN DÍAS CONCRETOS DE ESTA SEMANA (mandan sobre lo general SOLO ese día; mi semana tipo no cambia):${excLista.map(x=>`\n  · ${DAY_NAMES[x.i]} ${_wdArr[x.i].getDate()}/${_wdArr[x.i].getMonth()+1}: ${excTxt(x.o)}`).join('')}${quitados.length?`\n  · Sin sesión esta semana: ${conFecha(quitados).replace(/; ESTE DÍA: [^)]*/g,'')}. No me pongas nada esos días.`:''}${extra?'\n  Material de esos días que no está en mi lista general:'+extra.replace(/\n/g,'\n    '):''}
+  Cómo tratarlos: (1) la sesión de ese día tiene que CABER en sus minutos (la app lo comprueba con el mismo cálculo de tiempo); (2) usa SOLO el material de ese día; (3) si un ejercicio principal del bloque no se puede hacer con ese material, pon la variante más parecida del mismo patrón y di en "nota_progresion" que ese día no cuenta para su progresión de carga; el resto de la semana mantiene los ejercicios del bloque con su nombre exacto; (4) no compenses cargando más series en los otros días por encima de su tiempo; si un grupo muscular se queda corto, redistribúyelo dentro de los minutos disponibles y dilo en "analisis_progreso"; (5) con 30 min o menos, prioriza los básicos del día y, si hace falta para caber, combina en superserie ejercicios que no compitan por el mismo grupo (convención de práctica); (6) en un día solo con peso corporal o bandas, progresa por repeticiones, tempo o variante, no por kilos.`;
+  }
   const cfg=`Objetivos (combinar de forma coherente): ${objLabels}. Nivel: ${p.nivel}. Equipo disponible: ${eqLabels}.${eqDetail}${coachExtrasFor(p.equipos,fmt(weekDates(S.currentWeek)[0]))}${limitTxt}${noteForPrompt(userNoteFrom('week-note'))}
 Días de fuerza COMPLETA (~${p.minutos} min): ${conFecha(fullDays)||'ninguno'}.
 Días de fuerza BREVE (15-20 min, complementaria porque ese día también hago carrera): ${conFecha(briefDays)||'ninguno'}.
-Días de entrenamiento libre (cardio/paseo): ${conFecha(freeOrd)||'ninguno'}.
+Días de entrenamiento libre (cardio/paseo): ${conFecha(freeOrd)||'ninguno'}.${excBloque}
 - ESTRUCTURA DE LA SEMANA (decídela TÚ): elige el esquema de los días completos —cuerpo entero, superior/inferior, empuje-tirón-pierna u otro— según cuántos días son, los minutos disponibles y mi objetivo, y justifícalo en "mesociclo.justificacion". Con 3 días completos o menos, prioriza cuerpo entero. Con 4 o más, valora repartir por bloques en vez de tocar todos los grupos todos los días. Fíjate en las FECHAS de arriba: si hay días consecutivos, no repitas en ellos los mismos grupos con carga alta; deja ~48 h entre estímulos fuertes del mismo grupo.
 - ORDEN DENTRO DE LA SESIÓN: primero los básicos multiarticulares y lo más técnico o exigente; después accesorios y core. Lo unilateral, después de su equivalente bilateral. Nunca dejes para el final el ejercicio en el que espero progresar en carga.
 - PRESUPUESTO DE TIEMPO (obligatorio; la app lo comprueba y me avisa si no cuadra): la sesión tiene que CABER en los minutos indicados. Estímalo así: minutos ≈ calentamiento + Σ(series × (duración de la serie + descanso_seg)) / 60, contando ~3,5 s por repetición. Si no cabe, quita ejercicios, baja series o acorta descansos; no me entregues una sesión que se pase más de un 10%.
@@ -3719,7 +3809,7 @@ function _esInferior(ex){
   const t=((ex&&ex.patron)||'')+' '+((ex&&ex.musculos)||'')+' '+((ex&&ex.nombre)||'');
   return /rodilla|cadera|cu[áa]driceps|isquio|gl[úu]teo|pierna|sentadilla|zancada|peso muerto|puente|hip thrust|prensa|gemelo|s[óo]leo|split|b[úu]lgara|step[- ]?up|subida al caj[óo]n/i.test(t);
 }
-function validateExercise(e,i,issues){
+function validateExercise(e,i,issues,dia){
   const tag=e&&e.nombre?`"${e.nombre}"`:`ejercicio ${i+1}`;
   if(!e||!e.nombre){issues.errors.push(`Falta "nombre" en el ejercicio ${i+1}.`);return;}
   if(isBlock(e))return; // bloques AMRAP/EMOM/circuito: estructura propia ya tolerada
@@ -3727,12 +3817,23 @@ function validateExercise(e,i,issues){
   if(e.reps==null||e.reps==='')issues.errors.push(`Falta "reps" en ${tag}.`);
   if(e.descanso_seg==null||isNaN(+e.descanso_seg)||+e.descanso_seg<=0)issues.warns.push(`${tag} no indica "descanso_seg"; la sesión guiada usará 60 s.`);
   if(!e.peso)issues.warns.push(`${tag} no indica "peso" (carga inequívoca).`);
-  const eq=S.profile.equipos||[];
+  const eq=(dia&&dia.equipos)||S.profile.equipos||[];
   const nm=(e.nombre||'').toLowerCase();
+  // v89: un día con material cambiado se comprueba contra SU material
+  if(dia){
+    const txt=_norm((e.nombre||'')+' '+(e.peso||''));
+    const tiene=k=>eq.includes(k)||eq.includes('gimnasio');
+    const falta=[];
+    if(/mancuerna/.test(txt)&&!tiene('mancuernas'))falta.push('mancuernas');
+    if(/banda|goma|elastic/.test(txt)&&!tiene('bandas'))falta.push('bandas');
+    if(/kettlebell|pesa rusa/.test(txt)&&!tiene('kettlebell'))falta.push('kettlebell');
+    if(!falta.length&&/\d\s*kg/.test(txt)&&!['mancuernas','kettlebell','barra','gimnasio'].some(tiene))falta.push('carga en kg');
+    if(falta.length)issues.warns.push(`${tag} (${dia.dia}): ese día solo tienes ${equipLabels(eq)} y el ejercicio pide ${falta.join(', ')}.`);
+  }
   if(/dominada/.test(nm)&&!eq.includes('dominadas')&&!eq.includes('gimnasio'))issues.warns.push(`${tag}: no tienes barra de dominadas configurada.`);
   if(/\bcon barra\b/.test(nm)&&!eq.includes('barra')&&!eq.includes('gimnasio'))issues.warns.push(`${tag}: no tienes barra con discos configurada.`);
   // v80: material que tampoco tienes y antes pasaba sin aviso
-  if(/kettlebell|pesa rusa/.test(nm)&&!eq.includes('kettlebells')&&!eq.includes('gimnasio'))issues.warns.push(`${tag}: no tienes kettlebells configuradas.`);
+  if(/kettlebell|pesa rusa/.test(nm)&&!eq.includes('kettlebell')&&!eq.includes('kettlebells')&&!eq.includes('gimnasio'))issues.warns.push(`${tag}: no tienes kettlebells configuradas.`);
   if(/polea|m[áa]quina|jal[óo]n en polea|prensa/.test(nm)&&!eq.includes('gimnasio'))issues.warns.push(`${tag}: requiere gimnasio y no lo tienes configurado.`);
   /* v80: "peso" existía pero podía ser ambiguo ("20 kg" sin decir si es por mancuerna o en total),
      que es justo lo que el mensaje pide evitar. Se avisa cuando hay kilos sin aclaración. */
@@ -3747,7 +3848,8 @@ function validatePlan(plan){
   ses.forEach((s,si)=>{
     if(!s.dia_codigo||DAYS.indexOf(s.dia_codigo)<0)issues.errors.push(`Sesión ${si+1} ("${s.titulo||'sin título'}"): "dia_codigo" inválido (${s.dia_codigo||'vacío'}); debe ser L, M, X, J, V, S o D.`);
     if(!Array.isArray(s.ejercicios)||!s.ejercicios.length)issues.errors.push(`La sesión "${s.titulo||si+1}" no tiene "ejercicios".`);
-    else s.ejercicios.forEach((e,i)=>validateExercise(e,i,issues));
+    else{const _k=keyDeCodigo(s.dia_codigo);const _o=_k?excDia(_k):null;
+      s.ejercicios.forEach((e,i)=>validateExercise(e,i,issues,_o&&_o.equipos?{equipos:_o.equipos,dia:DAY_NAMES[DAYS.indexOf(s.dia_codigo)]}:null));}
   });
   if(plan.nutricion&&(!plan.nutricion.calorias_diarias||!Array.isArray(plan.nutricion.menu_dia)))issues.warns.push('La "nutricion" no sigue el esquema completo (calorias_diarias, proteina_g, agua_litros, menu_dia); se aplicará lo que haya.');
   coachingChecks(ses,issues,plan); // v80 · v88: recibe el plan para saber si empieza bloque
@@ -3764,7 +3866,9 @@ function coachingChecks(ses,issues,plan){
   ses.forEach(s=>{
     const ejs=Array.isArray(s.ejercicios)?s.ejercicios:[];
     const breve=S.briefDays&&S.briefDays.indexOf(s.dia_codigo)>=0;
-    const tope=breve?20:(parseInt(S.profile.minutos)||45);
+    const _k=keyDeCodigo(s.dia_codigo); // v89: los minutos de ESE día, si se cambiaron
+    const tope=_k?minutosDia(_k,s.dia_codigo):(breve?20:(parseInt(S.profile.minutos)||45));
+    if(_k&&sinSesionDia(_k))issues.warns.push(`"${s.titulo||s.dia_codigo}": ese día lo marcaste sin sesión esta semana y el plan trae una. Si la aplicas, se añade igualmente.`);
     const est=estimateSessionMin(ejs);
     if(est>tope*1.1)
       issues.warns.push(`"${s.titulo||s.dia_codigo}": ~${est} min estimados frente a los ${tope} min que tienes. Pide menos ejercicios, menos series o descansos más cortos.`);
@@ -3877,6 +3981,7 @@ function applyBridgePlan(plan){
     const key=fmt(dates[idx]);if(!S.schedule[key])S.schedule[key]=[];
     cleanSession(s); // v72
     const entry={type:'ai',title:s.titulo,meta:s.meta,warmup:s.calentamiento,cooldown:s.vuelta_calma,exercises:s.ejercicios,done:false};
+    const _c=excDia(key);if(_c)entry.cond=_c; // v89: con qué condiciones se planificó ese día
     conservarRegistro(key,entry); // v74
     if(_wNote)entry.userNote=_wNote; // v64: la instrucción libre queda visible al entrenar
     const ex=S.schedule[key].findIndex(x=>x.type==='ai');
@@ -4060,8 +4165,9 @@ function equipSummaryHTML(equipos){
   return `<div class="note" style="margin:-4px 0 10px">${parts.join(' · ')} — <a href="#" onclick="tab('prof');closeSheet('mod-bg');closeSheet('gen-bg');return false;" style="color:var(--ai)">editar en Perfil</a></div>`;
 }
 function openModify(key){
-  MOD={key,equipos:[...(S.profile.equipos||['ninguno'])]};
-  const mins=S.profile.minutos||45;
+  const _o=excDia(key); // v89: si ese día tiene cambios, se parte de ellos
+  MOD={key,equipos:[...((_o&&_o.equipos)||S.profile.equipos||['ninguno'])]};
+  const mins=(_o&&_o.min)||S.profile.minutos||45;
   document.getElementById('mod-min').value=mins;document.getElementById('mod-min-out').textContent=mins;
   document.getElementById('mod-claude').style.display='none';
   document.getElementById('mod-in')&&(document.getElementById('mod-in').value='');
@@ -4206,8 +4312,8 @@ function openGen(key,idx){
   GEN={key,idx,mode:'add',
     objetivo:primaryGoal(S.profile.objetivos),
     nivel:S.profile.nivel||'intermedio',
-    equipos:[...(S.profile.equipos||['ninguno'])]};
-  const mins=S.profile.minutos||45;
+    equipos:[...((excDia(key)&&excDia(key).equipos)||S.profile.equipos||['ninguno'])]};
+  const mins=(excDia(key)&&excDia(key).min)||S.profile.minutos||45; // v89
   const ms=document.getElementById('gen-min');if(ms)ms.value=mins;
   const mo=document.getElementById('gen-min-out');if(mo)mo.textContent=mins;
   const gc=document.getElementById('gen-claude');if(gc)gc.style.display='none';
@@ -6310,6 +6416,66 @@ try{
 }catch(e){}
 marcarPulsables();
 
+let EXC={off:null,abierto:null};
+function _excOffs(){const s=new Set([0,1]);if(S.currentWeek>1)s.add(S.currentWeek);return [...s].sort((a,b)=>a-b);}
+function _rangoSemana(off){const d=weekDates(off);return d[0].getDate()+'/'+(d[0].getMonth()+1)+' – '+d[6].getDate()+'/'+(d[6].getMonth()+1);}
+function renderExc(){
+  const wk=document.getElementById('exc-weeks'),b=document.getElementById('exc-body');if(!wk||!b)return;
+  if(EXC.off==null)EXC.off=S.currentWeek>0?S.currentWeek:1;
+  wk.innerHTML=_excOffs().map(o=>`<span class="chip${o===EXC.off?' sel':''}" onclick="excSemana(${o})">${o===0?'Esta semana':o===1?'Próxima':'Semana mostrada'} · ${_rangoSemana(o)}</span>`).join('');
+  const plan=planForWeek(EXC.off)||{ai:S.aiDays,brief:S.briefDays,free:S.freeDays};
+  const fechas=weekDates(EXC.off);
+  const gen=S.profile.equipos||['ninguno'];
+  const filas=DAYS.map((c,i)=>{
+    const tipo=plan.ai.includes(c)?(plan.brief.includes(c)?'fuerza breve':'fuerza completa'):plan.free.includes(c)?'libre (cardio)':null;
+    if(!tipo)return '';
+    const key=fmt(fechas[i]);const o=excDia(key);
+    const base=tipo==='libre (cardio)'?'':`${minutosDia('',c)} min · ${equipLabels(gen)}`;
+    const resumen=o?`<b style="color:var(--warn)">📌 ${esc(excTxt(o))}</b>`:`<span style="color:var(--text3)">como siempre${base?' · '+esc(base):''}</span>`;
+    const abierto=EXC.abierto===key;
+    let ed='';
+    if(abierto){
+      const raw=(S.dayOverrides||{})[key]||{};
+      const eqSel=raw.equipos||null;
+      ed=`<div style="margin-top:9px;padding-top:9px;border-top:1px solid var(--border)">
+        <div class="mb-9"><span class="chip${raw.sinSesion?' sel':''}" onclick="excSin('${key}')">🚫 Sin sesión este día</span></div>
+        ${raw.sinSesion?'':`<div class="note mb-9" style="padding:7px 10px">Tiempo de ese día</div>
+        <div class="mb-9"><span class="chip${!raw.min?' sel':''}" onclick="excMin('${key}',0)">Como siempre</span>${EXC_MIN.map(m=>`<span class="chip${+raw.min===m?' sel':''}" onclick="excMin('${key}',${m})">${m}</span>`).join('')}</div>
+        <div class="note mb-9" style="padding:7px 10px">Material de ese día</div>
+        <div class="mb-9"><span class="chip${!eqSel?' sel':''}" onclick="excEq('${key}',null)">Como siempre</span>${EQUIP_LIST.map(([k,l])=>`<span class="chip${eqSel&&eqSel.includes(k)?' sel':''}" onclick="excEq('${key}','${k}')">${l}</span>`).join('')}</div>`}
+        <div class="field"><label>Nota para ese día (opcional)</label><input type="text" id="exc-nota" maxlength="120" value="${esc(raw.nota||'')}" placeholder="Ej: en el hotel; solo por la mañana" onchange="excNota('${key}',this.value)"></div>
+        <div class="flexrow gap8"><button class="btn flex1" onclick="excCerrar()">Listo</button>${o?`<button class="btn" onclick="excQuitar('${key}')">Quitar cambio</button>`:''}</div>
+      </div>`;
+    }
+    return `<div style="padding:10px 12px;margin-bottom:8px;border-radius:12px;background:var(--surface2);border:1px solid ${o?'var(--warn)':'var(--border)'}">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <div style="min-width:0"><div class="fw6">${DAY_NAMES[i]} ${fechas[i].getDate()}/${fechas[i].getMonth()+1} <span style="font-weight:400;color:var(--text2)">· ${tipo}</span></div>
+          <div style="font-size:calc(13px*var(--fs));margin-top:2px">${resumen}</div></div>
+        ${abierto?'':`<button class="btn btn-xs" onclick="excAbrir('${key}')">Cambiar</button>`}
+      </div>${ed}</div>`;
+  }).join('');
+  b.innerHTML=filas||'<p class="note">Esa semana no tiene días de entrenamiento previstos.</p>';
+}
+function excSemana(o){EXC.off=o;EXC.abierto=null;renderExc();}
+function excAbrir(k){EXC.abierto=k;renderExc();}
+function excCerrar(){const n=document.getElementById('exc-nota');if(n&&EXC.abierto)excNota(EXC.abierto,n.value,true);EXC.abierto=null;renderExc();}
+function _excObj(k){if(!S.dayOverrides)S.dayOverrides={};if(!S.dayOverrides[k])S.dayOverrides[k]={};return S.dayOverrides[k];}
+function _excLimpia(k){const o=S.dayOverrides[k];if(o&&!o.sinSesion&&!o.min&&!(o.equipos&&o.equipos.length)&&!(o.nota&&o.nota.trim()))delete S.dayOverrides[k];}
+function excSin(k){const o=_excObj(k);o.sinSesion=!o.sinSesion;_excLimpia(k);save();renderExc();renderCal();}
+function excMin(k,m){const o=_excObj(k);if(m)o.min=m;else delete o.min;_excLimpia(k);save();renderExc();renderCal();}
+function excEq(k,e){
+  const o=_excObj(k);
+  if(e==null){delete o.equipos;}
+  else{
+    let l=o.equipos?o.equipos.slice():[];
+    if(e==='ninguno')l=['ninguno'];                         // «sin equipo» excluye lo demás
+    else{l=l.filter(x=>x!=='ninguno');const i=l.indexOf(e);if(i>=0)l.splice(i,1);else l.push(e);}
+    if(l.length)o.equipos=l;else delete o.equipos;
+  }
+  _excLimpia(k);save();renderExc();renderCal();
+}
+function excNota(k,v,sinPintar){const o=_excObj(k);const t=String(v||'').trim().slice(0,120);if(t)o.nota=t;else delete o.nota;_excLimpia(k);save();if(!sinPintar)renderExc();}
+function excQuitar(k){if(S.dayOverrides)delete S.dayOverrides[k];EXC.abierto=null;save();renderExc();renderCal();}
 function renderDayChips(){
   const ai=document.getElementById('ai-days'),fr=document.getElementById('free-days');
   ai.innerHTML='';fr.innerHTML='';
@@ -6330,6 +6496,7 @@ function renderDayChips(){
     f.onclick=()=>{toggleArr(S.freeDays,c);if(S.freeDays.includes(c)){const i=S.aiDays.indexOf(c);if(i>=0)S.aiDays.splice(i,1);const j=S.briefDays.indexOf(c);if(j>=0)S.briefDays.splice(j,1);}save();renderDayChips();};
     fr.appendChild(f);
   });
+  renderExc(); // v89: los días con sesión cambian, la lista de cambios también
 }
 function toggleArr(arr,v){const i=arr.indexOf(v);if(i>=0)arr.splice(i,1);else arr.push(v);}
 

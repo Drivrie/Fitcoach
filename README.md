@@ -2379,3 +2379,61 @@ Epley es una estimación y pierde precisión por encima de ~12 repeticiones.
   el entrenador puede quitarla con `"fallo_tecnico": false`.
 - **El primer mensaje semanal con la v88 es el que hay que mirar con lupa**: los rangos pasarán de
   8-10 a 8-13 o similares en varios ejercicios. Es lo esperado, no un error.
+
+---
+
+## v89: cambios en días concretos — tiempo, material o sin sesión, solo para esa fecha
+
+### El hueco que cubre
+Hasta la v88 el tiempo y el material eran los mismos para todos los días de la semana. Si un
+miércoles solo había 30 minutos o un viernes no había mancuernas, había que escribirlo en la nota
+libre: el entrenador podía leerlo o no, el validador no lo comprobaba y el generador sin conexión no
+lo usaba.
+
+### Cómo funciona
+- **Perfil → 📌 Cambios en días concretos**, debajo de la estructura semanal. Por defecto muestra la
+  semana próxima (se puede elegir la semana en curso). Lista solo los días con entrenamiento previsto.
+- En cada día: **tiempo** (15-90 min o «como siempre»), **material** («como siempre», sin equipo o
+  cualquier combinación), **sin sesión este día** y una **nota** corta.
+- Se guarda por **fecha** (`S.dayOverrides`), no por día de la semana: no se cuela en las semanas
+  siguientes y la semana tipo no cambia.
+
+### A dónde llega
+- **Mensaje semanal**: cada día lleva sus condiciones junto a la fecha («L (Lunes 12/10; ESTE DÍA:
+  30 min · solo bandas elásticas)»), los días sin sesión salen de la planificación, y un bloque
+  explica cómo tratarlos: caber en sus minutos, solo su material, la variante más parecida si un
+  principal no se puede hacer (ese día no cuenta para su progresión de carga), no compensar en
+  otros días por encima de su tiempo y, en días sin carga, progresar por repeticiones o tempo. Si
+  ese día hay material que no está en la lista general, se describe con sus pesos.
+- **Validador**: el tiempo se compara con los minutos de ese día; avisa si un ejercicio pide
+  material que ese día no hay, o si el plan trae sesión en un día marcado sin sesión.
+- **Aplicar el plan**: la sesión guarda sus condiciones (`cond`) y el cumplimiento se lo recuerda al
+  entrenador la semana siguiente («[día con cambios: 30 min · solo bandas elásticas]»).
+- **Generador sin conexión**: usa los minutos y el material de cada día y salta los días sin sesión.
+- **Modificar / Generar un día** arrancan con las condiciones de ese día.
+- **Calendario**: el día muestra «📌 Este día: …»; un día sin sesión ya no aparece como «Sesión IA
+  planificada».
+
+### Dos fallos anteriores corregidos de paso
+- **El generador sin conexión no respetaba los minutos**: con 18 min pedidos salían ~55 min según el
+  mismo cálculo que usa el validador. Ahora recorta hasta caber con un 10% de margen: descansos de
+  accesorios, series de accesorios, descansos y series de básicos, y por último quita accesorios.
+- El validador avisaba de «no tienes kettlebells» aunque las tuvieras (buscaba la clave
+  `kettlebells` y la del material es `kettlebell`).
+
+### Validación
+- **528 comprobaciones en verde, 0 fallos**, en cinco zonas horarias (`test-v89.js`): 48 nuevas
+  (504 sin la copia real, que no va en el repositorio).
+- Contra la v88: falla la versión y la comprobación de que existe la función nueva; la sección
+  nueva entera se salta.
+- Una prueba de la v88 dependía del día de la semana en que se ejecutaba (el bloque de «ejercicios
+  estables» solo sale si hay ejercicios ANTES del lunes de la semana planificada). Corregida.
+- Persistencia: el veterano y la copia real de 134 sesiones intactos; `initState` solo añade
+  `dayOverrides`.
+- Playwright con la copia real a 375×812 y 390×844, letra al 100%, 130% y 145%: la tarjeta, el editor
+  abierto y la nota del calendario, sin errores ni desbordes.
+
+### Pendiente en el iPhone
+- La tarjeta con el editor abierto es larga (unos 10 chips de tiempo y 7 de material): comprobar que
+  se maneja bien con el pulgar.
+- La nota de cada día es un campo de texto dentro de la tarjeta: comprobar que el teclado no la tapa.
