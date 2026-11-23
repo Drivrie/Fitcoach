@@ -2,8 +2,13 @@
 
 PWA de entrenamiento personal para iPhone, en español. Un único usuario, sin servidor, sin API de pago.
 
+**Lee primero `CONTEXTO-DESARROLLO.md`**: tiene las 45 reglas innegociables, el modelo de datos de `S`
+y el método de trabajo. Este archivo es el resumen operativo; si contradice a aquel o al código,
+gana el código y se corrigen los dos documentos.
+
 ## Stack
-- **Sin build, sin dependencias, sin `package.json`.** HTML + CSS + JS vanilla en un solo archivo.
+- **Sin build ni dependencias en tiempo de ejecución.** HTML + CSS + JS vanilla en un solo archivo.
+  `package.json` existe solo para instalar `jsdom` para el arnés de pruebas.
 - `index.html` (~7.600 líneas, ~550 KB): toda la app. Un único `<script>` inline (empieza en ~l.777).
 - `sw.js`: service worker. Documento en *network-first* (offline cae a caché); resto *cache-first*.
 - `manifest.json`, `icon-192.png`, `icon-512.png`: PWA instalable.
@@ -37,24 +42,46 @@ PWA de entrenamiento personal para iPhone, en español. Un único usuario, sin s
   «Pendiente en el iPhone» con lo que no se puede comprobar aquí.
 
 ## Cómo probar
-**Los tests no están en el repositorio.** El README cita `test-core.js`, `test-v80.js`…`test-v93.js`
-y `test-flujo-domingo.js` (727 comprobaciones en v93), pero esos ficheros vivían fuera del repo y se
-han perdido al menos una vez (v64). Hasta que se versionen, lo verificable aquí es:
+Arnés: `test-vNN.js` (hoy `test-v93.js`), DOM real con jsdom. Cubre arranque limpio y con usuario
+veterano, persistencia campo a campo y regresión de todas las versiones anteriores.
 
 ```bash
-# 1. Sintaxis del script inline
+npm install
+```
+```bash
+npm test
+```
+`npm test` lo ejecuta en las cinco zonas horarias (Europe/Madrid, UTC, America/Santiago,
+Australia/Sydney, Pacific/Kiritimati). Resultado esperado en v93 sin copia real: **701 OK, 0 fallos**
+en cada una (727 con la copia real).
+
+- Una sola zona: `TZ=Europe/Madrid node test-v93.js`.
+- Con la copia real del usuario: `FITCOACH_BACKUP=/ruta/copia.json node test-v93.js`. La copia son
+  datos personales: **nunca al repositorio** (está en `.gitignore`).
+- Contraste: ejecutar el arnés nuevo contra la versión anterior (`node test-vNN.js ruta/index-anterior.html`);
+  debe fallar exactamente donde se ha corregido algo.
+- Al crear una versión nueva: copiar a `test-vNN+1.js`, añadir las secciones nuevas **antes** del
+  resumen final (regla 14), actualizar el script `test` de `package.json` y borrar el arnés anterior
+  (cada arnés incluye todas las regresiones previas).
+
+Comprobaciones previas a entregar:
+```bash
 python3 -c "import re;s=open('index.html').read();open('/tmp/app.js','w').write(re.search(r'<script>(.*)</script>',s,re.S).group(1))" && node --check /tmp/app.js
 ```
 ```bash
-# 2. Ninguna llamada a la API de Anthropic (debe dar 0)
 grep -c "api.anthropic.com" index.html
 ```
-```bash
-# 3. Servir en local y abrir con Playwright (preinstalado)
-python3 -m http.server 8000
-```
-- Comprobación visual con Playwright/Chromium: viewports 375×812 y 390×844, escala de letra
-  100/130/145 %, las seis pestañas y el reproductor de sesión, sin errores de consola ni
-  desbordamiento horizontal. Zona horaria `Europe/Madrid`.
-- Los tests históricos usaban una «copia real» (backup JSON del usuario). Son datos personales:
-  **no commitearlos nunca**; usar datos sintéticos.
+(el segundo debe dar 0).
+
+Regresión visual con Playwright/Chromium (preinstalado en el entorno cloud), sirviendo con
+`python3 -m http.server 8000`: viewports 375×812 y 390×844, letra al 100/130/145 %, las seis pestañas,
+la revisión previa y el reproductor, sin errores de JS ni desbordamiento horizontal. Lo que no se
+puede comprobar así (teclado iOS, emoji, safe areas) va al README como «Pendiente en el iPhone».
+
+## Qué va al repositorio
+- Sí: `index.html`, `sw.js`, `manifest.json`, iconos, `README.md`, `CONTEXTO-DESARROLLO.md`,
+  `CLAUDE.md`, el arnés vigente y `package.json`.
+- No: copias de datos del usuario, `node_modules/`, zips de entrega, ni los `README-vNN.md` sueltos
+  (se pegan en `README.md` y se descartan).
+- El repo es público y GitHub Pages sirve todo lo que hay en la raíz: nada con datos personales ni
+  secretos.

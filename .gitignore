@@ -1,0 +1,6 @@
+node_modules/
+package-lock.json
+# Copias reales del usuario (datos personales): nunca al repositorio
+*.backup.json
+fitcoach-backup*.json
+b.json
