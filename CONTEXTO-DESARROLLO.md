@@ -244,17 +244,20 @@ de forma estable.
 4. Contrastar el mismo arnés contra la versión anterior: debe fallar donde se ha corregido algo.
    Desde la v92 hay una sección de «comportamiento observable» sin guarda de función, para que el
    contraste falle por el comportamiento y no solo porque falta una función.
-5. Entregar archivos sueltos + zip, y anotar en `README.md` qué se ha cambiado, por qué y cómo se
-   ha comprobado.
+5. Desde la v94 se trabaja en **Claude Code** sobre el repositorio, no en un chat de proyecto de
+   claude.ai. Entregar = commit en una rama de trabajo + pull request contra `main`, con `README.md`
+   (sección `## vNN`: qué, por qué y cómo se ha comprobado), `sw.js` y el arnés nuevo en el mismo
+   cambio. **Fusionar en `main` es publicar**: GitHub Pages sirve `main`. Lo fusiona el usuario
+   cuando lo ha revisado. Ya no hay zip ni archivos sueltos.
 
 **Trampa conocida al aplicar parches por script:** si el script hace varias sustituciones y una
 falla, no se escribe NADA. Conviene escribir a disco tras cada sustitución o verificar después que
 todas están presentes; ya ha provocado entregas a medias.
 
-**Trampa conocida con el proyecto de Claude:** los documentos pequeños del proyecto (README, arnés)
-se leen en línea y no quedan en disco; para editarlos hay que volver a escribirlos enteros. En la v92
-el README no se pudo regenerar entero en el entorno de trabajo y la sección nueva se entregó aparte
-(`README-v92.md`) para pegarla al final; en la v93, lo mismo (`README-v93.md`).
+**Trampa histórica con el proyecto de Claude (hasta la v93):** los documentos del proyecto se leían
+en línea y no quedaban en disco, así que el README no se podía editar y las secciones nuevas se
+entregaban aparte (`README-v92.md`, `README-v93.md`). Con el repositorio ya no aplica: se edita
+`README.md` directamente y no se crean `README-vNN.md` sueltos.
 
 **Regresión visual:** Playwright con Chromium, cargando una copia real en `localStorage` antes de
 abrir la página, a 375×812 y 390×844 y con tamaños de letra 100%, 130% y 145%. Se comprueban errores
@@ -265,4 +268,6 @@ no se puede comprobar así (teclado de iOS, fuentes de emoji, safe areas) se ano
 **Probar con datos reales, no solo con el veterano de laboratorio.** En la v88 la copia real destapó
 tres fallos que el arnés no veía (series por tiempo, sufijo «por pierna», texto de la serie a
 fallo); en la v92, el prellenado de las repeticiones. Si hay una copia disponible, el arnés la usa
-(`FITCOACH_BACKUP=ruta node test-vNN.js`).
+(`FITCOACH_BACKUP=ruta node test-vNN.js`). En Claude Code la copia no está en el entorno: el usuario
+la sube a la sesión cuando haga falta, se usa desde el directorio temporal y **nunca se copia al
+repositorio** (es público y GitHub Pages lo publica).

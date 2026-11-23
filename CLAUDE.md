@@ -33,6 +33,18 @@ gana el código y se corrigen los dos documentos.
 - Las citas científicas del prompt y de «Base científica» se verifican contra su fuente (DOI/PubMed)
   antes de añadirlas. No inventar referencias.
 
+## Flujo de trabajo (desde la v94)
+Las versiones y revisiones se hacen aquí, en Claude Code; ya no en un chat de proyecto de claude.ai.
+1. Acordar el alcance con el usuario antes de implementar (paso 1 de «Cómo se trabaja» en
+   `CONTEXTO-DESARROLLO.md`).
+2. Trabajar en una rama, nunca directamente en `main`.
+3. Una versión = un cambio coherente: `index.html` + `CACHE` en `sw.js` + sección `## vNN` en
+   `README.md` + `test-vNN.js` (que sustituye al anterior) + script `test` de `package.json` y, si
+   cambian reglas o datos, `CONTEXTO-DESARROLLO.md`.
+4. `npm test` en verde en las cinco zonas, contraste contra la versión anterior y Playwright.
+5. Pull request contra `main` solo cuando el usuario lo pida. **Fusionar en `main` publica la app**;
+   la fusión la decide el usuario.
+
 ## Despliegue
 - GitHub Pages, rama `main`, carpeta `/ (root)` (según README; no hay workflow de Actions).
 - Al publicar un cambio en `index.html`, **subir el número de caché en `sw.js`**
