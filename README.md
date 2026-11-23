@@ -2552,3 +2552,180 @@ del plato del desayuno, con su razonamiento calórico, y se cortó a 200 caracte
 - Persistencia: veterano y copia real intactos. No hay campos nuevos en `initState`; `mesoNota` se
   crea al aplicar un plan.
 - Galería de figuras revisada visualmente; capturas de Nutrición y Mesociclo con la copia real.
+
+## v92: auditoría de las progresiones — medir sin ancla, confirmar antes de subir, técnica, topes de rango y subida escalonada
+
+### De dónde sale
+Pregunta del usuario: ¿la progresión que propone la app es adecuada o elevada, si casi siempre se llega
+al máximo del rango y no se tiene en cuenta la técnica? Se auditó con la copia real de 24 semanas
+(111 sesiones de fuerza; 408 ejercicios con series registradas desde julio) y contra criterios
+publicados.
+
+### Lo que dicen los datos (hechos, medidos sobre la copia)
+- Series cerradas EXACTAMENTE en el tope del rango: julio 65%, agosto 70%, septiembre 93%, octubre
+  86%, noviembre 75%. Desde el 12/10, de las series en el tope: RIR 0 en 26, RIR 1 en 72, RIR 2 en
+  117 y RIR 3+ en 23.
+- **Causa raíz encontrada en el código**: la casilla de repeticiones venía PRELLENADA con el tope del
+  rango (`targetReps()` devolvía el número alto) y las series 2+ con lo escrito en la serie anterior.
+  La v88 solo lo quitó en la serie a fallo técnico. «Tope del rango» significaba muchas veces «paré
+  donde decía la casilla».
+- 52 subidas de carga entre julio y noviembre. En 49 la sesión siguiente salió MEJOR de lo que
+  predecía Epley (media +3,8 repeticiones). Conclusión (inferencia): las subidas **no fueron
+  excesivas para la capacidad**; el dato de partida estaba truncado y la app infravaloraba el margen.
+  La excepción clara: press de pecho en suelo, 20 kg × 16, 16, 14 → 22 kg × 7, 7, 6.
+- 28 de las 52 subidas fueron de más del 10% (el escalón de 2 kg sobre 12-20 kg). El ACSM 2009
+  habla de subir un 2-10%.
+- Ritmo: sumo 24 → 34 kg en 6 semanas, hip thrust 16 → 26 kg, elevación de talones 12 → 20 kg, con
+  RIR 2 constante. Absorbido según el RIR declarado, pero sin ningún dato de técnica: si el recorrido
+  o el tempo se recortan, el registro no lo ve.
+- Rangos que crecían sin tope (8-12 → 10-14 → 10-16; 10-14 → 16-20) y luego el entrenador bajaba el
+  rango a 6-10 al subir carga: dos variables a la vez.
+- RIR idéntico en todas las series en 21 de 66 ejercicios de 3+ series desde el 6/10. Con la misma
+  carga y las mismas repeticiones, la fatiga debería bajarlo serie a serie (inferencia).
+- Calibración con las 12 series a fallo: el RIR declarado no es optimista (elevación de talones: dijo
+  2 y salieron 2-3 más).
+- Material no modelado: «de 28 y 32 kg solo hay una mancuerna» estaba solo en la nota semanal, que
+  las reglas locales no leen.
+
+### Qué cambia
+**1. Medir sin ancla (reproductor).** Las repeticiones no se prellenan en ninguna serie. Se enseña
+«🎯 Objetivo de hoy: N» (lo de la última vez con esa carga +1, sin pasar del tope; tras subir carga, la
+parte baja +1; sin historial, el centro del rango), con un botón «= N» para escribirlo de un toque y
+± que parten del objetivo. Sin repeticiones la serie no se guarda y se dice por qué.
+
+**2. Última serie con tope abierto.** En todo ejercicio por repeticiones (salvo los de fallo técnico,
+los que cargan una zona con molestia y el día que se llega cansado), la última serie se puede llevar
+por encima del tope hasta RIR 1. Es la forma de ver las «1-2 repeticiones de más» que pide el ACSM.
+Se guarda `abierta:true`.
+
+**3. Técnica.** La última serie pregunta «¿Técnica como la pautada en todas las series?»: ✓ Limpia /
+⚠ Dudosa, sin premarcar. Se guarda `tec` en el ejercicio. Dudosa → no se sube carga. En las dos
+primeras sesiones de un ejercicio la carga solo sube con técnica marcada como limpia.
+
+**4. Regla de progresión (`decisionProgresion`, sigue siendo la única).**
+- Margen de 2 o más por encima del tope (medido en la serie abierta o a fallo, o RIR ≥2 declarado en
+  todas) → sube.
+- Margen de 1 → sube solo si la sesión anterior con esa carga también cerró el rango («2 por 2»); si
+  no, «misma carga una sesión más para confirmarlo».
+- El salto tiene que caber (Epley, como antes). Si no cabe, rango ampliado, pero con tope: 15 en
+  multiarticulares, 20 en monoarticulares (`topeRepsRango`).
+- Con el rango en su tope: **subida escalonada** (`escalon:{kg,series}`): la carga nueva en la 1.ª
+  serie y la anterior en el resto; al cerrar el rango pasa la 2.ª, y así hasta todas. Series con dos
+  cargas se evalúan aparte (`_decEscalonada`): seguir, pasar otra serie, completar o volver atrás.
+- «Con margen» ya solo aparece en el texto si lo hay.
+
+**5. Revisión del día y validador con la misma regla.** La revisión devuelve a la carga anterior un
+salto pautado sin confirmar o con técnica dudosa, y propone la escalonada. El validador avisa si el
+plan sube una carga que la regla no da, si cambia rango y carga a la vez, y si un rango pasa del tope.
+
+**6. Mancuernas sueltas.** Nuevo campo en Perfil → Mancuernas: «Pesos de los que solo tienes UNA».
+Con esos pesos no se proponen ejercicios con una en cada mano (escalones, validador, mensaje).
+**No se rellena solo a partir de la nota**: hay que escribir «28, 32».
+
+**7. Mensaje al entrenador.** Regla de progresión reescrita (criterio ACSM 2009, «2 por 2», técnica,
+topes, escalonada, mismo rango al subir), aviso de cómo leer los registros anteriores a la v92
+(prellenados) y campo `escalon` en el esquema.
+
+**8. De paso.** La vista previa del plan comparaba la duración con los minutos generales y no con los
+del día (rompía la regla 35). Corregido.
+
+### Evidencia añadida (comprobada contra la fuente en noviembre de 2026)
+- ACSM 2009 Position Stand, Med Sci Sports Exerc 41(3):687-708, DOI 10.1249/MSS.0b013e3181915670:
+  subir un 2-10% cuando se hacen 1-2 repeticiones más de las pedidas.
+- Nuzzo et al. 2024, Sports Med 54(2):303-321, DOI 10.1007/s40279-023-01937-7: las repeticiones a un
+  mismo % del 1RM varían mucho entre personas y ejercicios.
+- Regla «2 por 2» del manual de la NSCA: **consultada en fuentes secundarias, sin comprobar en el
+  texto original**, y así se dice en la app.
+
+**No sale de ningún estudio**: los topes 15/20, «dos primeras sesiones», la subida escalonada, el
+objetivo «última vez +1» y la serie abierta hasta RIR 1.
+
+### Contrafactual sobre la copia real (6/10 - 22/11)
+De 30 «sube» de la v91, 24 siguen siendo «sube» y 6 pasan a «confirmar una sesión más». De 53 «rango
+ampliado», 13 pasan a «subida escalonada» porque el rango ya estaba en 15 o más.
+
+### Validación
+- **706 comprobaciones en verde, 0 fallos**, en cinco zonas horarias (`test-v92.js`), con la copia
+  real (680 sin ella). Secciones 28 y 29 nuevas.
+- Cambios en pruebas anteriores, a propósito: la sección 9 y la 24-D marcan la técnica como limpia
+  (un ejercicio en sus dos primeras sesiones ya no sube sin ella) y la 24-K acepta el texto nuevo de
+  la regla.
+- Contra la v91: 4 fallos (versión, función nueva, y los dos comportamientos de la sección 29: la
+  casilla traía «12» y una sesión con 1 de margen subía).
+- Persistencia: veterano y copia real intactos; `initState` solo añade `v92Desde` y `dbSueltas`.
+- Playwright con la copia real a 375×812 y 390×844, letra al 100%, 130% y 145%: seis pestañas y
+  reproductor (serie 1 y última) sin errores de JavaScript ni desbordes laterales.
+- `node --check` correcto, etiquetas balanceadas, 0 llamadas a `api.anthropic.com`.
+
+### Pendiente en el iPhone
+- El reproductor tiene ahora una fila más (técnica) y el botón «= N»: comprobar con el pulgar.
+- La serie sin repeticiones no se guarda: si resulta pesado, decirlo antes de relajarlo.
+- El primer plan con la v92 traerá «confirmar» en varios ejercicios que antes subían: es lo esperado.
+
+## v93: revisión de la evidencia 2024-2026 — volumen por grupo, series mínimas, déficit, proteína, recorrido y fallo
+
+### De dónde sale
+Búsqueda de documentación de referencia publicada o actualizada en 2024-2026 sobre las variables que
+usa la app, contrastada con las 21 referencias que ya llevaba el mensaje al entrenador y con la copia
+real de noviembre.
+
+### Lo que cambia la evidencia y la app no recogía
+| Fuente | Qué dice | Qué hacía la app | Cambio |
+|---|---|---|---|
+| ACSM 2026 (ya citado), cifras concretas | ≥2 series por ejercicio; ≥10 series semanales por grupo para hipertrofia; rendimientos decrecientes a partir de ~18-20; fuerza con ≥2 sesiones y básicos al principio; con el mismo esfuerzo, 30-100% del 1RM igual de útil; a igual volumen la frecuencia no cambia la hipertrofia; velocidad de repetición sin efecto consistente; fallo innecesario, 2-3 RIR, desaconsejable en mayores | «~10+ series por grupo» sin techo, sin mínimo de series, sin comprobar el reparto | Cifras al mensaje; avisos de volumen y de series mínimas |
+| Refalo et al. 2024, J Sports Sci, DOI 10.1080/02640414.2024.2321021 | 1-2 RIR = misma hipertrofia que el fallo en entrenados, con más repeticiones totales | Coherente (RIR 1-3) | Cita añadida |
+| Wolf et al. 2025, PeerJ, DOI 10.7717/peerj.18904 | Parciales en posición alargada ≈ recorrido completo en entrenados | «Ventaja pequeña e incierta» | Recorrido completo por defecto; alargada solo para desempatar |
+| Murphy y Koehler 2022, Scand J Med Sci Sports, DOI 10.1111/sms.14075 | El déficit frena la masa magra; ~500 kcal/día la anula de media | Sin límite de déficit | Regla en el mensaje y aviso del validador |
+| Trommelen et al. 2023, Cell Rep Med, DOI 10.1016/j.xcrm.2023.101324 | Sin tope demostrado de proteína por toma | Exigía 0,40-0,55 g/kg en cada toma | Manda el total diario; repartir es práctico, no obligatorio |
+
+### Lo que dicen tus datos al aplicarlo
+- Semana planificada del 23/11: pecho 9 series en bruto (por debajo de 10), cuádriceps 10 (7,5-8,5
+  fraccionadas), glúteos 25 en bruto (16,5 fraccionadas). El reparto, no el total, es lo que se
+  aparta: mucha cadera, poco cuádriceps y pecho. Con la v93, el validador lo habría avisado (pecho).
+- Duración de las sesiones: 40-49 min frente a 50 disponibles. No hace falta recortar.
+- Calorías actuales (2.450) frente a un gasto estimado de ~2.340: no hay déficit (ligero superávit); el aviso nuevo no salta.
+
+### Qué se ha implementado
+- `volumenPlan()` y `_checkVolumenSemana()`: el validador del plan avisa de los grupos principales
+  (cuádriceps, isquios, glúteos, pecho, espalda, hombro) por debajo de 10 series en bruto —mismo
+  criterio que la tarjeta de Progreso— y de cualquier grupo por encima de 20 fraccionadas. No avisa de
+  lo bajo en una semana de volumen reducido ni con una sola sesión.
+- Tarjeta de volumen: además del ámbar por debajo de 10, marca «por encima de lo eficiente» por encima
+  de 20 fraccionadas.
+- `validateExercise()`: aviso de ejercicio con una sola serie (salvo movilidad/calentamiento/cardio).
+- `tdeePerfil()` y `_checkDeficit()`: con objetivo de músculo, aviso si las calorías del plan quedan
+  más de 500 kcal por debajo del gasto estimado (Mifflin-St Jeor × 1,55, el mismo cálculo de la tarjeta
+  de datos; estimación con margen amplio).
+- Mensaje: cifras del ACSM 2026, 10+ series en CADA grupo principal y corregir el reparto antes que el
+  total, recorrido completo por defecto, proteína por total diario, déficit máximo con objetivo de músculo.
+- Ficha «Base científica»: las cuatro fuentes nuevas y las cifras del ACSM 2026.
+
+### Revisado y NO implementado (y por qué)
+- **Superseries** (Zhang et al. 2025, Sports Med, DOI 10.1007/s40279-025-02176-8: misma fuerza e
+  hipertrofia en menos tiempo). El reproductor no sabe alternar dos ejercicios serie a serie; pedirlas
+  al entrenador sin poder guiarlas rompería la regla 17. Candidata a una versión propia.
+- **Volumen por sesión** (~11 series fraccionadas por grupo antes de rendimientos decrecientes,
+  Remmert et al. 2025): es un **preprint sin revisión por pares**. Con tus datos ningún grupo pasa de
+  ~6 por sesión, así que tampoco cambiaría nada hoy.
+- **Descargas** (Bell et al. 2023, Delphi, Sports Med Open, DOI 10.1186/s40798-023-00633-0): consenso
+  de entrenadores, no ensayos. La app ya trata la descarga como semana de volumen reducido condicionada.
+- **Distribución de la intensidad en carrera**: sigue siendo válido Silva Oliveira 2024; un ensayo de
+  2025 en maratonianos recreativos favorece polarizado en experimentados y piramidal en noveles, sin
+  metaanálisis nuevo que cambie la regla.
+- **Potencia en mayores** y **creatina en mayores** (revisión narrativa de Candow et al. 2025, JISSN):
+  la app ya activa el bloque de potencia a partir de 55 años y ya menciona la creatina; nada que cambiar
+  a los 49.
+- **Guías de actividad física**: la OMS 2020 (150-300 min moderados o 75-150 vigorosos y fuerza 2 días)
+  sigue vigente; es lo que ya usa la app.
+
+### Validación
+- **727 comprobaciones en verde, 0 fallos**, en cinco zonas horarias (`test-v93.js`), con la copia
+  real (701 sin ella). Secciones 30 y 31 nuevas.
+- Contra la v92: 4 fallos (versión, caché, función nueva y el comportamiento de la sección 31: un plan
+  con pecho y cuádriceps a 6 series semanales no recibía aviso).
+- Persistencia: veterano y copia real intactos; `initState` no cambia.
+- Playwright con la copia real a 375×812 y 390×844, letra al 100%, 130% y 145%: sin errores ni
+  desbordes en las seis pestañas y el reproductor.
+- `node --check` correcto, etiquetas balanceadas, 0 llamadas a `api.anthropic.com`.
+- Las cinco fuentes nuevas se comprobaron contra su ficha (PubMed, editorial o repositorio).
+  Murphy y Koehler 2022: volumen y páginas no comprobados; se cita con DOI.
