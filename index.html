@@ -626,6 +626,7 @@ body{font-size:calc(15px*var(--fs))}
       <div class="card-t">💾 Mis datos</div>
       <p class="note mb-9">Tus datos viven en este iPhone (no hay servidor). La app guarda además una copia interna que sobrevive a reiniciar el móvil, pero <b>«Borrar historial y datos de sitios web» de Safari se lleva por delante las dos</b>. La única copia que sobrevive a eso —y a cambiar de móvil— es la que exportes tú.</p>
       <div id="backup-age" class="note mb-9"></div>
+      <div id="storage-use" class="note mb-9"></div>
       <button class="btn btn-block btn-primary" onclick="exportData()">⬇️ Exportar copia (Archivos / iCloud)</button>
       <input type="file" id="restore-file" accept="application/json,.json" style="display:none" onchange="restoreData(event)">
       <button class="btn btn-block mt-8" onclick="document.getElementById('restore-file').click()">⬆️ Restaurar copia de seguridad</button>
@@ -655,7 +656,7 @@ body{font-size:calc(15px*var(--fs))}
         <div id="cloud-status" style="margin-top:7px;font-size:calc(12px*var(--fs))"></div>
       </details>
     </div>
-    <div style="text-align:center;font-size:calc(11px*var(--fs));color:var(--text3);margin-top:16px">FitCoach IA · versión 93</div>
+    <div style="text-align:center;font-size:calc(11px*var(--fs));color:var(--text3);margin-top:16px">FitCoach IA · versión 94</div>
     <div id="sw-status" style="text-align:center;font-size:calc(11px*var(--fs));color:var(--warn);margin-top:4px;display:none"></div>
     <div style="text-align:center;margin-top:8px">
       <button class="btn btn-xs" onclick="checkForUpdate()">🔄 Buscar actualización</button>
@@ -941,7 +942,25 @@ function esc(v){
 /* --- Estado persistente --- */
 let _loadFailed=false;
 let _corruptKey='';
+let _tamEstado=0;          // v94: caracteres del último estado leído o guardado
 let S=load();
+/* v94 · ALMACENAMIENTO LLENO SIN PÉRDIDA DE DATOS
+   Hasta la v93, si localStorage rechazaba un guardado (cuota llena), el espejo de IndexedDB sí
+   recogía los cambios, pero al reabrir la app arrancaba con lo viejo de localStorage, no ofrecía el
+   espejo (solo lo hacía con localStorage vacío o dañado) y el primer guardado SOBRESCRIBÍA el espejo
+   con lo viejo: los cambios hechos con la cuota llena se perdían. Además salía un aviso por cada
+   guardado (uno por serie en pleno entrenamiento).
+   Ahora cada guardado lleva un número de revisión (`_rev`, creciente) y la hora (`_guardadoEn`):
+     · al arrancar, si el espejo tiene una revisión mayor que la que traía localStorage, manda él;
+     · el espejo nunca se escribe con una revisión menor que la que ya guarda;
+     · con la cuota llena se avisa UNA vez por sesión y Ajustes lo dice mientras dure. */
+let _revCargado=(S&&+S._rev)||0;  // revisión que traía localStorage al arrancar
+let _revMax=_revCargado;           // la mayor revisión conocida (localStorage o espejo)
+let _soloEspejo=false;             // el último guardado en localStorage falló
+let _avisoCuotaDado=false;
+let _espejoListoRes=null;
+const _espejoListo=new Promise(r=>{_espejoListoRes=r;}); // hasta comparar con el espejo, no se escribe en él
+const LIMITE_LS_PRUDENTE=2500000;  // caracteres: 5 MB a 2 bytes por carácter (WebKit guarda en UTF-16)
 /* v71: si los datos guardados no se pueden leer, se APARTA el contenido crudo antes de arrancar en
    limpio. Hasta ahora se devolvía {} y el primer save() lo sobrescribía: siendo la única copia que
    existe (no hay servidor), un simple truncamiento se volvía irrecuperable. Ahora queda bajo la
@@ -951,6 +970,7 @@ function load(){
   try{
     raw=localStorage.getItem('fitcoach');
     if(raw==null)return {};
+    _tamEstado=raw.length;
     const o=JSON.parse(raw);
     if(!o||typeof o!=='object'||Array.isArray(o))throw new Error('formato inesperado');
     return o;
@@ -1013,15 +1033,33 @@ function mirrorSoon(){
   clearTimeout(_mirrorT);
   _mirrorT=setTimeout(()=>{
     // el espejo es una red de seguridad: si falla, la app debe seguir funcionando con localStorage
-    try{idbSet('estado',{at:new Date().toISOString(),data:JSON.parse(JSON.stringify(S))});}catch(e){}
+    let copia;try{copia=JSON.parse(JSON.stringify(S));}catch(e){return;}
+    const rev=+copia._rev||0;
+    // v94: nunca hacia atrás. Si el espejo guarda una revisión mayor, no se pisa.
+    _espejoListo.then(()=>idbGet('estado')).then(m=>{
+      const revEsp=m&&m.data?(+m.data._rev||0):0;
+      if(revEsp>rev)return;
+      return idbSet('estado',{at:new Date().toISOString(),rev,data:copia});
+    }).catch(()=>{});
   },1500);
 }
 function save(){
-  try{localStorage.setItem('fitcoach',JSON.stringify(S));mirrorSoon();return true;}
+  S._rev=Math.max(+S._rev||0,_revMax)+1;_revMax=S._rev;   // v94
+  S._guardadoEn=new Date().toISOString();
+  try{
+    const json=JSON.stringify(S);_tamEstado=json.length;
+    localStorage.setItem('fitcoach',json);
+    if(_soloEspejo){_soloEspejo=false;try{renderDataStatus();}catch(_){}}
+    mirrorSoon();return true;
+  }
   catch(e){
     console.warn('No se pudo guardar en localStorage',e);
+    _soloEspejo=true;
     mirrorSoon(); // aunque falle localStorage, el espejo puede salvar la sesión
-    alert('⚠️ No se ha podido guardar. El almacenamiento del navegador puede estar lleno o bloqueado (modo privado). Tus últimos cambios podrían no conservarse: exporta una copia desde Ajustes → Mis datos en cuanto puedas.');
+    try{renderDataStatus();}catch(_){}
+    if(_avisoCuotaDado)return false;   // v94: un aviso por sesión, no uno por serie
+    _avisoCuotaDado=true;
+    alert('⚠️ El almacenamiento principal del navegador está lleno o bloqueado (modo privado). Tus cambios se siguen guardando en la copia interna de la app y no se perderán al cerrarla, pero exporta una copia desde Ajustes → Mis datos en cuanto puedas. No volverá a salir este aviso hasta que reabras la app.');
     return false;
   }
 }
@@ -1156,20 +1194,38 @@ initState();
    o un fallo de lectura), el espejo de IndexedDB puede seguir ahí. No se restaura por las bravas:
    se pregunta, mostrando fecha y volumen de lo encontrado, porque restaurar sobre datos buenos
    sería peor que no hacer nada. */
+function repintarTodo(){
+  renderCal();renderProg();renderNutri();renderMeso();renderHealth();loadProfile();renderDayChips();renderEquipChips();renderEquipDetail();renderDataStatus();
+}
 function ofrecerRescate(){
-  if(!_arrancoVacio&&!_loadFailed)return;
   idbGet('estado').then(m=>{
-    if(!m||!m.data)return;
-    const d=m.data;
-    const nSes=(d.history||[]).length;
-    const nDias=Object.keys(d.schedule||{}).length;
-    if(!nSes&&!nDias)return;
-    const cuando=m.at?new Date(m.at).toLocaleString('es-ES',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'}):'fecha desconocida';
-    if(!confirm('Este dispositivo no tiene datos, pero la app guarda una copia interna de seguridad.\n\nCopia del '+cuando+': '+nSes+' sesiones registradas y '+nDias+' días planificados.\n\n¿Restaurarla?'))return;
-    S=d;initState();save();
-    renderCal();renderProg();renderNutri();renderMeso();renderHealth();loadProfile();renderDayChips();renderEquipChips();renderEquipDetail();renderDataStatus();
-    alert('✓ Datos restaurados desde la copia interna. Exporta una copia a Archivos para no depender solo del navegador.');
-  }).catch(()=>{});
+    const d=m&&m.data;
+    const revEsp=d?(+d._rev||0):0;
+    if(_arrancoVacio||_loadFailed){
+      if(!d)return;
+      const nSes=(d.history||[]).length;
+      const nDias=Object.keys(d.schedule||{}).length;
+      if(!nSes&&!nDias)return;
+      const cuando=m.at?new Date(m.at).toLocaleString('es-ES',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'}):'fecha desconocida';
+      if(!confirm('Este dispositivo no tiene datos, pero la app guarda una copia interna de seguridad.\n\nCopia del '+cuando+': '+nSes+' sesiones registradas y '+nDias+' días planificados.\n\n¿Restaurarla?')){
+        _revMax=Math.max(_revMax,revEsp); // v94: se empieza de cero a propósito; lo nuevo manda sobre esa copia
+        return;
+      }
+      S=d;initState();_revMax=Math.max(_revMax,revEsp);save();
+      repintarTodo();
+      alert('✓ Datos restaurados desde la copia interna. Exporta una copia a Archivos para no depender solo del navegador.');
+      return;
+    }
+    // v94: localStorage tiene datos, pero el espejo es MÁS RECIENTE (un guardado falló por cuota).
+    if(d&&revEsp>_revCargado){
+      S=d;initState();_revMax=Math.max(_revMax,revEsp);
+      const ok=save();
+      repintarTodo();
+      if(ok)alert('✓ Se han recuperado cambios que el navegador no había llegado a guardar (estaban en la copia interna de la app). Exporta una copia desde Ajustes → Mis datos.');
+      return;
+    }
+    _revMax=Math.max(_revMax,revEsp);
+  }).catch(()=>{}).then(()=>{_espejoListoRes();});
 }
 setTimeout(ofrecerRescate,600);
 if(_loadFailed){
@@ -7443,6 +7499,19 @@ function renderDataStatus(){
       el.innerHTML=`Última copia: ${d===0?'hoy':d===1?'ayer':'hace '+d+' días'} (${esc(S.lastBackup)}).`;
     }
   }
+  // v94: espacio que ocupan los datos y estado del almacenamiento principal
+  const su=document.getElementById('storage-use');
+  if(su){
+    if(_soloEspejo){
+      su.innerHTML='<b style="color:var(--danger)">⚠️ El almacenamiento principal está lleno o bloqueado.</b> Tus cambios se guardan solo en la copia interna de la app. Exporta una copia ahora.';
+    }else if(_tamEstado){
+      const pct=Math.round(_tamEstado/LIMITE_LS_PRUDENTE*100);
+      const tam=_tamEstado>=1e6?(_tamEstado/1e6).toLocaleString('es-ES',{maximumFractionDigits:2,minimumFractionDigits:2})+' millones de caracteres'
+        :Math.max(1,Math.round(_tamEstado/1000)).toLocaleString('es-ES')+' mil caracteres';
+      const txt=`Tamaño de tus datos: ${tam}, ${pct<1?'menos del 1':'~'+pct}% del límite prudente estimado para Safari (2,5 millones).`;
+      su.innerHTML=pct>=70?`<b style="color:var(--warn)">${txt}</b> Se acerca al límite: exporta una copia con regularidad.`:txt;
+    }else su.textContent='';
+  }
   const cs=document.getElementById('cloud-state');
   if(cs){
     const c=S.cloud||{};
@@ -7576,7 +7645,9 @@ function confirmDeleteAll(){
   if(!confirm('Esto BORRARÁ TODOS tus datos de esta app en este dispositivo (perfil, historial, agenda, marcadores de salud, nutrición...). No se puede deshacer.\n\n¿Seguro que quieres continuar?'))return;
   if(!confirm('Última confirmación: se eliminarán todos los datos permanentemente ahora mismo. ¿Continuar?'))return;
   localStorage.removeItem('fitcoach');
-  location.reload();
+  // v94: también la copia interna; si no, con las revisiones al arrancar volvería a imponerse
+  clearTimeout(_mirrorT);
+  idbSet('estado',null).catch(()=>{}).then(()=>location.reload());
 }
 
 /* Service worker */

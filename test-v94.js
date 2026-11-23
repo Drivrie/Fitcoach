@@ -1,5 +1,5 @@
-/* Arnés de pruebas FitCoach IA · v93
-   Uso: node test-v93.js [ruta-index.html]   (FITCOACH_BACKUP=ruta para incluir la copia real)
+/* Arnés de pruebas FitCoach IA · v94
+   Uso: node test-v94.js [ruta-index.html]   (FITCOACH_BACKUP=ruta para incluir la copia real)
    Se ejecuta en Europe/Madrid, UTC, America/Santiago, Australia/Sydney y Pacific/Kiritimati.
    Secciones 24-30: cada una falla contra la versión anterior a la suya. Ese es el contraste.
    v92: secciones 9 y 24-D marcan la técnica como limpia en los casos que prueban la subida con
@@ -22,17 +22,21 @@ process.on('uncaughtException',e=>{bad++;fails.push('EXCEPCIÓN, el arnés se de
   console.log('\n'+ok+' comprobaciones OK, '+bad+' fallos (ejecución interrumpida)');
   console.log('\nFALLOS:');fails.forEach(f=>console.log(' ✕ '+f));process.exit(1);});
 
-function boot(estadoInicial){
+function boot(estadoInicial,op){
+  op=op||{};
   const vc=new VirtualConsole(); // silenciar ruido de jsdom
   const dom=new JSDOM(HTML,{runScripts:'outside-only',url:'https://example.org/',
     pretendToBeVisual:true,virtualConsole:vc});
   const w=dom.window;
   // polyfills mínimos que la app toca al arrancar
-  w.alert=()=>{};w.confirm=()=>true;w.scrollTo=()=>{};
+  w.alert=op.alert||(()=>{});w.confirm=op.confirm||(()=>true);w.scrollTo=()=>{};
   w.matchMedia=w.matchMedia||(q=>({matches:false,media:q,addListener(){},removeListener(){},addEventListener(){},removeEventListener(){}}));
   if(!w.navigator.clipboard)Object.defineProperty(w.navigator,'clipboard',{value:{writeText:()=>Promise.resolve()},configurable:true});
   if(!w.navigator.serviceWorker)Object.defineProperty(w.navigator,'serviceWorker',{value:{register:()=>Promise.resolve({addEventListener(){}}),addEventListener(){},ready:Promise.resolve({})},configurable:true});
-  w.indexedDB=undefined;
+  w.indexedDB=op.idb||undefined;
+  if(op.ls!=null)w.localStorage.setItem('fitcoach',op.ls);
+  if(op.lleno){const orig=w.Storage.prototype.setItem;
+    w.Storage.prototype.setItem=function(k,v){if(k==='fitcoach')throw new w.DOMException('cuota','QuotaExceededError');return orig.call(this,k,v);};}
   w.requestAnimationFrame=cb=>setTimeout(cb,0);
   if(estadoInicial)w.localStorage.setItem('fitcoach',JSON.stringify(estadoInicial));
   const code=HTML.replace(/[\s\S]*?<script>/,'').replace(/<\/script>[\s\S]*$/,'');
@@ -1340,7 +1344,7 @@ if(!boot(null).decisionProgresion){ t('v88: decisionProgresion existe',false); }
 
   // --- M. visual y versión ---------------------------------------------------------------------------------------
   {
-    t('v88→v93 M: versión en el pie',/FitCoach IA · versión 93</.test(HTML));
+    t('v88→v94 M: versión en el pie',/FitCoach IA · versión 94</.test(HTML));
     t('v88 M: texto negro sobre el botón verde',/\.btn-primary\{[^}]*color:#000\}/.test(HTML));
     t('v88 M: texto terciario con contraste suficiente',/--text3:#98989f/.test(HTML));
     const tb=HTML.slice(HTML.indexOf('<div class="tabbar">'),HTML.indexOf('<!-- LOG SHEET -->'));
@@ -1355,7 +1359,7 @@ if(!boot(null).decisionProgresion){ t('v88: decisionProgresion existe',false); }
     t('v88 M: los textos pequeños escalan con el tamaño de letra',fijos<=3,String(fijos));
     const sw=path.join(path.dirname(path.resolve(FILE)),'sw.js');
     if(path.basename(FILE)==='index.html'&&fs.existsSync(sw))
-      t('v93 M: la caché del service worker cambia de nombre',/fitcoach-v93/.test(fs.readFileSync(sw,'utf8')));
+      t('v94 M: la caché del service worker cambia de nombre',/fitcoach-v94/.test(fs.readFileSync(sw,'utf8')));
   }
 
   // --- N. copia real del usuario (solo si está disponible en esta máquina) -----------------------------------------
@@ -2033,6 +2037,111 @@ if(!boot(null).volumenPlan){ t('v93: volumenPlan existe',false); } else {
   t('v93 comportamiento: un plan con pecho y cuádriceps a 6 series semanales recibe aviso',iss.warns.some(x=>/Pecho/.test(x)&&/10 series/.test(x)),JSON.stringify(iss.warns));
 }
 
+/* ---------- 32. v94 · revisión de guardado y medidor de espacio --------------------------------- */
+{
+  const w=boot(estadoVeterano());
+  if(!('_rev' in (w.S||{}))&&!w.repintarTodo){ t('v94: save() numera las revisiones',false); } else {
+    const r0=+w.S._rev||0;w.save();const r1=w.S._rev;w.save();const r2=w.S._rev;
+    t('v94: save() numera las revisiones en orden creciente',r1>r0&&r2===r1+1,r0+'/'+r1+'/'+r2);
+    t('v94: save() anota la hora del guardado',typeof w.S._guardadoEn==='string'&&!isNaN(Date.parse(w.S._guardadoEn)));
+    const g=JSON.parse(w.localStorage.getItem('fitcoach'));
+    t('v94: la revisión viaja en lo guardado',g._rev===r2);
+    w.tab('set');w.renderDataStatus();
+    const su=w.document.getElementById('storage-use');
+    t('v94: Ajustes muestra el tamaño de los datos',!!su&&/(mil|millones de) caracteres/.test(su.textContent)&&/límite prudente/.test(su.textContent),su?su.textContent:'sin elemento');
+  }
+  // cerca del límite: aviso en ámbar
+  const e=estadoVeterano();e.baseline='x'.repeat(1800000);
+  const w2=boot(null,{ls:JSON.stringify(e)});
+  w2.tab('set');w2.renderDataStatus();
+  const su2=w2.document.getElementById('storage-use');
+  t('v94: a partir del 70% del límite se avisa',!!su2&&/Se acerca al límite/.test(su2.textContent),su2?su2.textContent:'sin elemento');
+  t('v94: cero llamadas a la API',HTML.indexOf('api.anthropic.com')<0);
+}
+
+/* ---------- 33. v94 · comportamiento observable con cuota llena (se ejecuta también contra la v93) -- */
+async function seccion33(){
+  const {IDBFactory}=require('fake-indexeddb');
+  const espera=ms=>new Promise(r=>setTimeout(r,ms));
+  const leerEspejo=idb=>new Promise(res=>{const q=idb.open('fitcoach-db',1);
+    q.onupgradeneeded=()=>{try{q.result.createObjectStore('kv');}catch(e){}};
+    q.onsuccess=()=>{try{const g=q.result.transaction('kv').objectStore('kv').get('estado');
+      g.onsuccess=()=>{const v=g.result;q.result.close();res(v||null);};g.onerror=()=>res(null);}catch(e){res(null);}};
+    q.onerror=()=>res(null);});
+  const ses=(n,tit)=>({key:'2026-11-'+String(n).padStart(2,'0'),title:tit+n,duration:'40',feeling:'💪'});
+
+  // A · el fallo de la v93: cambios con la cuota llena, reabrir, guardar
+  {
+    const idb=new IDBFactory();const avisos=[];
+    let w=boot(estadoVeterano(),{idb,alert:m=>avisos.push(m)});
+    w.S.history=[1,2,3,4,5].map(i=>ses(i,'A'));w.save();
+    await espera(2300);
+    const ls=w.localStorage.getItem('fitcoach');
+    const orig=w.Storage.prototype.setItem;
+    w.Storage.prototype.setItem=function(k,v){if(k==='fitcoach')throw new w.DOMException('cuota','QuotaExceededError');return orig.call(this,k,v);};
+    for(let i=6;i<=8;i++){w.S.history.push(ses(i,'B'));w.save();}
+    await espera(2300);
+    t('v94 comportamiento: con la cuota llena, un solo aviso aunque se guarde varias veces',avisos.length===1,String(avisos.length));
+    const m1=await leerEspejo(idb);
+    t('v94 comportamiento: la copia interna recoge lo que localStorage rechaza',!!m1&&m1.data.history.length===8,m1?String(m1.data.history.length):'sin espejo');
+    const su=w.document.getElementById('storage-use');
+    t('v94 comportamiento: Ajustes dice que se guarda solo en la copia interna',!!su&&/solo en la copia interna/.test(su.textContent));
+    w.close();
+    const avisos2=[],preguntas=[];
+    w=boot(null,{idb,ls,lleno:true,alert:m=>avisos2.push(m),confirm:m=>{preguntas.push(m);return true;}});
+    await espera(1200);
+    t('v94 comportamiento: al reabrir manda la copia interna, que es más reciente',w.S.history.length===8,String(w.S.history.length));
+    w.save();await espera(2300);
+    const m2=await leerEspejo(idb);
+    t('v94 comportamiento: el primer guardado tras reabrir NO pisa la copia interna con lo viejo',!!m2&&m2.data.history.length===8,m2?String(m2.data.history.length):'sin espejo');
+    w.close();
+  }
+  // B · datos de la v93 sin revisión: no se toca nada
+  {
+    const idb=new IDBFactory();
+    const viejo=estadoVeterano();viejo.history=[ses(1,'V')];
+    let w=boot(null,{idb});
+    await espera(900);
+    // espejo de la v93 (sin _rev) con OTRO contenido, y localStorage de la v93 sin _rev
+    await new Promise(res=>{const q=idb.open('fitcoach-db',1);q.onupgradeneeded=()=>{try{q.result.createObjectStore('kv');}catch(e){}};
+      q.onsuccess=()=>{const tx=q.result.transaction('kv','readwrite');tx.objectStore('kv').put({at:'2026-11-01T10:00:00Z',data:Object.assign(estadoVeterano(),{history:[ses(1,'E'),ses(2,'E')]})},'estado');tx.oncomplete=()=>{q.result.close();res();};};});
+    w.close();
+    w=boot(null,{idb,ls:JSON.stringify(viejo)});
+    await espera(1200);
+    t('v94 comportamiento: sin revisiones (datos de la v93) manda localStorage, como antes',w.S.history.length===1&&w.S.history[0].title==='V1',String(w.S.history.length));
+    w.close();
+  }
+  // C · restaurar una copia antigua manda sobre la copia interna (no se deshace al reabrir)
+  {
+    const idb=new IDBFactory();
+    let w=boot(estadoVeterano(),{idb});
+    await espera(900);
+    for(let i=0;i<5;i++)w.save();
+    await espera(2300);
+    const copia=Object.assign(estadoVeterano(),{history:[ses(9,'R')],_rev:1});
+    w.S=copia;w.initState();w.save();
+    await espera(2300);
+    const ls=w.localStorage.getItem('fitcoach');w.close();
+    w=boot(null,{idb,ls});await espera(1200);
+    t('v94 comportamiento: una copia restaurada no se deshace al reabrir',w.S.history.length===1&&w.S.history[0].title==='R9',JSON.stringify(w.S.history.map(h=>h.title)));
+    w.close();
+  }
+  // D · «Eliminar todos mis datos» borra también la copia interna
+  {
+    const idb=new IDBFactory();
+    let w=boot(estadoVeterano(),{idb});
+    await espera(900);w.save();await espera(2300);
+    try{w.confirmDeleteAll();}catch(e){}
+    await espera(600);
+    const m=await leerEspejo(idb);
+    t('v94 comportamiento: eliminar todos los datos vacía también la copia interna',!m||!m.data,m?'sigue':'');
+    w.close();
+  }
+}
+
 /* ============================================================================================ */
-console.log('\n'+ok+' comprobaciones OK, '+bad+' fallos');
-if(bad){console.log('\nFALLOS:');fails.forEach(f=>console.log(' ✕ '+f));process.exit(1);}
+seccion33().catch(e=>{bad++;fails.push('EXCEPCIÓN en la sección 33: '+e.message);}).then(()=>{
+  console.log('\n'+ok+' comprobaciones OK, '+bad+' fallos');
+  if(bad){console.log('\nFALLOS:');fails.forEach(f=>console.log(' ✕ '+f));process.exit(1);}
+  process.exit(0);
+});
