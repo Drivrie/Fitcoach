@@ -2729,3 +2729,56 @@ real de noviembre.
 - `node --check` correcto, etiquetas balanceadas, 0 llamadas a `api.anthropic.com`.
 - Las cinco fuentes nuevas se comprobaron contra su ficha (PubMed, editorial o repositorio).
   Murphy y Koehler 2022: volumen y páginas no comprobados; se cita con DOI.
+
+## v94: el almacenamiento lleno ya no hace perder datos
+
+### De dónde sale
+Revisión de riesgos al pasar el desarrollo a Claude Code. Los datos ocupaban ~1 MB en noviembre de
+2026 y crecen 170-240 KB al mes. El límite de localStorage es de unos 5 MiB por origen (MDN); según
+un informe de WebKit, Safari guarda el texto a 2 bytes por carácter, lo que dejaría ~2,5 millones de
+caracteres. Apple no publica la cifra exacta para iOS: es una estimación prudente, no un dato medido.
+Con ese límite se llegaría hacia mediados de 2027. El origen `drivrie.github.io` es compartido con
+cualquier otra app publicada en esa cuenta.
+
+### El fallo (reproducido en la v93)
+1. Con la cuota llena, `save()` fallaba, pero el espejo de IndexedDB sí recogía los cambios.
+2. Salía un aviso **por cada guardado** (uno por serie en pleno entrenamiento).
+3. Al reabrir, la app cargaba lo viejo de localStorage y **no ofrecía el espejo**: solo lo hacía con
+   localStorage vacío o dañado.
+4. El primer guardado **sobrescribía el espejo con lo viejo**. Los cambios hechos con la cuota llena
+   se perdían sin aviso.
+
+### Qué cambia
+- Cada guardado lleva una revisión creciente (`_rev`) y la hora (`_guardadoEn`).
+- Al arrancar, si el espejo tiene una revisión mayor que la que traía localStorage, manda el espejo.
+- El espejo nunca se escribe con una revisión menor que la que ya tiene, y no se escribe hasta haberlo
+  comparado al arrancar.
+- Con la cuota llena: un solo aviso por sesión y, en Ajustes → Mis datos, un estado en rojo mientras
+  dure («se guardan solo en la copia interna»).
+- Ajustes → Mis datos muestra el tamaño de los datos frente al límite prudente (2,5 millones de
+  caracteres) y avisa en ámbar a partir del 70%.
+- «Eliminar todos mis datos» vacía también la copia interna; si no, con las revisiones se volvería a
+  imponer al reabrir.
+- Restaurar una copia (archivo o nube) toma una revisión mayor que todo lo conocido, así que no se
+  deshace al reabrir.
+- Datos de la v93 (sin revisión): se comportan como antes; no se adopta nada.
+
+### Lo que NO resuelve
+Con la cuota llena la app sigue funcionando sobre la copia interna, pero localStorage no recupera
+espacio. Quitar el límite de raíz (IndexedDB como almacenamiento principal o archivar los textos de
+planes antiguos) queda para otra versión.
+
+### Validación
+- **715 comprobaciones en verde, 0 fallos**, en cinco zonas horarias (`test-v94.js`), sin la copia
+  real (701 de la v93 + 14 nuevas). Secciones 32 y 33 nuevas; la 33 usa `fake-indexeddb` (nueva
+  devDependency) porque el arnés desactivaba IndexedDB y no podía ver este fallo.
+- Contra la v93: 9 fallos (versión, caché, revisión, medidor y los cinco comportamientos corregidos:
+  avisos repetidos, estado en Ajustes, adopción del espejo, espejo pisado y borrado completo).
+- Playwright a 375×812 y 390×844, letra al 100%, 130% y 145%: seis pestañas sin errores de
+  JavaScript ni desbordes laterales. El reproductor no se ha revisado: esta versión no lo toca.
+- `node --check` correcto, 0 llamadas a `api.anthropic.com`.
+
+### Pendiente en el iPhone
+- Ajustes → Mis datos: comprobar que aparece el tamaño de tus datos y qué porcentaje marca con la
+  copia real.
+- La cuota llena no se puede provocar a mano en el iPhone; está cubierta solo por el arnés.

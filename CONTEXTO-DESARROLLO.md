@@ -1,6 +1,6 @@
 # FitCoach IA · contexto de desarrollo
 
-**Versión actual: v93** · Última revisión: noviembre 2026
+**Versión actual: v94** · Última revisión: noviembre 2026
 
 Este archivo se lee ANTES de tocar nada. Si algo aquí contradice al código, gana el código: avísalo
 y actualiza este archivo en la misma versión.
@@ -25,7 +25,7 @@ pegar: la app genera un prompt, el usuario lo pega en Claude, y pega de vuelta e
 | `CONTEXTO-DESARROLLO.md` | Este archivo |
 | `CLAUDE.md` | Resumen operativo para Claude Code (stack, despliegue, pruebas) |
 | `test-vNN.js` | Arnés vigente (solo el de la última versión: incluye todas las regresiones) |
-| `package.json`, `.gitignore` | Solo para instalar `jsdom` y ejecutar `npm test`; no los usa la app |
+| `package.json`, `.gitignore` | Solo para instalar `jsdom` y `fake-indexeddb` y ejecutar `npm test`; no los usa la app |
 
 ## Reglas innegociables
 
@@ -179,6 +179,13 @@ pegar: la app genera un prompt, el usuario lo pega en Claude, y pega de vuelta e
    guiarlo (v93).** Las superseries tienen buena evidencia, pero el reproductor no las alterna: se
    dejaron fuera hasta poder guiarlas. Es la regla 17 aplicada a la evidencia.
 
+46. **El espejo nunca retrocede y manda si es más reciente (v94).** Cada `save()` numera la revisión
+   (`S._rev`) por encima de todo lo conocido (`_revMax`). Al arrancar, si el espejo de IndexedDB tiene
+   una revisión mayor que la que traía localStorage, se adopta; el espejo no se escribe con una
+   revisión menor ni antes de esa comparación (`_espejoListo`). Cualquier flujo que sustituya `S`
+   (restaurar, nube, rescate) termina en `save()`, y cualquiera que borre datos borra también el
+   espejo. Con la cuota llena, un aviso por sesión, no por guardado.
+
 ## Estado de los datos
 
 Todo cuelga de `S`, persistido en `localStorage` bajo la clave `'fitcoach'`.
@@ -193,7 +200,8 @@ número del bloque que fija el entrenador; vacío = cálculo por calendario), `d
 cambios guardan una copia en `cond`), `mesoNota` (v91: lo que dijo el entrenador sobre el bloque en su
 último plan, para mostrarlo en Perfil), `v92Desde` (v92: primer día con repeticiones sin prellenar;
 el mensaje lo usa para avisar de cómo leer los registros anteriores), `dbSueltas` (v92: texto
-«28, 32» con los pesos de los que solo hay una mancuerna).
+«28, 32» con los pesos de los que solo hay una mancuerna). `_rev` y `_guardadoEn` (v94: revisión creciente y hora del
+último guardado; los pone `save()`, no se tocan a mano).
 
 Dentro de `schedule[fecha][i].sets[].series[]` cada serie lleva `kg` o `banda`, `reps` y, desde la
 v80, `esf` (`facil`|`justo`|`limite`): el esfuerzo que marcó el usuario al cerrarla. Es opcional; sin

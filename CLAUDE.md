@@ -2,17 +2,17 @@
 
 PWA de entrenamiento personal para iPhone, en español. Un único usuario, sin servidor, sin API de pago.
 
-**Lee primero `CONTEXTO-DESARROLLO.md`**: tiene las 45 reglas innegociables, el modelo de datos de `S`
+**Lee primero `CONTEXTO-DESARROLLO.md`**: tiene las 46 reglas innegociables, el modelo de datos de `S`
 y el método de trabajo. Este archivo es el resumen operativo; si contradice a aquel o al código,
 gana el código y se corrigen los dos documentos.
 
 ## Stack
 - **Sin build ni dependencias en tiempo de ejecución.** HTML + CSS + JS vanilla en un solo archivo.
-  `package.json` existe solo para instalar `jsdom` para el arnés de pruebas.
+  `package.json` existe solo para instalar `jsdom` y `fake-indexeddb` para el arnés de pruebas.
 - `index.html` (~7.600 líneas, ~550 KB): toda la app. Un único `<script>` inline (empieza en ~l.777).
 - `sw.js`: service worker. Documento en *network-first* (offline cae a caché); resto *cache-first*.
 - `manifest.json`, `icon-192.png`, `icon-512.png`: PWA instalable.
-- `README.md` (~2.700 líneas): instrucciones de despliegue + **changelog por versión** (v6…v93).
+- `README.md` (~2.700 líneas): instrucciones de despliegue + **changelog por versión** (v6…v94).
   Es la memoria del proyecto: antes de tocar una función, busca su versión en el README
   (`grep -n "^## v" README.md`) para entender por qué está así.
 - Todo va **plano en la raíz**. No crear subcarpetas (el subidor web de GitHub falla con carpetas).
@@ -54,7 +54,7 @@ Las versiones y revisiones se hacen aquí, en Claude Code; ya no en un chat de p
   «Pendiente en el iPhone» con lo que no se puede comprobar aquí.
 
 ## Cómo probar
-Arnés: `test-vNN.js` (hoy `test-v93.js`), DOM real con jsdom. Cubre arranque limpio y con usuario
+Arnés: `test-vNN.js` (hoy `test-v94.js`), DOM real con jsdom y `fake-indexeddb` para el espejo. Cubre arranque limpio y con usuario
 veterano, persistencia campo a campo y regresión de todas las versiones anteriores.
 
 ```bash
@@ -64,11 +64,11 @@ npm install
 npm test
 ```
 `npm test` lo ejecuta en las cinco zonas horarias (Europe/Madrid, UTC, America/Santiago,
-Australia/Sydney, Pacific/Kiritimati). Resultado esperado en v93 sin copia real: **701 OK, 0 fallos**
-en cada una (727 con la copia real).
+Australia/Sydney, Pacific/Kiritimati). Resultado esperado en v94 sin copia real: **715 OK, 0 fallos**
+en cada una (con la copia real se añaden sus 26 comprobaciones).
 
-- Una sola zona: `TZ=Europe/Madrid node test-v93.js`.
-- Con la copia real del usuario: `FITCOACH_BACKUP=/ruta/copia.json node test-v93.js`. La copia son
+- Una sola zona: `TZ=Europe/Madrid node test-v94.js`.
+- Con la copia real del usuario: `FITCOACH_BACKUP=/ruta/copia.json node test-v94.js`. La copia son
   datos personales: **nunca al repositorio** (está en `.gitignore`).
 - Contraste: ejecutar el arnés nuevo contra la versión anterior (`node test-vNN.js ruta/index-anterior.html`);
   debe fallar exactamente donde se ha corregido algo.

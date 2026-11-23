@@ -3,9 +3,10 @@
   "private": true,
   "description": "Solo para el arnés de pruebas. La app no tiene build ni dependencias en tiempo de ejecución.",
   "scripts": {
-    "test": "for z in Europe/Madrid UTC America/Santiago Australia/Sydney Pacific/Kiritimati; do TZ=$z node test-v93.js || exit 1; done"
+    "test": "for z in Europe/Madrid UTC America/Santiago Australia/Sydney Pacific/Kiritimati; do TZ=$z node test-v94.js || exit 1; done"
   },
   "devDependencies": {
+    "fake-indexeddb": "6.2.8",
     "jsdom": "31.0.1"
   }
 }
