@@ -503,10 +503,12 @@ body{font-size:calc(15px*var(--fs))}
         Los parámetros siguen evidencia actual:
         <ul style="padding-left:16px;margin:7px 0">
           <li><b>Fuerza:</b> cargas ≥80% 1RM, 2-3 series/ejercicio, descansos 2-3 min.</li>
+          <li><b>Hipertrofia (v93):</b> la app avisa de los grupos principales por debajo de 10 series semanales y por encima de 20, y de los ejercicios con una sola serie (ACSM 2026).</li>
           <li><b>Hipertrofia:</b> ~10+ series por grupo muscular/semana, cerca del fallo (1-3 RIR), no al fallo absoluto. En fuerza no hace falta acercarse tanto: con más margen (RIR 3-4) el resultado es similar y la fatiga menor.</li>
           <li><b>Frecuencia:</b> lo que más manda es el volumen semanal; repartirlo en 2 o más días por grupo lo facilita, pero no es una regla rígida. Peso corporal y bandas son eficaces.</li>
           <li><b>Proteína:</b> ~1,6 g/kg/día es donde deja de aumentar la ganancia de masa magra; hasta 2,2 g/kg cubre el margen del intervalo y el déficit calórico.</li>
-          <li><b>Progresión:</b> primero repeticiones, después carga. La carga sube solo cuando el salto cabe en el rango (con el peso nuevo se puede volver a la parte baja con una repetición de margen); si no cabe, se amplía el rango. Progresar repeticiones o carga da resultados parecidos (Plotkin 2022).</li>
+          <li><b>Progresión:</b> primero repeticiones, después carga. La carga sube cuando sobran 1-2 repeticiones por encima de lo pedido (ACSM 2009): con 2 o más de margen, ya; con 1, si se repite dos sesiones seguidas (regla «2 por 2» de la NSCA). El salto tiene que caber en el rango; si no cabe, se amplía el rango hasta 15 (multiarticulares) o 20 (monoarticulares) y después se sube de forma escalonada, serie a serie. Con técnica dudosa no se sube. Progresar repeticiones o carga da resultados parecidos (Plotkin 2022).</li>
+          <li><b>Repeticiones:</b> se anotan sin prellenar y la última serie va con tope abierto, hasta dejar 1 en reserva. La relación entre repeticiones y % del 1RM varía mucho entre personas y ejercicios (Nuzzo 2024), así que la fórmula de Epley es una estimación que se corrige con lo que hagas.</li>
           <li><b>Esfuerzo:</b> se marca en repeticiones en reserva (RIR). Como esa estimación falla en torno a una repetición (Halperin 2022), la última serie de algunos ejercicios seguros se lleva a fallo técnico para medirlo; el resto se queda a 1-3 del fallo, que rinde igual y se recupera antes (Refalo 2023; Morán-Navarro 2017).</li>
           <li><b>Ejercicios estables:</b> los principales se mantienen todo el bloque; variar al azar puede frenar la ganancia (Kassiano 2022).</li>
           <li><b>Volumen fraccionado:</b> cada serie cuenta 1 para el músculo principal y 0,5 para los que ayudan (Pelland 2025).</li>
@@ -535,6 +537,20 @@ body{font-size:calc(15px*var(--fs))}
           <li><b>Coleman et al. 2024</b>, PeerJ 12:e16777. DOI 10.7717/peerj.16777.</li>
           <li><b>Iraki et al. 2019</b>, Sports 7(7):154 (revisión narrativa; DOI sin comprobar).</li>
           <li><b>Kreider et al. 2017</b>, J Int Soc Sports Nutr 14:18. DOI 10.1186/s12970-017-0173-z.</li>
+        </ul>
+        Añadidas en la versión 93 (noviembre de 2026):
+        <ul style="padding-left:16px;margin:7px 0">
+          <li><b>Refalo et al. 2024</b>, J Sports Sci 42(1):85-101. DOI 10.1080/02640414.2024.2321021. A 1-2 RIR, la misma hipertrofia que al fallo en entrenados.</li>
+          <li><b>Wolf et al. 2025</b>, PeerJ 13:e18904. DOI 10.7717/peerj.18904. Parciales en posición alargada ≈ recorrido completo en entrenados.</li>
+          <li><b>Murphy y Koehler 2022</b>, Scand J Med Sci Sports. DOI 10.1111/sms.14075. El déficit calórico frena la ganancia de masa magra; ~500 kcal/día la anula de media.</li>
+          <li><b>Trommelen et al. 2023</b>, Cell Rep Med 4(12):101324. DOI 10.1016/j.xcrm.2023.101324. Sin tope demostrado de proteína por toma.</li>
+          <li>Del <b>ACSM 2026</b> se incorporan ahora sus cifras: ≥2 series por ejercicio, ≥10 series semanales por grupo y rendimientos decrecientes a partir de ~18-20.</li>
+        </ul>
+        Añadidas en la versión 92 (noviembre de 2026):
+        <ul style="padding-left:16px;margin:7px 0">
+          <li><b>ACSM 2009 Position Stand</b>, «Progression Models in Resistance Training for Healthy Adults». Med Sci Sports Exerc 41(3):687-708. DOI 10.1249/MSS.0b013e3181915670. Subir un 2-10% la carga cuando se hacen 1-2 repeticiones más de las pedidas.</li>
+          <li><b>Nuzzo et al. 2024</b>, Sports Med 54(2):303-321. DOI 10.1007/s40279-023-01937-7. Repeticiones máximas a cada % del 1RM: media y variación entre personas, ~7.000 participantes.</li>
+          <li><b>Regla «2 por 2»</b> (manual de la NSCA): subir cuando la última serie supera en 2 repeticiones lo pedido en dos sesiones seguidas. Consultada en fuentes secundarias; no se ha comprobado en el texto original.</li>
         </ul>
         <div style="margin-top:8px;color:var(--text3)">Los umbrales que usa la app para decidir (qué es «la mitad de las series sin margen», cuándo «cabe» un salto, IMC 23) son convenciones de práctica, no puntos de corte sacados de un estudio. Información orientativa, no sustituye consejo médico. Ante dudas de técnica con cargas altas, revisa con un profesional.</div>
       </div>
@@ -639,7 +655,7 @@ body{font-size:calc(15px*var(--fs))}
         <div id="cloud-status" style="margin-top:7px;font-size:calc(12px*var(--fs))"></div>
       </details>
     </div>
-    <div style="text-align:center;font-size:calc(11px*var(--fs));color:var(--text3);margin-top:16px">FitCoach IA · versión 91</div>
+    <div style="text-align:center;font-size:calc(11px*var(--fs));color:var(--text3);margin-top:16px">FitCoach IA · versión 93</div>
     <div id="sw-status" style="text-align:center;font-size:calc(11px*var(--fs));color:var(--warn);margin-top:4px;display:none"></div>
     <div style="text-align:center;margin-top:8px">
       <button class="btn btn-xs" onclick="checkForUpdate()">🔄 Buscar actualización</button>
@@ -1060,6 +1076,9 @@ function initState(){
   // v89: cambios en días concretos (tiempo, material, sin sesión) por FECHA: {'2026-10-14':{min:30}}.
   // Van por fecha y no por día de la semana para que no se cuelen en las semanas siguientes.
   if(!S.dayOverrides||typeof S.dayOverrides!=='object'||Array.isArray(S.dayOverrides))S.dayOverrides={};
+  // v92: desde qué día las repeticiones se anotan sin prellenar (para leer bien los registros viejos)
+  if(!S.v92Desde)S.v92Desde=todayKey();
+  if(S.dbSueltas==null)S.dbSueltas=''; // v92: pesos de los que solo hay UNA mancuerna
   // v88: inicio y número del bloque que DECIDE EL ENTRENADOR. Antes el bloque se contaba por
   // calendario fijo desde el primer registro, y el entrenador tenía que corregir a la app
   // («aunque la app marque semana 1, este bloque empezó el 21/9»). Vacío = cálculo antiguo.
@@ -2723,17 +2742,18 @@ function renderVolume(){
   const filas=MG_ORDER.filter(g=>act.vol[g]||real.vol[g]).map(g=>{
     const p=Math.round(act.vol[g]/max*100),pr=Math.round(real.vol[g]/max*100);
     const flojo=act.bruto[g]>0&&act.bruto[g]<10; // la referencia de ~10 se formuló con el recuento bruto
+    const sobra=act.vol[g]>20; // v93: ACSM 2026, rendimientos decrecientes a partir de ~18-20
     return `<div style="margin-bottom:9px">
       <div style="display:flex;justify-content:space-between;font-size:calc(12px*var(--fs))">
         <span>${MG_LABEL[g]}</span>
-        <span class="fw6"${flojo?' style="color:var(--warn)"':''}>${_nSer(act.vol[g])} series${act.bruto[g]!==act.vol[g]?` <span style="font-weight:400;color:var(--text3)">(${act.bruto[g]} en bruto)</span>`:''}</span></div>
+        <span class="fw6"${flojo?' style="color:var(--warn)"':(sobra?' style="color:var(--ring-stand)"':'')}>${_nSer(act.vol[g])} series${sobra?' · por encima de lo eficiente':''}${act.bruto[g]!==act.vol[g]?` <span style="font-weight:400;color:var(--text3)">(${act.bruto[g]} en bruto)</span>`:''}</span></div>
       <div class="prog-bar" style="margin-top:3px"><div class="prog-fill" style="width:${p}%"></div></div>
       <div style="font-size:calc(11px*var(--fs));color:var(--text3);margin-top:2px">semana pasada, realizadas: ${_nSer(real.vol[g])}</div>
       <div class="prog-bar" style="height:3px;margin-top:2px"><div class="prog-fill" style="width:${pr}%;background:var(--text3)"></div></div>
     </div>`;
   }).join('');
   b.innerHTML=filas
-    ? filas+`<p class="note mt-8">Series de esta semana (planificadas o ya hechas) frente a las realizadas la semana pasada. Recuento <b>fraccionado</b>: cada serie cuenta 1 para el grupo principal del ejercicio y 0,5 para los que ayudan (un press suma 1 a pecho y 0,5 a hombro y a tríceps). Entre paréntesis, el recuento en bruto, en el que cada serie cuenta entera para todos. La referencia divulgada de <b>~10 series semanales por grupo</b> se formuló en bruto: aparece en ámbar el grupo que no llega a 10 ni así. Es una <b>estimación</b>: los grupos se deducen del nombre y de los músculos declarados de cada ejercicio.</p>`
+    ? filas+`<p class="note mt-8">Series de esta semana (planificadas o ya hechas) frente a las realizadas la semana pasada. Recuento <b>fraccionado</b>: cada serie cuenta 1 para el grupo principal del ejercicio y 0,5 para los que ayudan (un press suma 1 a pecho y 0,5 a hombro y a tríceps). Entre paréntesis, el recuento en bruto, en el que cada serie cuenta entera para todos. La referencia divulgada de <b>~10 series semanales por grupo</b> se formuló en bruto: aparece en ámbar el grupo que no llega a 10 ni así. Por encima de <b>~20 fraccionadas</b> se marca «por encima de lo eficiente»: el ACSM 2026 ve rendimientos decrecientes a partir de ~18-20 series semanales. Es una <b>estimación</b>: los grupos se deducen del nombre y de los músculos declarados de cada ejercicio.</p>`
     : '<p class="note">Genera o registra sesiones de fuerza para ver el reparto de volumen por grupo muscular.</p>';
 }
 function renderCardio(){
@@ -2892,6 +2912,8 @@ function equipDetailFor(equipos){
   if(eq.includes('mancuernas')){
     const l=dumbbellList();
     if(l.length)d+=`\nMancuernas disponibles (kg por mancuerna, una en cada mano): ${l.join(', ')}. Usa el peso adecuado de esta lista según mi progresión real; puedes subir de escalón cuando los registros lo justifiquen. NO te limites a 12 y 16 kg.`;
+    const su=dbSueltas(); // v92
+    if(su.length)d+=`\nDe estos pesos solo tengo UNA mancuerna: ${su.join(', ')} kg. Úsalos solo en ejercicios de una mancuerna (goblet, a una mano, un brazo cada vez); nunca en ejercicios con una en cada mano.`;
   }
   if(eq.includes('bandas')){
     const b=S.bands||{};const res=['baja','media','alta'].filter(r=>b[r]);
@@ -3116,18 +3138,63 @@ function _rirDe(x){
 }
 // repeticiones al fallo esperables tras subir la carga una fracción s, si antes eran R (Epley)
 function repsTrasSalto(R,s){return (1+R/30)/(1+s)*30-30;}
-function decisionProgresion(ex,ser,kgPlan){
+/* v92 · auditoría de progresiones con 24 semanas de datos reales (111 sesiones de fuerza).
+   Lo que se midió:
+   · 52 subidas de carga entre julio y noviembre. En 49 la sesión siguiente salió MEJOR de lo que
+     predecía Epley (media +3,8 repeticiones): las subidas no fueron excesivas para la capacidad.
+     La causa es que el dato de partida estaba truncado: el campo de repeticiones venía PRELLENADO
+     con el tope del rango (y las series 2+ con lo de la serie anterior), así que «tope del rango»
+     significaba muchas veces «paré donde decía la casilla». Se arregla en el reproductor.
+   · Rangos que se ampliaban sin límite (8-12 → 10-14 → 10-16; 10-14 → 16-20) y luego, al subir
+     la carga, el entrenador bajaba el rango a 6-10: dos variables a la vez y un 22 kg × 7, 7, 6 tras
+     un 20 kg × 16, 16, 14. Ahora el rango tiene tope (15 en multiarticulares, 20 en monoarticulares)
+     y, si el salto no cabe, se sube de forma ESCALONADA (la carga nueva solo en la 1.ª serie).
+   · Ningún criterio de técnica: la carga podía subir cada semana sin que nadie preguntara si el
+     recorrido y el tempo seguían siendo los pautados. Ahora la última serie pregunta por la técnica
+     y una técnica «dudosa» bloquea la subida; en un ejercicio nuevo (dos primeras sesiones) la
+     subida exige técnica confirmada como limpia.
+   · Subía tras UNA sola sesión en el tope con 1 repetición de margen. El ACSM 2009 sube un 2-10%
+     cuando se hacen 1-2 repeticiones por encima de lo pedido; la regla «2 por 2» de la NSCA pide
+     2 repeticiones de más en la última serie en 2 sesiones seguidas. Aquí: margen de 2 o más (medido
+     en la serie abierta o a fallo, o declarado en todas) → sube; margen de 1 → solo si la sesión
+     anterior con esa carga también cerró el rango.
+   Los topes 15/20, «dos primeras sesiones» y la subida escalonada son convenciones de práctica, no
+   puntos de corte validados por un estudio. */
+const MONO_RX=/curl|elevaci[oó]n(es)? (lateral|frontal|de talones)|elevaciones laterales|talones|gemelo|extensi[oó]n de (tr[ií]ceps|cu[aá]driceps)|patada de (tr[ií]ceps|gl[uú]teo)|p[aá]jaro|face pull|pull-?apart|encogimiento|abducci[oó]n|aducci[oó]n|aperturas|press franc[eé]s/;
+function esMonoarticular(ex){return MONO_RX.test(_norm((ex&&ex.nombre)||''));}
+function topeRepsRango(ex){return esMonoarticular(ex)?20:15;}
+// sesiones anteriores a `antesDe` en las que se registró este ejercicio (misma identidad)
+function exposicionesPrevias(nombre,antesDe){
+  let n=0;
+  (S.history||[]).forEach(h=>{
+    if(!h.sets||!h.key||(antesDe&&h.key>=antesDe))return;
+    if(h.sets.some(e=>e&&e.series&&e.series.length&&mismoEjercicio(e.nombre,nombre)))n++;
+  });
+  return n;
+}
+// carga de una serie concreta, teniendo en cuenta la subida escalonada
+function kgSerie(ex,set){
+  const e=ex&&ex.escalon;
+  if(e&&+e.kg>0&&set<=(+e.series||1))return +e.kg;
+  return parseKg(ex&&ex.peso);
+}
+function decisionProgresion(ex,ser,kgPlan,opts){
+  opts=opts||{};
   const rango=repRange(ex&&ex.reps);
   if(!rango||!ser||!ser.length)return null;
   if(parseReps(ex.reps))return null; // series por tiempo (isométricos, intervalos): Epley no aplica
   const [lo,hi]=rango;
-  const val=ser.map(x=>({r:toNum(String(x.reps)),m:_rirDe(x),f:!!x.fallo,kg:toNum(x.kg),num:x.rir!=null&&x.rir!==''})).filter(x=>!isNaN(x.r));
+  const val=ser.map(x=>({r:toNum(String(x.reps)),m:_rirDe(x),f:!!x.fallo,ab:!!x.abierta,kg:toNum(x.kg),num:x.rir!=null&&x.rir!==''})).filter(x=>!isNaN(x.r));
   if(!val.length)return null;
   const kgs=val.map(x=>x.kg).filter(v=>!isNaN(v)&&v>0);
   const kgL=kgs.length?Math.max(...kgs):null;
+  const cap=topeRepsRango(ex);
+  const d={accion:'reps',kgL,lo,hi,nLim:0,conEsf:0,up:null,pct:null,tope:null,alc:null,R:null,fuente:'',cap,tec:opts.tec||null};
+  // v92 · series con dos cargas: subida escalonada en curso
+  if(kgL!=null&&kgs.some(v=>v<kgL-1e-9))return _decEscalonada(ex,val,d);
   const norm=val.filter(x=>!x.f),fal=val.filter(x=>x.f);
   const conEsf=norm.filter(x=>x.m!=null).length,nLim=norm.filter(x=>x.m===0).length;
-  const d={accion:'reps',kgL,lo,hi,nLim,conEsf,up:null,pct:null,tope:null,alc:null,R:null,fuente:''};
+  d.nLim=nLim;d.conEsf=conEsf;
   if(val.some(x=>x.r<lo)){
     d.accion=norm.some(x=>x.r<lo-1)?'bajar':'corto';
     d.texto='por debajo del rango en alguna serie → mantener o bajar';
@@ -3144,9 +3211,18 @@ function decisionProgresion(ex,ser,kgPlan){
     }
     return d;
   }
-  if(todoTope&&!fal.length&&conEsf>0&&nLim*2>=conEsf){
+  // v92: en la serie abierta, una serie «sin margen» por encima del tope no es motivo para consolidar
+  const nLimCons=norm.filter(x=>x.m===0&&!(x.ab&&x.r>hi)).length;
+  if(todoTope&&!fal.length&&conEsf>0&&nLimCons*2>=conEsf){
     d.accion='consolidar';
     d.texto=`tope del rango pero ${nLim} de ${conEsf} series sin margen (RIR 0) → consolidar esta carga, no subir todavía`;
+    return d;
+  }
+  const pref=todoTope?'tope del rango':'dentro del rango y con margen de sobra';
+  // v92: técnica dudosa → no se sube sobre una técnica que se deforma
+  if(opts.tec==='dudosa'){
+    d.accion='tecnica';
+    d.texto=`${pref}, pero marcaste la técnica como dudosa → misma carga y mismo rango hasta que salga limpia`;
     return d;
   }
   // repeticiones al fallo que se le suponen con la carga actual
@@ -3154,7 +3230,12 @@ function decisionProgresion(ex,ser,kgPlan){
   else if(conEsf>0){const c=norm.filter(x=>x.m!=null);d.R=Math.min(...c.map(x=>x.r+x.m));const mn=Math.min(...c.map(x=>x.m));
     d.fuente=c.some(x=>x.num)?`RIR declarado, el más justo: ${mn}${c.every(x=>x.m>=3)?' o más':''}`:`etiquetas antiguas de esfuerzo, la más justa ≈ RIR ${mn}`;}
   else{d.R=Math.min(...norm.map(x=>x.r))+1;d.fuente='sin dato de esfuerzo: se supone 1 rep. de margen';}
-  const pref=todoTope?'tope del rango':'dentro del rango y con margen de sobra';
+  // v92 · margen por encima del tope: MEDIDO (serie abierta o a fallo) o DECLARADO (RIR en todas)
+  const medidas=val.filter(x=>x.f||x.ab).map(x=>x.r+(x.f?0:(x.m!=null?x.m:0))-hi);
+  const supMed=medidas.length?Math.max(...medidas):null;
+  const decl=norm.filter(x=>!x.ab);
+  const supDec=(decl.length&&decl.every(x=>x.m!=null))?Math.min(...decl.map(x=>x.r+x.m-hi)):null;
+  d.sup=Math.max(supMed==null?-99:supMed,supDec==null?-99:supDec);
   if(kgL==null){
     d.accion='variante';
     d.texto=ser.some(x=>x&&x.banda)
@@ -3164,21 +3245,75 @@ function decisionProgresion(ex,ser,kgPlan){
   }
   const up=(kgPlan!=null&&kgPlan>kgL)?kgPlan:_stepKg(kgL,+1,ex.peso);
   if(up==null){
-    d.accion='sin_escalon';d.tope=Math.min(20,hi+2);
-    d.texto=`${pref} y no hay una carga más pesada disponible → progresa con repeticiones (${lo}-${d.tope}), tempo o versión a una mano/pierna`;
+    d.accion='sin_escalon';d.tope=Math.min(cap,hi+2);
+    d.texto=d.tope>hi
+      ?`${pref} y no hay una carga más pesada disponible → progresa con repeticiones (${lo}-${d.tope}), tempo o versión a una mano/pierna`
+      :`${pref}, sin carga más pesada y el rango ya en su tope (${cap}) → progresa con una serie más, tempo más lento, pausa en el punto difícil o versión a una mano/pierna`;
     return d;
   }
   d.up=up;d.s=(up-kgL)/kgL;d.pct=Math.round(d.s*100);
   d.alc=Math.floor(repsTrasSalto(d.R,d.s)+1e-9)-1;      // repeticiones con ~1 de margen tras el salto
   if(d.alc>=lo){
-    d.accion='subir';d.obj=`${lo}-${Math.max(lo+1,Math.min(hi,d.alc))}`;
-    d.texto=`${pref} con margen (${d.fuente}) → sube a ${up} kg (+${d.pct}%) y vuelve a la parte baja del rango (${d.obj} rep.)`;
+    d.obj=`${lo}-${Math.max(lo+1,Math.min(hi,d.alc))}`;
+    // v92 · ¿está confirmado? margen ≥2, o margen de 1 y la sesión anterior con esta carga también cerró el rango
+    const pv=(opts.prev||[]).map(x=>({r:toNum(String(x.reps)),kg:toNum(x.kg)})).filter(x=>!isNaN(x.r));
+    const prevOk=pv.length>0&&pv.every(x=>x.r>=hi)&&pv.every(x=>isNaN(x.kg)||Math.abs(x.kg-kgL)<1e-9);
+    const nuevo=opts.nPrev!=null&&opts.nPrev<2;
+    const cm=d.R>hi?' con margen':''; // v92: «con margen» solo si lo hay
+    let crit='';
+    if(nuevo&&opts.tec!=='ok'){
+      d.accion='confirmar';
+      d.texto=`${pref}${cm} (${d.fuente}), pero es la ${opts.nPrev+1}.ª sesión de este ejercicio y la técnica no está confirmada → misma carga una sesión más; marca la técnica al terminar la última serie`;
+      return d;
+    }
+    if(d.sup>=2)crit='margen de 2 o más repeticiones por encima del tope';
+    else if(prevOk)crit='segunda sesión seguida cerrando el rango con esta carga';
+    else{
+      d.accion='confirmar';
+      d.texto=`${pref}${cm} (${d.fuente}) → misma carga una sesión más para confirmarlo: sube cuando cierres el rango dos sesiones seguidas o te sobren 2 repeticiones en la última serie`;
+      return d;
+    }
+    d.accion='subir';
+    d.texto=`${pref} con margen (${d.fuente}) → sube a ${up} kg (+${d.pct}%) y vuelve a la parte baja del rango (${d.obj} rep.) · criterio: ${crit}`;
     return d;
   }
   // el salto no cabe: ¿hasta dónde hay que llegar con la carga actual para que quepa?
   const Rnec=(lo+1+30)*(1+d.s)-30;
-  d.accion='ampliar';d.tope=Math.min(20,Math.max(hi+2,Math.min(hi+5,Math.ceil(Rnec-1e-9)-1)));
-  d.texto=`${pref} (${d.fuente}), pero el siguiente escalón (${up} kg, +${d.pct}%) te dejaría en ~${Math.max(0,d.alc)} rep., por debajo del rango → misma carga y rango ampliado a ${lo}-${d.tope}; el salto llega al cerrar ${d.tope}`;
+  const tope=Math.min(cap,Math.max(hi+2,Math.min(hi+5,Math.ceil(Rnec-1e-9)-1)));
+  if(tope>hi){
+    d.accion='ampliar';d.tope=tope;
+    d.texto=`${pref} (${d.fuente}), pero el siguiente escalón (${up} kg, +${d.pct}%) te dejaría en ~${Math.max(0,d.alc)} rep., por debajo del rango → misma carga y rango ampliado a ${lo}-${d.tope}; el salto llega al cerrar ${d.tope}`;
+    return d;
+  }
+  // v92 · el rango ya no puede crecer: subida escalonada
+  d.accion='escalonada';d.escalon={kg:up,series:1};
+  d.texto=`${pref} (${d.fuente}), pero el salto a ${up} kg (+${d.pct}%) no cabe y el rango ya está en su tope (${cap}) → subida escalonada: ${up} kg solo en la 1.ª serie (buscando ${lo}-${Math.min(hi,lo+2)}) y ${kgL} kg en el resto; cuando esa serie cierre ${hi}, pasa también la 2.ª`;
+  return d;
+}
+/* v92 · decisión cuando las series llevan dos cargas (subida escalonada en curso) */
+function _decEscalonada(ex,val,d){
+  const kgH=d.kgL,lig=val.filter(x=>x.kg<kgH-1e-9),pes=val.filter(x=>!(x.kg<kgH-1e-9));
+  const kgB=Math.max(...lig.map(x=>x.kg));
+  d.kgBase=kgB;d.nPes=pes.length;
+  if(pes.some(x=>x.r<d.lo)){
+    d.accion='escalon_atras';
+    d.texto=`subida escalonada: con ${kgH} kg no llegaste a ${d.lo} → vuelve a ${kgB} kg en todas las series y suma repeticiones`;
+    return d;
+  }
+  const margen=pes.every(x=>x.f||x.m==null||x.m>=1);
+  if(pes.every(x=>x.r>=d.hi)&&margen){
+    const n=pes.length+1;
+    if(n>=val.length){
+      d.accion='escalon_completo';d.up=kgH;
+      d.texto=`subida escalonada: ${pes.length} serie(s) con ${kgH} kg cerrando el rango → ${kgH} kg en todas las series, buscando la parte baja del rango`;
+    }else{
+      d.accion='escalonada';d.escalon={kg:kgH,series:n};
+      d.texto=`subida escalonada: ${pes.length} serie(s) con ${kgH} kg cerrando el rango → ${kgH} kg en las ${n} primeras series y ${kgB} kg en el resto`;
+    }
+    return d;
+  }
+  d.accion='escalonada';d.escalon={kg:kgH,series:pes.length};
+  d.texto=`subida escalonada: misma distribución (${kgH} kg en ${pes.length} serie(s), ${kgB} kg en el resto) y suma repeticiones en las series con ${kgH} kg`;
   return d;
 }
 function complianceFor(key){
@@ -3187,7 +3322,7 @@ function complianceFor(key){
   const filas=[];
   sess.exercises.forEach(ex=>{
     if(isBlock(ex))return;
-    const plan=`${ex.series||'?'}×${ex.reps||'?'}${ex.peso?' @ '+ex.peso:''}${ex._preAjuste?` (ajustado ese día; plan semanal: ${ex._preAjuste.series}×${ex._preAjuste.reps||ex.reps}${ex._preAjuste.peso?' @ '+ex._preAjuste.peso:''})`:''}`;
+    const plan=`${ex.series||'?'}×${ex.reps||'?'}${ex.peso?' @ '+ex.peso:''}${ex.escalon?` (escalonada: ${ex.escalon.kg} kg en ${ex.escalon.series} serie${ex.escalon.series>1?'s':''})`:''}${ex._preAjuste?` (ajustado ese día; plan semanal: ${ex._preAjuste.series}×${ex._preAjuste.reps||ex.reps}${ex._preAjuste.peso?' @ '+ex._preAjuste.peso:''})`:''}`;
     const hecho=(sess.sets||[]).find(e=>_norm(e.nombre)===_norm(ex.nombre));
     if(!hecho||!hecho.series||!hecho.series.length){
       filas.push({nombre:ex.nombre,plan,real:'sin registrar',estado:'sin dato'});
@@ -3201,10 +3336,11 @@ function complianceFor(key){
     if(ser.length<(+ex.series||ser.length))estado=`series incompletas (${ser.length}/${ex.series})`;
     else if(rango&&reps.length){
       // v88: la decisión sale de decisionProgresion, la misma que usa la revisión del día
-      const d=decisionProgresion(ex,ser,null);
+      const prv=ultimoRegistro(ex.nombre,key); // v92: la sesión anterior, para confirmar
+      const d=decisionProgresion(ex,ser,null,{prev:prv&&prv.e.series,tec:hecho.tec||null,nPrev:exposicionesPrevias(ex.nombre,key)});
       if(d&&d.texto)estado=d.texto;
     }
-    filas.push({nombre:ex.nombre,plan,real:real+esfDetalle(ser),estado});
+    filas.push({nombre:ex.nombre,plan,real:real+esfDetalle(ser)+(hecho.tec?` · técnica ${hecho.tec==='ok'?'limpia':'dudosa'}`:''),estado});
   });
   return filas.length?{key,titulo:sess.title+(sess.cond?` [día con cambios: ${excTxt(sess.cond)}]`:''),filas}:null;
 }
@@ -3564,7 +3700,7 @@ ${coherenciaObjetivosTxt()}`;
     // si toca subir, mantener o bajar; sin él, las cargas sueltas no dicen nada.
     const cmp=complianceLines(21);
     const cmpKeys=new Set(complianceList(21).map(c=>c.key)); // v88: para no mandar las series dos veces
-    if(cmp)histTxt+='\n\nCUMPLIMIENTO REAL (lo que te pauté frente a lo que hice, últimas 3 semanas). Es la base de la progresión. La etiqueta entre corchetes al final de cada ejercicio es la DECISIÓN que sale de aplicar la regla de PROGRESIÓN a esos datos; la app la calcula con la fórmula de Epley y con mis escalones de carga reales: «sube a X kg y vuelve a la parte baja del rango», «misma carga y rango ampliado a A-B», «suma repeticiones», «consolidar», «mantener o bajar». Síguela salvo que tengas un motivo, y si te apartas dilo en "nota_progresion". El "esfuerzo por serie" es lo que marqué al cerrar CADA serie, en orden (s1, s2, s3…): «RIR n» = repeticiones que creo que me quedaban (3+ = tres o más); «a fallo técnico» = esa serie la llevé hasta no poder hacer otra repetición con buena técnica, así que sus repeticiones son un dato y no una estimación. En registros anteriores a la v88: fácil ≈ RIR 3 o más, justo ≈ RIR 1-2, al límite ≈ RIR 0; ojo, esas etiquetas antiguas venían premarcadas con la de la serie anterior y tienden a repetirse, así que dales menos peso que a un RIR numérico. Si una serie pone "sin marcar", no supongas nada de ella.\nAVISO SOBRE LAS UNIDADES: los kilos y las repeticiones que registro son NÚMEROS, sin unidad implícita. Su significado es el del campo "pautado" que acompaña a cada ejercicio: si pautaste "16 kg por mancuerna" y "8-10 por pierna", entonces "16 kg × 10" significa 16 kg en cada mano y 10 repeticiones POR PIERNA, no en total. Interpreta siempre el registro con esa referencia, y si en algún ejercicio no aparece el campo "pautado", dilo en "meta" en vez de suponer:\n'+cmp;
+    if(cmp)histTxt+='\n\nCUMPLIMIENTO REAL (lo que te pauté frente a lo que hice, últimas 3 semanas). Es la base de la progresión. La etiqueta entre corchetes al final de cada ejercicio es la DECISIÓN que sale de aplicar la regla de PROGRESIÓN a esos datos; la app la calcula con la fórmula de Epley y con mis escalones de carga reales: «sube a X kg y vuelve a la parte baja del rango», «misma carga una sesión más para confirmarlo», «misma carga y rango ampliado a A-B», «subida escalonada», «técnica dudosa → misma carga», «suma repeticiones», «consolidar», «mantener o bajar». «Tope abierto» en una serie = la última, que pude llevar por encima del tope hasta RIR 1; «técnica limpia/dudosa» = lo que marqué al terminar el ejercicio. Síguela salvo que tengas un motivo, y si te apartas dilo en "nota_progresion". El "esfuerzo por serie" es lo que marqué al cerrar CADA serie, en orden (s1, s2, s3…): «RIR n» = repeticiones que creo que me quedaban (3+ = tres o más); «a fallo técnico» = esa serie la llevé hasta no poder hacer otra repetición con buena técnica, así que sus repeticiones son un dato y no una estimación. En registros anteriores a la v88: fácil ≈ RIR 3 o más, justo ≈ RIR 1-2, al límite ≈ RIR 0; ojo, esas etiquetas antiguas venían premarcadas con la de la serie anterior y tienden a repetirse, así que dales menos peso que a un RIR numérico. Si una serie pone "sin marcar", no supongas nada de ella.\nAVISO SOBRE LAS UNIDADES: los kilos y las repeticiones que registro son NÚMEROS, sin unidad implícita. Su significado es el del campo "pautado" que acompaña a cada ejercicio: si pautaste "16 kg por mancuerna" y "8-10 por pierna", entonces "16 kg × 10" significa 16 kg en cada mano y 10 repeticiones POR PIERNA, no en total. Interpreta siempre el registro con esa referencia, y si en algún ejercicio no aparece el campo "pautado", dilo en "meta" en vez de suponer:\n'+cmp;
     const h=S.history.slice(0,38); // ~4 semanas completas con margen, a tu ritmo (hasta 9 ses./sem)
     histTxt+='\n\nHISTORIAL DE SESIONES COMPLETADAS (hasta ~4 semanas, más reciente primero; da más peso a la última semana para decidir la carga inmediata, y usa el conjunto para ver la trayectoria del mesociclo: si progreso, me estanco o acumulo fatiga):\n'+
       (h.length?h.map(x=>`- ${x.key}: ${x.title}, ${x.duration}min${x.distance?' '+x.distance+'km':''}${x.kcal?' · '+x.kcal+' kcal':''}${x.hr?' · FC media '+x.hr:''}, esfuerzo ${x.feeling}${x.fatiga&&x.fatiga!=='normal'?' · llegaba '+x.fatiga:''}${x.pain&&x.pain.length?' · '+(x.painKind==='muscular'?'agujetas/molestia muscular en ':'molestia ARTICULAR en ')+x.pain.map(areaLabel).join('/'):''}${x.orden?' · esta actividad fue '+(x.orden==='antes'?'ANTES':'DESPUÉS')+' de la otra del día'+(x.sepH!=null?' ('+x.sepH+' h de separación)':' (separación sin anotar)'):''}. ${notasLibres(x)}${x.ajusteDia&&((x.ajusteDia.cambios||[]).length||(x.ajusteDia.rechazados||[]).length)?' AJUSTE DEL DÍA ('+(x.ajusteDia.fuente==='claude'?'revisado con Claude':'reglas de la app')+', llegaba '+x.ajusteDia.estado+(x.ajusteDia.dolor&&x.ajusteDia.dolor.length?', molestia '+x.ajusteDia.dolor.map(areaLabel).join('/'):'')+'): '+((x.ajusteDia.cambios||[]).length?'aplicado '+x.ajusteDia.cambios.map(c=>c.nombre+' ['+c.desc+']').join('; '):'nada aplicado')+((x.ajusteDia.rechazados||[]).length?'; rechacé '+x.ajusteDia.rechazados.map(c=>c.nombre+' ['+c.desc+']').join('; '):'')+'.':''}${cargasHist(x,cmpKeys)}`).join('\n'):'(ninguna registrada)');
@@ -3671,17 +3807,19 @@ Cómo interpretarlo: lo que informa es el CAMBIO respecto a mi propia línea de 
     }
   }
 
+  const FECHA_V92_TXT=S.v92Desde?_fechaCorta(S.v92Desde):'cambio de versión'; // v92
   const adaptRules=mode==='adapt'?`
 REGLAS DE ADAPTACIÓN (basadas en evidencia):
 - El PUNTO DE PARTIDA es la referencia del nivel inicial. Cuando existan sesiones recientes registradas, PRIORÍZALAS para decidir la progresión y trata el punto de partida solo como contexto de origen, no como el plan a repetir.
-- PROGRESIÓN (regla única; sustituye a cualquier otra idea de «subir un 2-5%» o «subir al llegar al tope»):
-  1. Se progresa primero en REPETICIONES con la misma carga, hasta cerrar todas las series en el tope del rango con margen. Progresar repeticiones y progresar carga dan resultados parecidos (Plotkin 2022).
-  2. La carga sube solo cuando el salto CABE en el rango: con la carga nueva tengo que poder volver a la parte baja del rango con ~1 repetición de margen. Con mancuernas el escalón es fijo, así que el salto puede ser de un 7% o de un 25% según el peso; un rango de 2 repeticiones solo absorbe ~6-7%. La app ya hace esa cuenta con mis escalones reales y te la da en la etiqueta entre corchetes de CUMPLIMIENTO REAL.
-  3. Si el salto no cabe, NO lo fuerces: misma carga y rango ampliado por arriba, como diga la etiqueta. El salto llega cuando cierre el rango ampliado.
-  4. La semana en que sube una carga, pauta la parte baja del rango y RIR 2 en ese ejercicio: el objetivo del primer día no es el tope. No subas en la misma semana la carga de más de la mitad de los ejercicios principales, ni la de un ejercicio que cargue una zona con molestia articular en los últimos 14 días.
-  5. «Consolidar» (la mitad o más de las series a RIR 0) = misma carga y mismo rango una semana más, o una serie menos. «Por debajo del rango» = mantener o bajar, y revisar por qué.
-  6. Si no hay una carga más pesada disponible: más repeticiones, tempo más lento, pausa en el punto difícil o versión a una mano/pierna.
-  Los puntos 4-6 y los umbrales son convenciones de práctica, no puntos de corte validados por un estudio.
+- PROGRESIÓN (regla única; la app la aplica con mis datos y te da el resultado en la etiqueta entre corchetes de CUMPLIMIENTO REAL; síguela):
+  1. Primero REPETICIONES con la misma carga, hasta cerrar todas las series en el tope del rango (Plotkin 2022: progresar repeticiones y progresar carga dan resultados parecidos).
+  2. La carga sube cuando sobran repeticiones por encima del tope, que es el criterio del ACSM 2009 (subir un 2-10% al poder hacer 1-2 repeticiones más de las pedidas): con un margen de 2 o más (medido en la última serie, que va con TOPE ABIERTO hasta RIR 1, o a fallo técnico; o declarado en todas las series) sube ya; con margen de 1, solo si la sesión anterior con esa carga también cerró el rango (regla «2 por 2» de la NSCA).
+  3. Además, el salto tiene que CABER: con la carga nueva tengo que poder volver a la parte baja del rango con ~1 repetición de margen. Con mancuernas el escalón es fijo (2 kg sobre 12 kg es un 17%; sobre 30 kg, un 7%). Si no cabe, misma carga y rango ampliado por arriba, pero con TOPE: 15 repeticiones en multiarticulares y 20 en monoarticulares. Si el rango ya está en su tope, SUBIDA ESCALONADA: la carga nueva solo en la 1.ª serie y la anterior en el resto, con el campo "escalon":{"kg":22,"series":1}; cuando esa serie cierre el rango, pasa la 2.ª ("series":2), y así hasta todas.
+  4. TÉCNICA: en la última serie de cada ejercicio marco si la técnica fue la pautada en todas las series. Con técnica «dudosa» no se sube carga. En las dos primeras sesiones de un ejercicio la carga solo sube si marqué la técnica como limpia: al principio lo que mejora es la coordinación, y la carga no debe ir por delante de ella.
+  5. La semana en que sube una carga, MANTÉN EL MISMO RANGO de repeticiones y pide la parte baja: no cambies rango y carga a la vez (bajar de 10-16 a 6-10 al subir 2 kg mezcla dos variables y no se sabe qué funcionó). No subas en la misma semana más de la mitad de los ejercicios principales, ni uno que cargue una zona con molestia articular en los últimos 14 días.
+  6. «Consolidar» (la mitad o más de las series a RIR 0) = misma carga y mismo rango una semana más, o una serie menos. «Por debajo del rango» = mantener o bajar, y revisar por qué. Sin carga más pesada: más repeticiones hasta el tope, tempo más lento, pausa o versión a una mano/pierna.
+  Los topes 15/20, las «dos primeras sesiones», la subida escalonada y los puntos 5-6 son convenciones de práctica, no puntos de corte validados por un estudio.
+- CÓMO LEER MIS REPETICIONES: hasta la versión 92 la casilla de repeticiones venía escrita con el tope del rango, así que en los registros anteriores al ${FECHA_V92_TXT} «tope del rango» puede querer decir «paré donde decía la casilla» y la capacidad real era mayor (en 49 de 52 subidas de carga rendí más de lo que predecía Epley). Desde entonces cada serie se anota sin prellenar y la última va con tope abierto: puede pasar del tope y eso es lo esperado.
 - Las series reales (kg × repeticiones, con su esfuerzo) son el dato MÁS fiable que tienes. Están en CUMPLIMIENTO REAL; el HISTORIAL remite allí para no repetirlas.
 - Si predominó 😓/😴 o faltaron sesiones, reduce volumen y prioriza recuperación.
 - Nunca una semana de descanso: entreno siempre. Si hay fatiga (😓/😴, marcadores peores, molestia articular repetida), puedes bajar a una semana de VOLUMEN REDUCIDO (40-50% menos series, misma frecuencia, carga similar, RIR 3-4) y decirlo con claridad en "analisis_progreso" y en "mesociclo.justificacion".
@@ -3700,11 +3838,15 @@ REGLAS DE ADAPTACIÓN (basadas en evidencia):
     : `- ALIMENTACIÓN: no he indicado restricciones. Cocina sencilla y variada, sin suplementos ni alimentos difíciles de encontrar.\n`;
   const evidence=`
 PRINCIPIOS BASADOS EN EVIDENCIA (referencias comprobadas una a una; si citas evidencia en tus explicaciones usa SOLO las de esta lista, y NUNCA inventes ni "actualices" citas. Lo que aquí se marca como «convención de práctica» no sale de un estudio: no lo presentes como si saliera):
-  · ACSM 2026 Position Stand, "Resistance Training Prescription for Muscle Function, Hypertrophy, and Physical Performance in Healthy Adults", Med Sci Sports Exerc 58(4):851-872, abril 2026, DOI 10.1249/MSS.0000000000003897. Síntesis de 137 revisiones sistemáticas y >30.000 participantes; actualiza el Position Stand de 2009. Subraya que la constancia y el esfuerzo pesan más que el plan perfecto, que bandas, peso corporal y rutinas en casa son plenamente eficaces, y que llegar al fallo, el material concreto y la periodización compleja no son imprescindibles en el adulto sano.
+  · ACSM 2026 Position Stand, "Resistance Training Prescription for Muscle Function, Hypertrophy, and Physical Performance in Healthy Adults", Med Sci Sports Exerc 58(4):851-872, abril 2026, DOI 10.1249/MSS.0000000000003897. Síntesis de 137 revisiones sistemáticas y >30.000 participantes; actualiza el Position Stand de 2009. Subraya que la constancia y el esfuerzo pesan más que el plan perfecto, que bandas, peso corporal y rutinas en casa son plenamente eficaces, y que llegar al fallo, el material concreto y la periodización compleja no son imprescindibles en el adulto sano. Cifras: al menos 2 series por ejercicio; fuerza con ≥2 sesiones/semana, 2-3 series por sesión y los básicos al principio; hipertrofia con ≥10 series semanales por grupo y rendimientos decrecientes a partir de ~2-3 series por ejercicio (fuerza) y ~18-20 series semanales (hipertrofia); con el mismo esfuerzo, cargas del 30 al 100% del 1RM dan hipertrofia parecida; a igual volumen, la frecuencia no cambia la hipertrofia; el énfasis excéntrico la favorece; la velocidad de la repetición no tiene un efecto consistente; el fallo no mejora nada, sugiere terminar a 2-3 RIR y advierte que en personas mayores puede ser desaconsejable.
   · Robinson et al. 2024, Sports Med 54(9):2209-2231, DOI 10.1007/s40279-024-02069-2. Meta-regresiones sobre proximidad al fallo: la hipertrofia mejora cuanto más cerca del fallo se termina la serie, mientras que la fuerza apenas se ve afectada por ese factor.
   · Pelland et al., Sports Med 56(2):481-505 (publicado en línea el 4-12-2025), DOI 10.1007/s40279-025-02344-w. 67 estudios, 2.058 participantes: volumen y frecuencia tienen curvas dosis-respuesta distintas, y la fuerza muestra rendimientos decrecientes más marcados que la hipertrofia.
   · Morton et al. 2018, Br J Sports Med 52(6):376-384, DOI 10.1136/bjsports-2017-097608. 49 estudios, 1.863 participantes: la ganancia de masa magra deja de aumentar por encima de ~1,62 g de proteína/kg/día (IC 95% 1,03-2,20).
   · Refalo et al. 2023, Sports Med 53(3):649-665, DOI 10.1007/s40279-022-01784-y. Entrenar hasta el fallo no dio más hipertrofia que quedarse cerca.
+  · Refalo et al. 2024, J Sports Sci 42(1):85-101, DOI 10.1080/02640414.2024.2321021. En entrenados, 8 semanas a 1-2 RIR dieron la misma hipertrofia de cuádriceps que ir al fallo, con más repeticiones totales y menos pérdida de rendimiento entre series.
+  · ACSM 2009 Position Stand, Med Sci Sports Exerc 41(3):687-708, DOI 10.1249/MSS.0b013e3181915670. Subir la carga un 2-10% cuando se pueden hacer 1-2 repeticiones más de las pedidas.
+  · Nuzzo et al. 2024, Sports Med 54(2):303-321, DOI 10.1007/s40279-023-01937-7. Las repeticiones posibles a un mismo % del 1RM varían mucho entre personas y ejercicios: Epley es una estimación, no una predicción exacta.
+  · Regla «2 por 2» del manual de la NSCA (consultada en fuentes secundarias, sin comprobar en el original): subir cuando la última serie supera en 2 lo pedido dos sesiones seguidas.
   · Morán-Navarro et al. 2017, Eur J Appl Physiol 117(12):2387-2399, DOI 10.1007/s00421-017-3725-7. Llegar al fallo retrasa la recuperación 24-48 h frente a dejar repeticiones en reserva con el mismo volumen.
   · Halperin et al. 2022, Sports Med 52:377-390, DOI 10.1007/s40279-021-01559-x. Al estimar las repeticiones que quedan, de media se subestiman en ~1; se acierta más cerca del fallo y en series de 12 repeticiones o menos.
   · Wiedenmann et al. 2026, BMC Sports Sci Med Rehabil 18:375, DOI 10.1186/s13102-026-01997-y. La estimación del RIR se entrena: mejora practicando con series llevadas al fallo real.
@@ -3712,20 +3854,23 @@ PRINCIPIOS BASADOS EN EVIDENCIA (referencias comprobadas una a una; si citas evi
   · Kassiano et al. 2022, J Strength Cond Res 36(6):1753-1762, DOI 10.1519/JSC.0000000000004258. Algo de variación de ejercicios puede ayudar; la variación excesiva o al azar puede comprometer las ganancias.
   · Singer et al. 2024, Front Sports Act Living 6:1429789, DOI 10.3389/fspor.2024.1429789. Para hipertrofia, descansar más de 60 s entre series da un beneficio modesto, y no se aprecia más por encima de ~90 s.
   · Wolf et al. 2023, Int J Strength Cond 3(1), DOI 10.47206/ijsc.v3i1.182. Recorrido completo frente a parcial: diferencias triviales; trabajar en la posición alargada del músculo podría dar una ventaja pequeña e incierta.
+  · Wolf et al. 2025, PeerJ 13:e18904, DOI 10.7717/peerj.18904. En entrenados, las parciales en posición alargada dieron adaptaciones parecidas al recorrido completo: no son superiores.
   · Schumann et al. 2022, Sports Med 52:601-612, DOI 10.1007/s40279-021-01587-7. Fuerza y resistencia a la vez: sin interferencia en hipertrofia ni en fuerza máxima; sí en fuerza explosiva, sobre todo en la misma sesión.
   · Silva Oliveira et al. 2024, Sports Med 54:2071-2095, DOI 10.1007/s40279-024-02034-z. Distribución polarizada de la intensidad: ventaja pequeña en VO2pico, sin diferencias claras en atletas de nivel medio ni en intervenciones de 12 semanas o más.
   · Coleman et al. 2024, PeerJ 12:e16777, DOI 10.7717/peerj.16777. Una semana sin entrenar fuerza a mitad de un programa de 9: misma hipertrofia y algo menos de fuerza en el tren inferior.
   · Iraki et al. 2019, Sports 7(7):154 (revisión narrativa; DOI no comprobado). Fuera de temporada: superávit ligero, ganar ~0,25-0,5% del peso por semana en principiantes e intermedios y más despacio en avanzados, proteína 1,6-2,2 g/kg/día repartida en tomas de 0,40-0,55 g/kg.
   · Kreider et al. 2017, J Int Soc Sports Nutr 14:18, DOI 10.1186/s12970-017-0173-z. Posición de la ISSN sobre la creatina monohidrato: eficaz y segura en adultos sanos a 3-5 g/día.
+  · Murphy y Koehler 2022, Scand J Med Sci Sports, DOI 10.1111/sms.14075. Metaanálisis: entrenar fuerza en déficit calórico frena la ganancia de masa magra (no la de fuerza); con un déficit de ~500 kcal/día ya no se gana masa magra de media. La cifra sale de una meta-regresión, no es un umbral exacto.
+  · Trommelen et al. 2023, Cell Rep Med 4(12):101324, DOI 10.1016/j.xcrm.2023.101324. Tras entrenar, 100 g de proteína en una toma dieron una respuesta anabólica mayor y más larga que 25 g: no hay un tope demostrado por toma. Lo que más pesa es el total diario.
 - Fuerza: cargas altas (orientativamente ~80% 1RM o más), 2-3 series por ejercicio, descansos 2-3 min. Ojo: es una referencia, no un umbral mágico; el rango útil es amplio y el esfuerzo pesa más que el porcentaje exacto.
-- Hipertrofia: acumular en torno a 10 o más series por grupo muscular a la semana; terminar las series cerca del fallo (1-3 repeticiones en reserva), NO al fallo absoluto, con la única excepción de la serie a fallo técnico descrita abajo. En el trabajo de FUERZA no hace falta acercarse tanto al fallo: puedes dejar más margen (RIR 3-4) sin perder resultado, y eso ahorra fatiga.
+- Hipertrofia: acumular 10 o más series por grupo muscular a la semana en CADA grupo principal (cuádriceps, isquios, glúteos, pecho, espalda, hombro), sin pasar de ~20 en ninguno salvo que lo justifiques: por encima, rendimientos decrecientes (ACSM 2026). Mira el VOLUMEN SEMANAL POR GRUPO de arriba y corrige el reparto antes que el total: es mejor subir el grupo que se queda corto que añadir series a uno que ya va sobrado. La app me avisa de los grupos por debajo de 10 (en bruto) y por encima de 20 (fraccionadas); terminar las series cerca del fallo (1-3 repeticiones en reserva), NO al fallo absoluto, con la única excepción de la serie a fallo técnico descrita abajo. En el trabajo de FUERZA no hace falta acercarse tanto al fallo: puedes dejar más margen (RIR 3-4) sin perder resultado, y eso ahorra fatiga.
 - El volumen semanal es la variable que más manda; la frecuencia importa sobre todo como forma de repartir ese volumen, no como objetivo en sí. Repartir cada grupo en 2 o más días suele facilitarlo, pero no lo trates como una regla rígida.
 - El peso corporal y las bandas son medios válidos y eficaces.
 - Indica el esfuerzo como RIR (repeticiones en reserva), no como RPE.
-- RANGOS DE REPETICIONES ANCHOS: en todo ejercicio con carga externa pauta rangos de 4-5 repeticiones de ancho (6-10, 8-12, 10-15), nunca de 2 ni un número fijo. El rango es lo que permite progresar en repeticiones antes de saltar de carga; con rangos estrechos cada escalón de mancuerna obliga a rozar el fallo. La app me avisa si llega un rango de menos de 4 (convención de práctica).
+- RANGOS DE REPETICIONES ANCHOS: en todo ejercicio con carga externa pauta rangos de 4-5 repeticiones de ancho (6-10, 8-12, 10-15), nunca de 2 ni un número fijo, y sin pasar de 15 en multiarticulares ni de 20 en monoarticulares (más arriba el RIR se estima peor y la serie se vuelve de resistencia). El rango es lo que permite progresar en repeticiones antes de saltar de carga; con rangos estrechos cada escalón de mancuerna obliga a rozar el fallo. La app me avisa si llega un rango de menos de 4 (convención de práctica).
 - SERIE A FALLO TÉCNICO ("fallo_tecnico"): al parar siempre en el tope del rango no sé cuántas repeticiones me quedaban, y mi estimación del RIR es imprecisa (Halperin 2022) aunque se entrena practicando el fallo real (Wiedenmann 2026). Por eso la app me pide llevar la ÚLTIMA serie de algunos ejercicios hasta el fallo técnico —la última repetición con buena técnica— y anotar las que salgan. Marca "fallo_tecnico":true en 2-3 ejercicios por sesión como máximo, y solo donde fallar una repetición no comprometa nada: monoarticulares (curl, elevaciones laterales, extensiones de tríceps, gemelo) y peso corporal seguro (flexiones). Marca false en todo lo demás: básicos con mancuernas pesadas, unilaterales de pierna con carga, remos con la espalda sin apoyo, y cualquier ejercicio que cargue una zona con molestia. El resto de las series, a RIR 1-3: llegar al fallo no da más hipertrofia (Refalo 2023) y retrasa la recuperación 24-48 h (Morán-Navarro 2017). Si no marcas nada, la app decide con una lista conservadora.
 - DESCANSOS: accesorios y monoarticulares, 60-90 s; no pautes 2-3 min en ellos, es tiempo que no cabe en la sesión y no compra más hipertrofia (Singer 2024). Básicos pesados, 2-3 min: ahí el descanso protege la carga y la técnica.
-- POSICIÓN ALARGADA, como criterio de desempate: entre dos variantes equivalentes, prefiere la que carga el músculo estirado (curl en banco inclinado frente a curl concentrado, RDL frente a puente). La ventaja es pequeña e incierta (Wolf 2023): no reorganices la sesión por esto.
+- RECORRIDO: por defecto, recorrido completo (el ACSM 2026 lo recoge para la fuerza). POSICIÓN ALARGADA solo como criterio de desempate entre variantes equivalentes (curl en banco inclinado frente a curl concentrado, RDL frente a puente): la ventaja es pequeña e incierta (Wolf 2023) y las parciales en posición alargada no superaron al recorrido completo en entrenados (Wolf 2025). No reorganices la sesión por esto ni pautes parciales como método principal.
 - COLOCACIÓN DE LAS MANCUERNAS PESADAS: en press de hombros, press de pecho y similares, a partir de cargas que cueste llevar a la posición de salida, explica en "descripcion" cómo colocarlas sin tirar del hombro (apoyarlas en los muslos y subirlas con un impulso de rodilla, una cada vez; al terminar, bajarlas a los muslos, no dejarlas caer abiertas). El momento de mayor riesgo para el hombro suele ser la colocación, no las repeticiones (convención de práctica).
 - En "peso" especifica SIEMPRE la carga propuesta de forma inequívoca: para mancuernas aclara si es "X kg por mancuerna (una en cada mano)" o "una sola mancuerna de X kg" (p. ej. goblet); para barra "X kg en total incluida la barra"; si es sin carga, "solo peso corporal". Nunca dejes un número de kg sin aclarar a qué se refiere.
 - REPARTO MUSCULAR: el tren inferior (cuádriceps, isquios, glúteos) debe recibir AL MENOS un tercio de los ejercicios de la semana, y ≥2 ejercicios en cada sesión completa que incluya piernas (en cuerpo entero, siempre). Las piernas son los grupos más grandes y relevantes; no las relegues frente a empuje/tirón/core.
@@ -3744,8 +3889,8 @@ PRINCIPIOS BASADOS EN EVIDENCIA (referencias comprobadas una a una; si citas evi
 - EQUILIBRIO DE PATRONES (además del reparto por grupos musculares): a lo largo de la semana cubre empuje horizontal, empuje vertical, tirón horizontal, tirón vertical, dominante de rodilla, dominante de cadera, core anti-extensión y core anti-rotación, y algún transporte cargado si hay material para ello. El volumen de TIRÓN debe ser al menos igual al de EMPUJE y nunca menor que la mitad: el desequilibrio hacia el empuje es la vía habitual a los problemas de hombro. Añade a cada ejercicio el campo "patron" con uno de estos valores exactos: empuje_horizontal, empuje_vertical, tiron_horizontal, tiron_vertical, rodilla, cadera, core_antiextension, core_antirrotacion, transporte, otro.
 - SERIES DE APROXIMACIÓN: en "calentamiento" incluye, además de la movilidad, las series de aproximación concretas del primer ejercicio pesado (p. ej. "2 series de aproximación: 50% × 8 y 75% × 4, sin llegar a fatigar"). No me hagas empezar en frío con la carga de trabajo.
 - MÍNIMO AERÓBICO DE SALUD: en "recomendacion_cardio" suma los minutos aeróbicos que salen de mis días libres y compáralos con el mínimo de salud (150-300 min semanales de intensidad moderada, o 75-150 de intensidad vigorosa). Si me quedo corto, dímelo de forma explícita y propón cómo llegar sin comprometer la fuerza, aunque yo no te lo haya pedido.
-${dietaTxt}- AJUSTE CALÓRICO CON MI PESO REAL (ciclo cerrado): usa la serie de PESO REGISTRADO si la hay. Ritmos de referencia: pérdida de grasa 0,25-0,5% del peso corporal por semana; ganancia de músculo 0,25-0,5% por semana en principiantes e intermedios y más despacio en avanzados (Iraki 2019); mantenimiento o recomposición, peso estable y cintura a la baja. Usa el ritmo ya calculado en PESO Y CINTURA, no la diferencia entre dos pesajes sueltos. Si mi ritmo real se aparta del objetivo durante 2-3 semanas seguidas, mueve el rango de calorías en torno a un 10% en la dirección que toque y dilo ("subo/bajo X kcal porque llevas Y semanas a Z kg por semana"). Si no hay pesos suficientes para juzgarlo, dilo en vez de tocar las calorías a ciegas.
-- PROTEÍNA POR TOMA: reparte la proteína en 3-5 tomas de 0,40-0,55 g/kg cada una (Iraki 2019) y comprueba que el "menu_dia" que propones las cumple.
+${dietaTxt}- AJUSTE CALÓRICO CON MI PESO REAL (ciclo cerrado): usa la serie de PESO REGISTRADO si la hay. Ritmos de referencia: pérdida de grasa 0,25-0,5% del peso corporal por semana; ganancia de músculo 0,25-0,5% por semana en principiantes e intermedios y más despacio en avanzados (Iraki 2019); mantenimiento o recomposición, peso estable y cintura a la baja. Usa el ritmo ya calculado en PESO Y CINTURA, no la diferencia entre dos pesajes sueltos. Si mi ritmo real se aparta del objetivo durante 2-3 semanas seguidas, mueve el rango de calorías en torno a un 10% en la dirección que toque y dilo ("subo/bajo X kcal porque llevas Y semanas a Z kg por semana"). Si no hay pesos suficientes para juzgarlo, dilo en vez de tocar las calorías a ciegas. Si mi objetivo incluye ganar músculo, no me pongas un déficit de más de ~500 kcal/día sobre mi gasto estimado: a partir de ahí el entrenamiento deja de sumar masa magra (Murphy y Koehler 2022); la app avisa si el plan lo supera.
+- PROTEÍNA: lo que manda es el TOTAL diario. Repartirla en 3-5 tomas de ~0,4 g/kg (Iraki 2019) es práctico, pero no hay un tope demostrado por toma (Trommelen 2023): no descartes una comida con mucha proteína ni me pidas comer más veces solo por repartir. Comprueba que el "menu_dia" suma el total.
 - CREATINA (opcional, y la única excepción a «sin suplementos»): si mi objetivo incluye fuerza o músculo, puedes mencionar UNA vez la creatina monohidrato a 3-5 g/día como opción con buen respaldo (Kreider 2017), sin fase de carga y sin presentarla como necesaria. Añade que con enfermedad renal o medicación crónica se consulta antes con el médico. No recomiendes ningún otro suplemento.
 - PRECISIÓN DEL MENÚ: la app NO registra lo que como, así que el menú es una propuesta orientativa para dar ideas y llegar a la proteína, no un objetivo a cumplir al gramo. Dilo con esas palabras en "nutricion.nota", junto con tu razonamiento calórico; en cada "plato" escribe SOLO el plato (ingredientes y cantidades), nunca explicaciones: la app muestra cada plato bajo su momento del día.`;
 
@@ -3762,7 +3907,7 @@ Responde ÚNICAMENTE con un objeto JSON válido, sin texto antes ni después, si
   "sesiones_ia":[
     {"dia_codigo":"L","titulo":"string","meta":"string breve","calentamiento":"string","vuelta_calma":"string",
      "ejercicios":[
-       {"nombre":"string","series":3,"reps":"8-12","descanso_seg":90,"rir":"1-3","fallo_tecnico":false,"tempo":"2-1-2","peso":"p. ej. 16 kg por mancuerna | 12 kg en cada mano | solo peso corporal","descripcion":"string técnica 1 frase","musculos":"string","patron":"rodilla","errores":["error 1","error 2"]${mode==='adapt'?',"nota_progresion":"string"':''}}
+       {"nombre":"string","series":3,"reps":"8-12","descanso_seg":90,"rir":"1-3","fallo_tecnico":false,"tempo":"2-1-2","peso":"p. ej. 16 kg por mancuerna | 12 kg en cada mano | solo peso corporal","escalon":null,"descripcion":"string técnica 1 frase","musculos":"string","patron":"rodilla","errores":["error 1","error 2"]${mode==='adapt'?',"nota_progresion":"string"':''}}
      ]}
   ],
   "recomendacion_cardio":"string para días libres",
@@ -3992,6 +4137,13 @@ function validateExercise(e,i,issues,dia){
     if(falta.length)issues.warns.push(`${tag} (${dia.dia}): ese día solo tienes ${equipLabels(eq)} y el ejercicio pide ${falta.join(', ')}.`);
   }
   if(/dominada/.test(nm)&&!eq.includes('dominadas')&&!eq.includes('gimnasio'))issues.warns.push(`${tag}: no tienes barra de dominadas configurada.`);
+  // v93: ACSM 2026, al menos dos series por ejercicio
+  if(!isBlock(e)&&+e.series===1&&!/calentamiento|movilidad|estiramiento|carrera|caminata|paseo/.test(nm))
+    issues.warns.push(`${tag}: una sola serie. El ACSM 2026 aconseja al menos dos series por ejercicio.`);
+  // v92: un peso del que solo hay una mancuerna, pautado con una en cada mano
+  {const kgs=[parseKg(e.peso),e.escalon&&+e.escalon.kg].filter(v=>v>0),su=dbSueltas();
+   const kgS=kgs.find(k=>su.some(s=>Math.abs(s-k)<1e-9));
+   if(kgS&&necesitaPar(e.peso))issues.warns.push(`${tag}: pauta ${kgS} kg con una mancuerna en cada mano, pero de ${kgS} kg solo tienes una.`);}
   if(/\bcon barra\b/.test(nm)&&!eq.includes('barra')&&!eq.includes('gimnasio'))issues.warns.push(`${tag}: no tienes barra con discos configurada.`);
   // v80: material que tampoco tienes y antes pasaba sin aviso
   if(/kettlebell|pesa rusa/.test(nm)&&!eq.includes('kettlebell')&&!eq.includes('kettlebells')&&!eq.includes('gimnasio'))issues.warns.push(`${tag}: no tienes kettlebells configuradas.`);
@@ -4023,7 +4175,7 @@ function validatePlan(plan){
 function coachingChecks(ses,issues,plan){
   let totalEj=0,infEj=0,emp=0,tir=0;
   // v88 · rangos estrechos y rotación excesiva: las dos cosas que frenaron la progresión
-  const estrechos=[],nuevos=[];let nFallo=0;
+  const estrechos=[],nuevos=[],altos=[];let nFallo=0;
   ses.forEach(s=>{
     const ejs=Array.isArray(s.ejercicios)?s.ejercicios:[];
     const breve=S.briefDays&&S.briefDays.indexOf(s.dia_codigo)>=0;
@@ -4040,6 +4192,8 @@ function coachingChecks(ses,issues,plan){
       if(e&&e.nombre&&!nuevos.some(n=>mismoEjercicio(n,e.nombre)))nuevos.push(String(e.nombre));
       const rr=repRange(e.reps);
       if(rr&&!parseReps(e.reps)&&/kg/i.test(String(e.peso||''))&&parseKg(e.peso)!=null&&rr[1]-rr[0]<4)estrechos.push(`${e.nombre} (${e.reps})`);
+      if(rr&&!parseReps(e.reps)&&rr[1]>topeRepsRango(e))altos.push(`${e.nombre} (${e.reps})`); // v92
+      _checkSubida(e,_k,issues); // v92
       if(e.fallo_tecnico===true||e.fallo_tecnico==='true'){falloSes++;
         if(FALLO_NUNCA.test(_norm(e.nombre)))issues.warns.push(`"${cleanStr(e.nombre,60)}" viene marcado con última serie a fallo técnico. Es un ejercicio en el que fallar una repetición tiene riesgo: valora quitarle la marca.`);}
       if(_esInferior(e))infEj++;
@@ -4051,6 +4205,10 @@ function coachingChecks(ses,issues,plan){
   });
   if(estrechos.length)
     issues.warns.push(`Rangos de repeticiones estrechos en ${estrechos.length} ejercicio(s) con carga: ${estrechos.slice(0,5).join(', ')}${estrechos.length>5?'…':''}. Con menos de 4 repeticiones de ancho un escalón de mancuerna no cabe en el rango; pide rangos como 6-10 u 8-12.`);
+  if(altos.length)
+    issues.warns.push(`Rangos que pasan del tope (15 en multiarticulares, 20 en monoarticulares) en ${altos.length} ejercicio(s): ${altos.slice(0,5).join(', ')}${altos.length>5?'…':''}. Por encima, el RIR se estima peor y el salto de carga se vuelve impredecible: usa la subida escalonada ("escalon").`);
+  _checkVolumenSemana(ses,issues,plan); // v93
+  _checkDeficit(plan,issues);           // v93
   const rot=rotacionEntre(nuevos,nombresSemana(S.currentWeek-1));
   const bloqueNuevo=plan&&plan.mesociclo&&parseInt(plan.mesociclo.semana_en_bloque)===1;
   if(rot&&rot.total>=6&&rot.pct<50&&!bloqueNuevo)
@@ -4061,6 +4219,75 @@ function coachingChecks(ses,issues,plan){
     issues.warns.push(`Desequilibrio empuje/tirón: ${emp} de empuje frente a ${tir} de tirón. El tirón debería igualar al empuje, y nunca bajar de la mitad.`);
   if(totalEj>=6&&emp+tir===0)
     issues.warns.push('Ningún ejercicio trae el campo "patron", así que no se puede comprobar el equilibrio empuje/tirón.');
+}
+/* v93 · volumen semanal por grupo del PLAN, con el mismo recuento que la tarjeta de Progreso.
+   ACSM 2026: hipertrofia con ≥10 series semanales (dosis-respuesta) y rendimientos decrecientes por
+   encima de ~18-20. En la copia real de noviembre, pecho y cuádriceps se quedaban en 9-10 series en
+   bruto (7,5-9 fraccionadas) mientras glúteos llegaba a 25 en bruto: el reparto, no el total, era el
+   problema. Solo avisa; en una semana de volumen reducido no avisa por defecto. */
+const MG_PRINCIPALES=['cuadriceps','isquios','gluteos','pecho','espalda','hombro'];
+function volumenPlan(ses){
+  const vol={},bruto={};MG_ORDER.forEach(g=>{vol[g]=0;bruto[g]=0;});
+  (ses||[]).forEach(s=>{
+    const k=keyDeCodigo(s.dia_codigo);
+    if(k&&sinSesionDia(k))return;
+    (Array.isArray(s.ejercicios)?s.ejercicios:[]).forEach(ex=>{
+      if(!ex||isBlock(ex))return;
+      const n=+ex.series||0;if(!n)return;
+      gruposPonderados(ex).forEach(({g,w})=>{if(vol[g]!=null){vol[g]+=n*w;bruto[g]+=n;}});
+    });
+  });
+  MG_ORDER.forEach(g=>{vol[g]=Math.round(vol[g]*2)/2;});
+  return {vol,bruto};
+}
+function _checkVolumenSemana(ses,issues,plan){
+  const nFuerza=(ses||[]).filter(s=>Array.isArray(s.ejercicios)&&s.ejercicios.length>=3).length;
+  if(nFuerza<2)return; // con una sola sesión el recuento semanal no dice nada
+  const {vol,bruto}=volumenPlan(ses);
+  const reducida=/reduc|descarga/i.test(String((plan&&plan.mesociclo&&plan.mesociclo.enfoque)||''));
+  const bajos=MG_PRINCIPALES.filter(g=>bruto[g]<10);
+  if(bajos.length&&!reducida)
+    issues.warns.push(`Volumen semanal por debajo de ~10 series en: ${bajos.map(g=>`${MG_LABEL[g]} ${_nSer(bruto[g])}`).join(', ')} (recuento en bruto, como la tarjeta de Progreso). El ACSM 2026 sitúa la hipertrofia en ≥10 series semanales por grupo; si el objetivo incluye músculo, reparte mejor antes que añadir sesiones.`);
+  const altos=MG_ORDER.filter(g=>vol[g]>20);
+  if(altos.length)
+    issues.warns.push(`Volumen semanal por encima de ~20 series fraccionadas en: ${altos.map(g=>`${MG_LABEL[g]} ${_nSer(vol[g])}`).join(', ')}. El ACSM 2026 ve rendimientos decrecientes a partir de ~18-20: ese tiempo rinde más en un grupo que se quede corto.`);
+}
+/* v93 · déficit calórico con objetivo de músculo. Murphy y Koehler 2022: con un déficit de ~500
+   kcal/día el entrenamiento ya no suma masa magra. El gasto se estima con Mifflin-St Jeor × 1,55
+   (el mismo cálculo de la tarjeta de datos): es una estimación con margen amplio, por eso solo avisa. */
+function tdeePerfil(){
+  const p=S.profile||{},kg=toNum(p.peso),cm=toNum(p.altura),a=toNum(p.edad);
+  if(!(kg>0&&cm>0&&a>0))return null;
+  const tmb=p.sexo==='hombre'?10*kg+6.25*cm-5*a+5:10*kg+6.25*cm-5*a-161;
+  return Math.round(tmb*1.55);
+}
+function _checkDeficit(plan,issues){
+  const n=plan&&plan.nutricion;if(!n)return;
+  const objs=S.profile.objetivos||[];
+  if(!objs.includes('musculo')&&!objs.includes('fuerza'))return;
+  const kcal=toNum(n.calorias_diarias),t=tdeePerfil();
+  if(!(kcal>0)||!t)return;
+  if(kcal<t-500)
+    issues.warns.push(`Calorías: ${kcal} kcal frente a un gasto estimado de ~${t} kcal, un déficit de ~${t-kcal} kcal/día. Con el objetivo de ganar músculo, por encima de ~500 kcal/día de déficit el entrenamiento deja de sumar masa magra (Murphy y Koehler 2022). El gasto es una estimación (×1,55): compruébalo con la tendencia de peso.`);
+}
+/* v92 · ¿la carga pautada sube respecto a lo último registrado sin cumplir el criterio de la app?
+   Lo que devuelve Claude pasa por los mismos límites que las reglas (regla 26). Solo avisa. */
+function _checkSubida(e,antesDe,issues){
+  if(!e||!e.nombre||isBlock(e)||parseReps(e.reps)||!_conKg(e))return;
+  const ur=ultimoRegistro(e.nombre,antesDe||null);if(!ur)return;
+  const kgs=(ur.e.series||[]).map(x=>toNum(x.kg)).filter(v=>!isNaN(v)&&v>0);if(!kgs.length)return;
+  const kgL=Math.max(...kgs);
+  const kgEsc=e.escalon&&+e.escalon.kg>0?+e.escalon.kg:null;
+  const kgPlan=Math.max(parseKg(e.peso)||0,kgEsc||0);
+  if(!(kgPlan>kgL+1e-9))return;
+  const exRef={nombre:e.nombre,reps:ur.e.repsRef||e.reps,peso:ur.e.pesoRef||e.peso};
+  const prv=ultimoRegistro(e.nombre,ur.fecha);
+  const d=decisionProgresion(exRef,ur.e.series,null,{prev:prv&&prv.e.series,tec:ur.e.tec||null,nPrev:exposicionesPrevias(e.nombre,ur.fecha)});
+  const nom=cleanStr(e.nombre,60);
+  const okSalto=d&&((d.accion==='subir'&&Math.abs((d.up||0)-kgPlan)<1e-9)||(d.accion==='escalonada'&&kgEsc!=null)||(d.accion==='escalon_completo'));
+  if(d&&!okSalto)issues.warns.push(`"${nom}": sube de ${kgL} a ${kgPlan} kg, pero con lo registrado el ${_fechaCorta(ur.fecha)} la regla de la app dice: ${d.texto}.`);
+  const rA=repRange(ur.e.repsRef||''),rB=repRange(e.reps);
+  if(rA&&rB&&rA[1]-rB[1]>2)issues.warns.push(`"${nom}": sube la carga y a la vez baja el rango (${ur.e.repsRef} → ${e.reps}). Son dos cambios a la vez: con la carga nueva, mismo rango y la parte baja como objetivo.`);
 }
 function validateSession(s,minutos){
   const issues={errors:[],warns:[]};
@@ -4095,7 +4322,8 @@ function previewBridge(){
     const replaces=key&&(S.schedule[key]||[]).some(x=>x.type==='ai')?' <span style="color:var(--free);font-size:calc(11px*var(--fs))">(sustituye a la sesión IA de ese día)</span>':'';
     // v80: duración estimada, para ver de un vistazo si la sesión cabe donde dices que cabe
     const _breve=S.briefDays&&S.briefDays.indexOf(s.dia_codigo)>=0;
-    const _tope=_breve?20:(parseInt(S.profile.minutos)||45);
+    // v92: los minutos de ESE día (regla 35); antes la vista previa usaba siempre los generales
+    const _tope=key?minutosDia(key,s.dia_codigo):(_breve?20:(parseInt(S.profile.minutos)||45));
     const _est=estimateSessionMin(s.ejercicios||[]);
     const dur=` <span style="font-size:calc(11px*var(--fs));color:${_est>_tope*1.1?'var(--danger)':'var(--text3)'}">· ~${_est} min</span>`;
     const exs=(s.ejercicios||[]).map(e=>isBlock(e)
@@ -4257,6 +4485,9 @@ function cleanEx(e){
   if(o.nota_progresion!=null)o.nota_progresion=cleanMulti(o.nota_progresion,1500); // v84 · v91
   if(Array.isArray(o.errores))o.errores=o.errores.slice(0,6).map(x=>cleanStr(x,400)); // v84 · v91
   if(!o.nombre)o.nombre='Ejercicio';
+  // v92: subida escalonada {kg, series}; cualquier otra forma se descarta
+  if(o.escalon!=null){const kg=toNum(o.escalon&&o.escalon.kg),n=parseInt(o.escalon&&o.escalon.series);
+    if(o.escalon&&typeof o.escalon==='object'&&kg>0&&kg<300&&n>=1&&n<=10)o.escalon={kg,series:n};else delete o.escalon;}
   if(Array.isArray(o.movimientos))o.movimientos=o.movimientos.slice(0,20).map(m=>({
     ...(m&&typeof m==='object'?m:{}),
     nombre:cleanStr(m&&m.nombre,120)||'Movimiento',
@@ -5312,7 +5543,8 @@ function _escalones(pesoTxt){
     const l=String((S.kettlebells&&S.kettlebells.list)||'').split(/[,;\s]+/).map(toNum).filter(v=>!isNaN(v)&&v>0);
     return [...new Set(l)].sort((a,b)=>a-b);
   }
-  return dumbbellList();
+  const su=necesitaPar(pesoTxt)?dbSueltas():[]; // v92: sin pares de esos pesos
+  return dumbbellList().filter(w=>!su.some(s=>Math.abs(s-w)<1e-9));
 }
 function _stepKg(kg,dir,pesoTxt){
   const l=_escalones(pesoTxt);if(!l.length||kg==null||isNaN(kg))return null;
@@ -5378,7 +5610,8 @@ function ajustesDelDia(key,estado){
       if(kgL!=null&&rango&&reps.length){
         /* v88: misma regla que el mensaje semanal. La carga solo sube si el salto cabe en el rango;
            si no cabe, se mantiene y se amplía el rango. Y un salto ya pautado que no cabe se avisa. */
-        const d=decisionProgresion(ex,ser,kgP>kgL?kgP:null)||{};
+        const prv=ultimoRegistro(ex.nombre,ur.fecha); // v92
+        const d=decisionProgresion(ex,ser,kgP>kgL?kgP:null,{prev:prv&&prv.e.series,tec:ur.e.tec||null,nPrev:exposicionesPrevias(ex.nombre,ur.fecha)})||{};
         const muyCorto=d.accion==='bajar';
         const rangoTxt=String(ex.reps||'');
         if(d.accion==='subir'&&kgP<=kgL&&estado.estado==='cansado'){
@@ -5405,6 +5638,27 @@ function ajustesDelDia(key,estado){
           const dn=_stepKg(kgL,-1,ex.peso);
           if(dn!=null){pr.cambios.peso={antes:ex.peso,despues:_pesoCon(ex.peso,dn)};
             pr.motivos.push(`El ${f} te quedaste lejos del rango con ${kgL} kg: baja un escalón a ${dn} kg y recupera las repeticiones.`);}
+        }else if((d.accion==='confirmar'||d.accion==='tecnica')&&kgP>kgL){ // v92
+          pr.cambios.peso={antes:ex.peso,despues:_pesoCon(ex.peso,kgL)};
+          pr.motivos.push(d.accion==='tecnica'
+            ?`El ${f} con ${kgL} kg marcaste la técnica como dudosa. Subir hoy a ${kgP} kg cargaría una técnica que ya se deforma: mantén ${kgL} kg hasta que salga limpia.`
+            :`El ${f} cerraste el rango con ${kgL} kg, pero falta confirmarlo (${/sesión de este ejercicio/.test(d.texto)?'ejercicio nuevo y técnica sin confirmar':'una sola sesión con 1 repetición de margen'}). Hoy ${kgL} kg; si vuelves a cerrar el rango, sube la próxima vez.`);
+        }else if(d.accion==='escalonada'&&d.escalon&&estado.estado!=='cansado'){ // v92
+          const ya=ex.escalon&&+ex.escalon.kg===d.escalon.kg&&+ex.escalon.series===d.escalon.series;
+          if(!ya){
+            if(kgP>kgL&&!(ser.some(x=>toNum(x.kg)<kgL)))pr.cambios.peso={antes:ex.peso,despues:_pesoCon(ex.peso,kgL)};
+            pr.cambios.escalon={antes:ex.escalon||null,despues:d.escalon};
+            pr.motivos.push(`El ${f}: ${d.texto.replace(/^.*?→\s*/,'')}.`);
+          }
+        }else if(d.accion==='escalon_completo'){ // v92
+          if(ex.escalon||kgP<d.up){
+            if(kgP<d.up)pr.cambios.peso={antes:ex.peso,despues:_pesoCon(ex.peso,d.up)};
+            if(ex.escalon)pr.cambios.escalon={antes:ex.escalon,despues:null};
+            pr.motivos.push(`El ${f} cerraste el rango con ${d.up} kg en la subida escalonada: hoy ${d.up} kg en todas las series, buscando la parte baja del rango.`);
+          }
+        }else if(d.accion==='escalon_atras'){ // v92
+          if(ex.escalon){pr.cambios.escalon={antes:ex.escalon,despues:null};
+            pr.motivos.push(`El ${f} con ${kgL} kg no llegaste a ${d.lo} repeticiones: hoy ${d.kgBase} kg en todas las series y a sumar repeticiones.`);}
         }else if(d.accion==='reps'&&kgP>kgL&&d.cabe===false){
           pr.cambios.peso={antes:ex.peso,despues:_pesoCon(ex.peso,kgL)};
           pr.motivos.push(`El ${f} con ${kgL} kg todavía no cerraste el rango. Subir hoy a ${kgP} kg (+${d.pct}%) te dejaría en unas ${Math.max(0,d.alc)} repeticiones, por debajo de las ${d.lo} del rango: es prematuro. Hoy ${kgL} kg y a sumar repeticiones.`);
@@ -5459,6 +5713,7 @@ function _descCambios(c){
     }else out.push(`carga: ${A} → ${B}`);
   }
   if(c.reps)out.push(`repeticiones ${c.reps.antes} → ${c.reps.despues}`); // v88
+  if('escalon' in c){const e=c.escalon.despues;out.push(e?`subida escalonada: ${e.kg} kg en ${e.series===1?'la 1.ª serie':'las '+e.series+' primeras series'}`:'sin subida escalonada: misma carga en todas las series');} // v92
   if(c.series)out.push(`series ${c.series.antes} → ${c.series.despues}`);
   if(c.rir)out.push(`RIR ${c.rir.antes} → ${c.rir.despues}`);
   return out.join(' · ');
@@ -5546,7 +5801,7 @@ function preEmpezar(aplicar){
     const reg={nombre:p.nombre,desc:_descCambios(p.cambios),motivo:p.motivos.join(' ')};
     if(!ok){rechazados.push(reg);return;}
     const ex=sess.exercises[p.i];if(!ex)return;
-    if(!ex._preAjuste)ex._preAjuste={nombre:ex.nombre,peso:ex.peso,series:ex.series,rir:ex.rir,reps:ex.reps};
+    if(!ex._preAjuste)ex._preAjuste={nombre:ex.nombre,peso:ex.peso,series:ex.series,rir:ex.rir,reps:ex.reps,escalon:ex.escalon||null};
     const c=p.cambios;
     if(c.nombre){
       const db=EXDB.find(e=>_norm(e.n)===_norm(c.nombre.despues));
@@ -5556,6 +5811,7 @@ function preEmpezar(aplicar){
     }
     if(c.peso)ex.peso=c.peso.despues;
     if(c.reps)ex.reps=c.reps.despues; // v88
+    if('escalon' in c){if(c.escalon.despues)ex.escalon={...c.escalon.despues};else delete ex.escalon;} // v92
     if(c.series)ex.series=c.series.despues;
     if(c.rir)ex.rir=c.rir.despues;
     cambios.push(reg);
@@ -5587,7 +5843,7 @@ function buildDailyPrompt(key,estado){
 Es un AJUSTE DEL DÍA: no replanifiques la semana. Si crees que hace falta replanificarla, dilo en "analisis" y lo haremos en la revisión semanal.
 
 CÓMO LLEGO HOY: ${est}. Molestia ahora: ${dol}.
-PERFIL: ${p.edad||'?'} años, ${p.peso||'?'} kg, nivel ${p.nivel||'?'}. Mancuernas disponibles (kg por mancuerna): ${dumbbellList().join(', ')}.
+PERFIL: ${p.edad||'?'} años, ${p.peso||'?'} kg, nivel ${p.nivel||'?'}. Mancuernas disponibles (kg por mancuerna): ${dumbbellList().join(', ')}.${dbSueltas().length?` De ${dbSueltas().join(', ')} kg solo tengo una.`:''}
 
 SESIÓN PREVISTA PARA HOY:
 ${prev}
@@ -5820,12 +6076,21 @@ function renderPlayer(){
     const canRec=!repSecs; // solo ejercicios por repeticiones (los de tiempo se registran solos)
     const last=canRec?lastPerformance(ex.nombre):null;
     const esBanda=isBandExercise(ex); // v62: con banda se registra la resistencia, no kg
-    const prefKg=(P.rec&&P.rec.exi===P.exi&&P.rec.kg!=null)?P.rec.kg:(parseKg(ex.peso)!=null?parseKg(ex.peso):'');
+    // v92: con subida escalonada, la carga depende de la serie
+    const kgS=kgSerie(ex,P.set);
+    const prefKg=ex.escalon?(kgS!=null?kgS:''):((P.rec&&P.rec.exi===P.exi&&P.rec.kg!=null)?P.rec.kg:(kgS!=null?kgS:''));
     /* v88: la última serie de los ejercicios seguros va a FALLO TÉCNICO. Las repeticiones NO se
        prellenan: el 93% de las series de sep-oct acababan exactamente en el tope pautado, porque el
        campo ya lo traía escrito y se paraba ahí. En esta serie el número tiene que ser el real. */
     const aFallo=canRec&&esFalloTecnico(ex)&&P.set>=(+ex.series||1);
-    const prefReps=aFallo?'':((P.rec&&P.rec.exi===P.exi&&P.rec.reps!=null)?P.rec.reps:targetReps(ex.reps));
+    /* v92: las repeticiones NO se prellenan en NINGUNA serie. Con el tope escrito en la casilla (y en
+       las series 2+, lo de la serie anterior), el 85% de las series de oct-nov se cerraron justo en el
+       tope y con las mismas repeticiones en todas: el dato medía la casilla, no el esfuerzo. Se enseña
+       el OBJETIVO de hoy y un botón para escribirlo de un toque si fue eso lo que salió. */
+    const ultima=P.set>=(+ex.series||1);
+    const abierta=canRec&&!aFallo&&ultima&&serieAbierta(ex);
+    const obj=canRec?objetivoReps(ex,P.set,P.key):null;
+    const prefReps='';
     const prefBanda=(P.rec&&P.rec.exi===P.exi&&P.rec.banda)?P.rec.banda:suggestedBand(ex);
     /* v80: el esfuerzo real de cada serie. Sin él, "llegó al tope del rango" era ambiguo: 12
        repeticiones a RIR 3 y 12 repeticiones arrastrándose al fallo pedían decisiones opuestas y
@@ -5863,10 +6128,13 @@ function renderPlayer(){
         </div>
         <div class="pl-rec-row" style="margin-top:8px">
           <button type="button" class="pl-step" onclick="stepField('pl-reps',-1,0,false)">−</button>
-          <input type="text" inputmode="numeric" enterkeyhint="done" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" id="pl-reps" value="${prefReps}" placeholder="reps" style="width:62px;${inpSt}">
+          <input type="text" inputmode="numeric" enterkeyhint="done" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" id="pl-reps" value="${prefReps}" placeholder="${obj!=null?'obj. '+obj:'reps'}" data-obj="${obj!=null?obj:''}" style="width:62px;${inpSt}">
           <span class="pl-cue">reps</span>
           <button type="button" class="pl-step" onclick="stepField('pl-reps',1,0,false)">+</button>
+          ${obj!=null&&!aFallo?`<button type="button" id="pl-obj" class="esf-b" onclick="ponerObjetivo()">= ${obj}</button>`:''}
         </div>
+        ${abierta?`
+        <div class="pl-fallo">🎯 <b>Última serie, tope abierto.</b> Si al llegar a ${esc(repRange(ex.reps)[1])} te quedan 2 o más, sigue hasta dejar 1 en reserva (no al fallo) y anota todas: es lo que dice si toca subir.</div>`:''}
         ${aFallo?`
         <div class="pl-fallo">🎯 <b>Última serie a fallo técnico.</b> Haz todas las repeticiones que puedas con la técnica pautada y para en la primera que salga peor. Anota las que hagas aunque pasen del rango: este número es el que de verdad dice si toca subir.</div>`:`
         <div class="pl-cue" style="font-size:calc(11px*var(--fs));margin-top:10px">¿Cuántas repeticiones más podrías haber hecho <b>con buena técnica</b>?</div>
@@ -5874,6 +6142,12 @@ function renderPlayer(){
           ${RIR_OPTS.map(([v,lab])=>`<button type="button" id="rir-${v}" class="esf-b${P.rir===v?' esf-on':''}" onclick="setRir(${v})">${lab}</button>`).join('')}
         </div>
         <div class="pl-cue" style="font-size:calc(10px*var(--fs));margin-top:5px">Sin marcar no pasa nada; marcado, tu entrenador sabe si la carga está bien puesta.</div>`}
+        ${ultima?`
+        <div class="pl-cue" style="font-size:calc(11px*var(--fs));margin-top:10px">¿Técnica como la pautada en <b>todas</b> las series? (recorrido completo, tempo, sin compensar)</div>
+        <div class="pl-rec-row" style="margin-top:6px;gap:6px">
+          <button type="button" id="tec-ok" class="esf-b${P.tec==='ok'&&P.tecEx===P.exi?' esf-on':''}" onclick="setTec('ok')">✓ Limpia</button>
+          <button type="button" id="tec-dudosa" class="esf-b${P.tec==='dudosa'&&P.tecEx===P.exi?' esf-on':''}" onclick="setTec('dudosa')">⚠ Dudosa</button>
+        </div>`:''}
         <div id="pl-msg" class="pl-cue" style="color:var(--warn);margin-top:6px"></div>
         ${last?`<div class="pl-cue" style="margin-top:6px;color:var(--ring-stand)">Última vez (${last.date}): ${esc(fmtSetsDetalladas(last))}</div>`:''}
       </div>`:'';
@@ -5883,8 +6157,10 @@ function renderPlayer(){
     const figW=_fs>1.15?118:(_fs>1?142:170), figH=Math.round(figW*135/170);
     mid=`<div style="width:${figW}px;height:${figH}px;margin:0 auto 14px">${exSVG(ex.nombre,ex.p)}</div>
       <div class="pl-reps">${ex.series>1?`Serie ${P.set} de ${esc(ex.series)}`:'1 serie'} · ${esc(ex.reps)}${/^\d+$/.test(String(ex.reps))?' reps':''}</div>
-      ${ex.peso?`<div class="pl-cue" style="margin-top:4px;color:var(--ring-ex);font-weight:600">🏋 ${esc(ex.peso)}</div>`:''}
+      ${ex.peso?`<div class="pl-cue" style="margin-top:4px;color:var(--ring-ex);font-weight:600">🏋 ${ex.escalon?`${esc(kgS)} kg en esta serie (subida escalonada: ${esc(ex.escalon.kg)} kg en ${ex.escalon.series===1?'la 1.ª serie':'las '+esc(ex.escalon.series)+' primeras'}) · ${esc(ex.peso)}`:esc(ex.peso)}</div>`:''}
+      ${obj!=null&&!aFallo?`<div class="pl-cue" id="pl-objtxt">🎯 Objetivo de hoy: <b>${obj}</b> rep.</div>`:''}
       ${aFallo?`<div class="pl-cue">Esta serie, hasta el fallo técnico${ex.tempo?' · tempo '+esc(ex.tempo):''}</div>`
+        :abierta?`<div class="pl-cue">Esta serie, tope abierto: si sobran, sigue hasta dejar 1 en reserva${ex.tempo?' · tempo '+esc(ex.tempo):''}</div>`
         :(ex.rir||ex.rpe)?`<div class="pl-cue">Deja ${esc(ex.rir||ex.rpe)} reps en reserva (RIR)${ex.tempo?' · tempo '+esc(ex.tempo):''}</div>`:''}
       ${recHTML}
       <button class="btn btn-primary btn-block mt-12" onclick="finishSet()">${repSecs?'Iniciar ('+repSecs+'s)':'✓ Serie completada'}</button>
@@ -5928,6 +6204,47 @@ function setRir(v){
 }
 // compatibilidad: la escala antigua se traduce a la nueva
 function setEsf(v){setRir({facil:3,justo:1,limite:0}[v]);}
+/* v92 · técnica del ejercicio, en su última serie. No viene marcada: sin dato no se bloquea nada,
+   pero «dudosa» impide subir la carga y en un ejercicio nuevo hace falta «limpia» para subir. */
+function setTec(v){
+  P.tec=(P.tec===v)?null:v;P.tecEx=P.exi;
+  ['ok','dudosa'].forEach(k=>{const b=document.getElementById('tec-'+k);if(b)b.className='esf-b'+(k===P.tec?' esf-on':'');});
+}
+function ponerObjetivo(){
+  const el=document.getElementById('pl-reps');if(!el)return;
+  const o=el.getAttribute('data-obj');if(o)el.value=o;
+  const m=document.getElementById('pl-msg');if(m)m.textContent='';
+  if(navigator.vibrate)navigator.vibrate(8);
+}
+/* v92 · ¿la última serie va con tope abierto (hasta RIR 1)? En todos los ejercicios por repeticiones
+   salvo los de fallo técnico (ya lo son), los que cargan una zona con molestia y el día que se llega
+   cansado. Es la forma de saber si sobran 1-2 repeticiones por encima de lo pedido, que es el criterio
+   del ACSM para subir carga; parar siempre en el tope lo hace invisible. */
+function serieAbierta(ex){
+  if(!ex||isBlock(ex)||parseReps(ex.reps)||!repRange(ex.reps))return false;
+  if(esFalloTecnico(ex))return false;
+  if(_zonasQueCarga(ex,activeRiskAreas()).length)return false;
+  const aj=P&&P.sess&&P.sess.ajusteDia;
+  if(aj&&aj.estado==='cansado')return false;
+  return true;
+}
+/* v92 · repeticiones objetivo de una serie: lo hecho la última vez con esa carga +1 (sin pasar del
+   tope); tras subir carga, la parte baja del rango; sin historial, el centro del rango. */
+function objetivoReps(ex,set,key){
+  const rr=repRange(ex&&ex.reps);if(!rr||parseReps(ex.reps))return null;
+  const [lo,hi]=rr;
+  const kgHoy=kgSerie(ex,set);
+  const ur=ultimoRegistro(ex.nombre,key||todayKey());
+  const centro=Math.round((lo+hi)/2);
+  if(!ur)return centro;
+  const ser=ur.e.series||[];
+  const p=ser[Math.min(set-1,ser.length-1)]||{};
+  const kgA=toNum(p.kg),rA=toNum(String(p.reps));
+  if(isNaN(rA))return centro;
+  if(kgHoy!=null&&!isNaN(kgA)&&kgHoy>kgA+1e-9)return Math.min(hi,lo+1);
+  if(kgHoy!=null&&!isNaN(kgA)&&kgHoy<kgA-1e-9)return Math.min(hi,lo+2);
+  return Math.max(lo,Math.min(hi,rA+1));
+}
 /* v88 · ¿esta serie puede ir a fallo técnico sin riesgo? Lo decide primero el entrenador
    (campo "fallo_tecnico" del plan). Si no lo dice, solo ejercicios de un solo segmento o con el
    peso corporal, en los que fallar una repetición no compromete la espalda ni el equilibrio. Nunca
@@ -5991,7 +6308,8 @@ const ESF_CORTO={facil:'fácil',justo:'justo',limite:'al límite'};
 function esfSerie(s){
   if(!s)return '';
   if(s.fallo)return 'a fallo técnico';               // v88
-  if(s.rir!=null)return 'RIR '+(s.rir>=3?'3+':s.rir); // v88
+  if(s.rir!=null)return 'RIR '+(s.rir>=3?'3+':s.rir)+(s.abierta?', tope abierto':''); // v88 · v92
+  if(s.abierta)return 'tope abierto';
   return (s.esf&&ESF_CORTO[s.esf])||'';
 }
 function esfDetalle(series){
@@ -6014,7 +6332,8 @@ function fmtSerieUna(x){
   return `${carga} × ${x.reps}${e?` (${e})`:''}`;
 }
 function fmtSetsDetalladas(e){
-  return ((e&&e.series)||[]).map(fmtSerieUna).join(' · ');
+  const t=((e&&e.series)||[]).map(fmtSerieUna).join(' · ');
+  return t&&e.tec?t+` · técnica ${e.tec==='ok'?'limpia':'dudosa'}`:t; // v92
 }
 /* Si la serie se registró antes de la v85 no lleva `pesoRef`; se toma del ejercicio de la sesión */
 function refSetsCon(e,exs){
@@ -6081,7 +6400,13 @@ function recordSet(ex){
     if(rEl)rEl.focus();
     return false;
   }
-  if((kg==null||isNaN(kg))&&reps==null&&!banda)return;
+  // v92: sin prellenado, una serie sin repeticiones no se guarda: se pide el dato
+  if(reps==null||isNaN(toNum(reps))){
+    const m=document.getElementById('pl-msg');
+    const o=rEl&&rEl.getAttribute('data-obj');
+    if(m)m.textContent=`Anota las repeticiones que has hecho${o?` (objetivo ${o}; si fueron esas, toca «= ${o}»)`:''}.`;
+    return false;
+  }
   let e=(P.setLog=P.setLog||[]).find(x=>x.nombre===ex.nombre);
   if(!e){e={nombre:ex.nombre,series:[]};P.setLog.push(e);}
   /* v85: el registro guardaba números pelados. "16 kg × 10" no dice si los 16 kg son por mancuerna
@@ -6092,11 +6417,15 @@ function recordSet(ex){
   if(ex.reps&&!e.repsRef)e.repsRef=String(ex.reps);
   const serie={kg:(kg!=null&&!isNaN(kg))?kg:null,reps};
   if(banda)serie.banda=banda;
+  const ultimaS=P.set>=(+ex.series||1);
+  if(!aFallo&&ultimaS&&serieAbierta(ex))serie.abierta=true; // v92
+  if(ultimaS&&P.tec&&P.tecEx===P.exi)e.tec=P.tec;          // v92: técnica del ejercicio
+  if(ultimaS){P.tec=null;P.tecEx=null;}
   if(aFallo){serie.fallo=true;}                       // v88: el esfuerzo es 0 por definición
   else if(P.rir!=null){serie.rir=P.rir;serie.esf=rirAEsf(P.rir);} // v88 (esf se mantiene por compatibilidad)
   else if(P.esf)serie.esf=P.esf;
   e.series.push(serie);
-  P.rec={exi:P.exi,kg:kgRaw,reps:rpRaw,banda}; // v88: se prellenan carga y reps, NO el esfuerzo
+  P.rec={exi:P.exi,kg:kgRaw,reps:rpRaw,banda}; // v88: se prellena la carga; v92: las reps ya no
   P.rirSet=null;
   P.ultimaCalib=aFallo?calibracionDe(e.series):null; // v88: se enseña durante el descanso
   persistSetLog(); // v71
@@ -6157,7 +6486,7 @@ function stepField(id,delta,min,decimales){
   const el=document.getElementById(id);
   if(!el)return;
   let v=toNum(el.value);
-  if(isNaN(v))v=0;
+  if(isNaN(v)){const o=toNum(String(el.getAttribute('data-obj')||''));v=isNaN(o)?0:o;} // v92: vacío → parte del objetivo
   v=Math.round((v+delta)*100)/100;
   if(v<min)v=min;
   el.value=decimales?String(v).replace('.',','):String(Math.round(v));
@@ -6742,6 +7071,8 @@ function renderEquipDetail(){
       <div class="field"><label>Salto entre pesos (kg)</label><select id="db-step" onchange="saveDumbbells()">
         ${[1,2,2.5,5].map(s=>`<option value="${s}"${db.step===s?' selected':''}>${s} kg</option>`).join('')}</select></div>
       <div id="db-preview" style="font-size:calc(11px*var(--fs));color:var(--text3);margin-top:4px"></div>
+      <div class="field mt-8"><label>Pesos de los que solo tienes UNA mancuerna (kg)</label><input type="text" id="db-sueltas" value="${esc(S.dbSueltas||'')}" placeholder="p. ej. 28, 32" inputmode="text" onchange="saveDbSueltas()"></div>
+      <div style="font-size:calc(11px*var(--fs));color:var(--text3);margin-top:4px">Con esos pesos solo se te propondrán ejercicios de una mancuerna (goblet, a una mano o un brazo cada vez).</div>
     </div>`;
   }
   if(eq.includes('bandas')){
@@ -6770,6 +7101,23 @@ function renderEquipDetail(){
   d.innerHTML=h;
   if(eq.includes('mancuernas'))updateDbPreview();
 }
+/* v92 · mancuernas sueltas. La copia real lo decía en la nota semanal («de 28 y 32 kg solo hay una
+   de cada»), que las reglas locales no leen: la revisión del día y el validador podían proponer
+   28 kg «una en cada mano». Ahora es un dato del material. */
+function dbSueltas(){
+  return [...new Set(String(S.dbSueltas||'').split(/[,;\s]+/).map(toNum).filter(v=>!isNaN(v)&&v>0))].sort((a,b)=>a-b);
+}
+function necesitaPar(pesoTxt){
+  const t=_norm(String(pesoTxt||''));
+  if(/una sola|un brazo|a una mano|una mancuerna de|goblet|sujeta con ambas/.test(t))return false;
+  return /por mancuerna|en cada mano|una en cada|dos mancuernas|par de mancuernas/.test(t);
+}
+function saveDbSueltas(){
+  const el=document.getElementById('db-sueltas');if(!el)return;
+  S.dbSueltas=el.value;                 // se normaliza a «28, 32»
+  S.dbSueltas=dbSueltas().join(', ');el.value=S.dbSueltas;
+  save();updateDbPreview();
+}
 function dumbbellList(){
   const db=S.dumbbells||{min:8,max:24,step:2};
   const out=[];for(let w=db.min;w<=db.max+1e-9;w+=db.step)out.push(+w.toFixed(2));
@@ -6777,8 +7125,8 @@ function dumbbellList(){
 }
 function updateDbPreview(){
   const p=document.getElementById('db-preview');if(!p)return;
-  const l=dumbbellList();
-  p.textContent=l.length?('Pesos: '+l.join(', ')+' kg'):'Revisa el rango.';
+  const l=dumbbellList(),su=dbSueltas();
+  p.textContent=l.length?('Pesos: '+l.join(', ')+' kg'+(su.length?` · solo una unidad de ${su.join(', ')} kg`:'')):'Revisa el rango.';
 }
 function saveDumbbells(){
   const min=toNum(document.getElementById('db-min').value);
