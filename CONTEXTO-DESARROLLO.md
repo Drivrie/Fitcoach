@@ -21,7 +21,8 @@ pegar: la app genera un prompt, el usuario lo pega en Claude, y pega de vuelta e
 | `sw.js` | Service worker. La constante `CACHE` sube con cada versión |
 | `manifest.json` | Manifiesto de la PWA |
 | `icon-192.png`, `icon-512.png` | Iconos. **Con guion.** Los tres archivos que los referencian (`index.html`, `manifest.json`, `sw.js`) deben coincidir |
-| `README.md` | Changelog detallado, versión a versión. Es la memoria del proyecto |
+| `README.md` | Qué es la app, instalación, uso, datos y desarrollo (sin historial) |
+| `CHANGELOG.md` | Historial detallado, versión a versión, la más reciente arriba. Es la memoria del proyecto |
 | `CONTEXTO-DESARROLLO.md` | Este archivo |
 | `CLAUDE.md` | Resumen operativo para Claude Code (stack, despliegue, pruebas) |
 | `test-vNN.js` | Arnés vigente (solo el de la última versión: incluye todas las regresiones) |
@@ -37,7 +38,7 @@ pegar: la app genera un prompt, el usuario lo pega en Claude, y pega de vuelta e
    copia de seguridad en un gist secreto. Si el usuario no la activa, la app no habla con nadie.
 4. **Verificar la persistencia antes de entregar.** El arnés comprueba campo a campo que el estado
    de un usuario veterano sobrevive intacto a la subida de versión.
-5. **Versión coherente** en `index.html` (texto de pie), `sw.js` (`CACHE`) y `README.md`.
+5. **Versión coherente** en `index.html` (texto de pie), `sw.js` (`CACHE`) y `CHANGELOG.md`.
 6. **Fechas: nunca `toISOString()`** para claves de día; se usa `ymd()`/`fmt()` en horario local.
    Para diferencias de días, `daysBetween()`, que normaliza a UTC solo año/mes/día (restar
    milisegundos falla en las semanas del cambio de hora).
@@ -130,7 +131,7 @@ pegar: la app genera un prompt, el usuario lo pega en Claude, y pega de vuelta e
 32. **Los secretos no salen del dispositivo (v88).** Todo lo que se exporta o se sube pasa por
    `copiaSinSecretos()`. Si se añade otra credencial a `S`, se añade ahí.
 33. **Lo que no sale de un estudio se dice (v88).** Los umbrales de la app son convenciones de
-   práctica. En el prompt, en la tarjeta «Base científica» y en el README se distinguen de lo citado.
+   práctica. En el prompt, en la tarjeta «Base científica» y en el CHANGELOG se distinguen de lo citado.
    Una referencia nueva se comprueba contra su fuente antes de añadirla; si el DOI no se ha podido
    comprobar, se escribe «DOI sin comprobar». Si solo se ha visto en fuentes secundarias, se dice.
 34. **Cada dato, una vez (v88).** Las series viajan en CUMPLIMIENTO REAL; el historial remite allí
@@ -253,7 +254,7 @@ de forma estable.
    Desde la v92 hay una sección de «comportamiento observable» sin guarda de función, para que el
    contraste falle por el comportamiento y no solo porque falta una función.
 5. Desde la v94 se trabaja en **Claude Code** sobre el repositorio, no en un chat de proyecto de
-   claude.ai. Entregar = commit en una rama de trabajo + pull request contra `main`, con `README.md`
+   claude.ai. Entregar = commit en una rama de trabajo + pull request contra `main`, con `CHANGELOG.md`
    (sección `## vNN`: qué, por qué y cómo se ha comprobado), `sw.js` y el arnés nuevo en el mismo
    cambio. **Fusionar en `main` es publicar**: GitHub Pages sirve `main`. Lo fusiona el usuario
    cuando lo ha revisado. Ya no hay zip ni archivos sueltos.
@@ -265,12 +266,13 @@ todas están presentes; ya ha provocado entregas a medias.
 **Trampa histórica con el proyecto de Claude (hasta la v93):** los documentos del proyecto se leían
 en línea y no quedaban en disco, así que el README no se podía editar y las secciones nuevas se
 entregaban aparte (`README-v92.md`, `README-v93.md`). Con el repositorio ya no aplica: se edita
-`README.md` directamente y no se crean `README-vNN.md` sueltos.
+`CHANGELOG.md` directamente y no se crean `README-vNN.md` sueltos. Desde la v94 el historial vive en
+`CHANGELOG.md` y el README solo describe la app.
 
 **Regresión visual:** Playwright con Chromium, cargando una copia real en `localStorage` antes de
 abrir la página, a 375×812 y 390×844 y con tamaños de letra 100%, 130% y 145%. Se comprueban errores
 de JavaScript y desbordes laterales en las seis pestañas, la revisión previa y el reproductor. Lo que
-no se puede comprobar así (teclado de iOS, fuentes de emoji, safe areas) se anota en el README como
+no se puede comprobar así (teclado de iOS, fuentes de emoji, safe areas) se anota en el CHANGELOG como
 «pendiente en el iPhone».
 
 **Probar con datos reales, no solo con el veterano de laboratorio.** En la v88 la copia real destapó

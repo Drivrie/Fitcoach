@@ -12,9 +12,10 @@ gana el código y se corrigen los dos documentos.
 - `index.html` (~7.600 líneas, ~550 KB): toda la app. Un único `<script>` inline (empieza en ~l.777).
 - `sw.js`: service worker. Documento en *network-first* (offline cae a caché); resto *cache-first*.
 - `manifest.json`, `icon-192.png`, `icon-512.png`: PWA instalable.
-- `README.md` (~2.700 líneas): instrucciones de despliegue + **changelog por versión** (v6…v94).
-  Es la memoria del proyecto: antes de tocar una función, busca su versión en el README
-  (`grep -n "^## v" README.md`) para entender por qué está así.
+- `README.md`: qué es la app, instalación, uso, datos y desarrollo. Corto; no lleva historial.
+- `CHANGELOG.md` (~2.650 líneas): **historial por versión** (v6…v94), de la más reciente a la más
+  antigua. Es la memoria del proyecto: antes de tocar una función, busca su versión
+  (`grep -n "^## v" CHANGELOG.md`) para entender por qué está así.
 - Todo va **plano en la raíz**. No crear subcarpetas (el subidor web de GitHub falla con carpetas).
 
 ## Datos y persistencia (no romper)
@@ -38,19 +39,20 @@ Las versiones y revisiones se hacen aquí, en Claude Code; ya no en un chat de p
 1. Acordar el alcance con el usuario antes de implementar (paso 1 de «Cómo se trabaja» en
    `CONTEXTO-DESARROLLO.md`).
 2. Trabajar en una rama, nunca directamente en `main`.
-3. Una versión = un cambio coherente: `index.html` + `CACHE` en `sw.js` + sección `## vNN` en
-   `README.md` + `test-vNN.js` (que sustituye al anterior) + script `test` de `package.json` y, si
+3. Una versión = un cambio coherente: `index.html` + `CACHE` en `sw.js` + sección `## vNN` al principio de
+   `CHANGELOG.md` + `test-vNN.js` (que sustituye al anterior) + script `test` de `package.json` y, si
    cambian reglas o datos, `CONTEXTO-DESARROLLO.md`.
 4. `npm test` en verde en las cinco zonas, contraste contra la versión anterior y Playwright.
 5. Pull request contra `main` solo cuando el usuario lo pida. **Fusionar en `main` publica la app**;
    la fusión la decide el usuario.
 
 ## Despliegue
-- GitHub Pages, rama `main`, carpeta `/ (root)` (según README; no hay workflow de Actions).
+- GitHub Pages, rama `main`, carpeta `/ (root)` (no hay workflow de Actions).
 - Al publicar un cambio en `index.html`, **subir el número de caché en `sw.js`**
-  (`const CACHE = 'fitcoach-vNN'`) y documentar la versión `## vNN` en el README.
+  (`const CACHE = 'fitcoach-vNN'`) y documentar la versión `## vNN` en `CHANGELOG.md`.
+  El README solo se toca si cambia lo que describe (funciones, instalación, datos).
   El marcador `vNN` también aparece en comentarios y textos de `index.html`.
-- El usuario verifica al final en su iPhone (Safari / app instalada); dejar en el README una sección
+- El usuario verifica al final en su iPhone (Safari / app instalada); dejar en la entrada del CHANGELOG una sección
   «Pendiente en el iPhone» con lo que no se puede comprobar aquí.
 
 ## Cómo probar
@@ -88,12 +90,12 @@ grep -c "api.anthropic.com" index.html
 Regresión visual con Playwright/Chromium (preinstalado en el entorno cloud), sirviendo con
 `python3 -m http.server 8000`: viewports 375×812 y 390×844, letra al 100/130/145 %, las seis pestañas,
 la revisión previa y el reproductor, sin errores de JS ni desbordamiento horizontal. Lo que no se
-puede comprobar así (teclado iOS, emoji, safe areas) va al README como «Pendiente en el iPhone».
+puede comprobar así (teclado iOS, emoji, safe areas) va al CHANGELOG como «Pendiente en el iPhone».
 
 ## Qué va al repositorio
-- Sí: `index.html`, `sw.js`, `manifest.json`, iconos, `README.md`, `CONTEXTO-DESARROLLO.md`,
+- Sí: `index.html`, `sw.js`, `manifest.json`, iconos, `README.md`, `CHANGELOG.md`, `CONTEXTO-DESARROLLO.md`,
   `CLAUDE.md`, el arnés vigente y `package.json`.
 - No: copias de datos del usuario, `node_modules/`, zips de entrega, ni los `README-vNN.md` sueltos
-  (se pegan en `README.md` y se descartan).
+  (se pegan en `CHANGELOG.md` y se descartan).
 - El repo es público y GitHub Pages sirve todo lo que hay en la raíz: nada con datos personales ni
   secretos.
